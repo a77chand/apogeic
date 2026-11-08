@@ -126,6 +126,17 @@ func active_events(state: Dictionary, sol: int) -> Array:
 	return out
 
 
+## Sunlight strength on `sol`: the scenario's normal sunlight times any
+## dust storm or night effects. 0 means the solar panels make nothing.
+func sunlight_on(state: Dictionary, sol: int) -> float:
+	var sunlight := float(scenario.solar_multiplier)
+	for e in active_events(state, sol):
+		var fx: Dictionary = events[e.id].effects
+		if fx.has("solar_multiplier"):
+			sunlight *= float(fx.solar_multiplier)
+	return sunlight
+
+
 ## Events the crew already knows are coming (within their warning time).
 func warnings(state: Dictionary) -> Array:
 	var out := []
@@ -205,12 +216,10 @@ func tick(state: Dictionary, actions: Dictionary) -> Dictionary:
 				_a(module_name(id)), build_time, _plural(word, build_time).to_lower()])
 
 	# --- 2. Events happening today -------------------------------------------
-	var sunlight := float(scenario.solar_multiplier)
+	var sunlight := sunlight_on(s, sol)
 	var storm_dose := 0.0
 	for e in active_events(s, sol):
 		var fx: Dictionary = events[e.id].effects
-		if fx.has("solar_multiplier"):
-			sunlight *= float(fx.solar_multiplier)
 		if fx.has("storm_dose"):
 			storm_dose += float(fx.storm_dose)
 		# Breakdowns were already announced when they happened, so skip those here.

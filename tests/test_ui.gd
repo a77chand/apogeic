@@ -27,6 +27,16 @@ func run() -> void:
 	await process_frame
 	check(main.state.sol == 3, "End sol advanced to sol 3 (got %d)" % main.state.sol)
 	check(main.top_bar.sol_label.text == "Sol 3 / 30", "sol label updated")
+	check(main.report_panel.visible, "report pops up after End sol")
+	check(main.report_panel.title.text == "Sol 2 report", "report is about the sol that just ended (got '%s')" % main.report_panel.title.text)
+	check(main.report_panel.details_list.get_child_count() > 0, "report has detail lines")
+	# The tutorial storm arrives on sol 4, so on sol 3 the alerts must warn about it.
+	var alert_texts := []
+	for label in main.alerts_panel.list.get_children():
+		alert_texts.append(label.text)
+	check(alert_texts.has("Next sol: Solar particle event"), "alerts warn one sol ahead (got %s)" % str(alert_texts))
+	main.report_panel.continue_button.pressed.emit()
+	check(not main.report_panel.visible, "Continue closes the report")
 	check(water_bar.delta_label.text != "", "water bar shows a change after a sol")
 
 	# Priority dropdown sends the choice with the next End sol.

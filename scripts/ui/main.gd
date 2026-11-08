@@ -18,7 +18,9 @@ var last_report: Array = []
 
 @onready var background_art: TextureRect = $BackgroundArt
 @onready var top_bar = $Margin/Layout/TopBar
-@onready var meter_panel = $Margin/Layout/Body/MeterPanel
+@onready var meter_panel = $Margin/Layout/Body/LeftColumn/MeterPanel
+@onready var alerts_panel = $Margin/Layout/Body/LeftColumn/AlertsPanel
+@onready var report_panel = $ReportPanel
 @onready var base_view = $Margin/Layout/Body/BaseView
 @onready var build_menu = $Margin/Layout/Body/BuildMenu
 @onready var error_label: Label = $ErrorLabel
@@ -51,6 +53,7 @@ func start_game() -> void:
 	planned_builds = []
 	chosen_priority = state.power_priority
 	last_report = []
+	report_panel.hide()
 	background_art.texture = Art.background_texture(scenario_id)
 	build_menu.setup(sim)
 	refresh()
@@ -59,17 +62,20 @@ func start_game() -> void:
 func end_sol() -> void:
 	if state.status != "playing":
 		return
+	var finished_sol: int = state.sol
 	var result: Dictionary = sim.tick(state, {"build": planned_builds, "power_priority": chosen_priority})
 	state = result.state
 	last_report = result.report
 	planned_builds = []
 	refresh()
+	report_panel.show_report(state.day_word, finished_sol, last_report)
 
 
 ## Redraws every UI piece from the current state.
 func refresh() -> void:
 	top_bar.show_state(state, chosen_priority, points_left())
 	meter_panel.show_state(sim, state)
+	alerts_panel.show_state(sim, state)
 	base_view.show_state(sim, state, planned_builds)
 	build_menu.show_state(sim, state, planned_builds)
 
