@@ -19,6 +19,8 @@ var last_report: Array = []
 @onready var background_art: TextureRect = $BackgroundArt
 @onready var top_bar = $Margin/Layout/TopBar
 @onready var meter_panel = $Margin/Layout/Body/MeterPanel
+@onready var base_view = $Margin/Layout/Body/BaseView
+@onready var build_menu = $Margin/Layout/Body/BuildMenu
 @onready var error_label: Label = $ErrorLabel
 
 
@@ -38,6 +40,8 @@ func _ready() -> void:
 	top_bar.priority_selected.connect(_on_priority_selected)
 	top_bar.restart_pressed.connect(start_game)
 	top_bar.end_sol_pressed.connect(end_sol)
+	build_menu.build_requested.connect(plan_build)
+	build_menu.clear_requested.connect(clear_plan)
 	start_game()
 
 
@@ -48,6 +52,7 @@ func start_game() -> void:
 	chosen_priority = state.power_priority
 	last_report = []
 	background_art.texture = Art.background_texture(scenario_id)
+	build_menu.setup(sim)
 	refresh()
 
 
@@ -65,6 +70,20 @@ func end_sol() -> void:
 func refresh() -> void:
 	top_bar.show_state(state, chosen_priority, points_left())
 	meter_panel.show_state(sim, state)
+	base_view.show_state(sim, state, planned_builds)
+	build_menu.show_state(sim, state, planned_builds)
+
+
+## Adds a module to this sol's plan if the sim says it's allowed.
+func plan_build(module_id: String) -> void:
+	if sim.can_build(state, module_id, planned_builds) == "":
+		planned_builds.append(module_id)
+		refresh()
+
+
+func clear_plan() -> void:
+	planned_builds = []
+	refresh()
 
 
 ## Build points after paying for this sol's planned builds.

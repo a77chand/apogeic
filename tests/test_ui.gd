@@ -35,6 +35,31 @@ func run() -> void:
 	main.top_bar.end_sol_button.pressed.emit()
 	check(main.state.power_priority == "food", "priority 'food' reached the sim (got %s)" % main.state.power_priority)
 
+	# Build menu: plan two solar panels, check the plan, then end the sol.
+	var solar_before: int = main.state.modules.solar_panel
+	var points_before: int = main.points_left()
+	main.build_menu.buttons["solar_panel"].pressed.emit()
+	main.build_menu.buttons["solar_panel"].pressed.emit()
+	check(main.planned_builds.size() == 2, "two solar panels planned")
+	check(main.points_left() == points_before - 4, "planning spends build points (left %d)" % main.points_left())
+	check(main.top_bar.points_label.text == "Build points: %d" % main.points_left(), "top bar shows points left")
+	var planned_tiles := 0
+	for tile in main.base_view.grid.get_children():
+		if tile.status_label.text == "PLANNED":
+			planned_tiles += 1
+	check(planned_tiles == 2, "base view shows 2 PLANNED tiles (got %d)" % planned_tiles)
+	main.build_menu.clear_button.pressed.emit()
+	check(main.planned_builds.is_empty(), "Clear plan empties the plan")
+	main.build_menu.buttons["solar_panel"].pressed.emit()
+	main.top_bar.end_sol_button.pressed.emit()
+	check(main.state.modules.solar_panel == solar_before + 1, "planned solar panel was built on End sol")
+	check(main.planned_builds.is_empty(), "plan is cleared after End sol")
+	# A module you can't afford has a disabled button with a reason.
+	main.state.build_points = 0
+	main.refresh()
+	var hab_button: Button = main.build_menu.buttons["habitat"]
+	check(hab_button.disabled and hab_button.tooltip_text.begins_with("Can't build"), "unaffordable module is disabled with a reason")
+
 	# Switching to the Moon starts a new Moon game.
 	main.top_bar.moon_button.pressed.emit()
 	await process_frame
