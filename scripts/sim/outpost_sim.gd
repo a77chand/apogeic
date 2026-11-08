@@ -459,7 +459,10 @@ func explain_failure(s: Dictionary, meter: String) -> Array:
 		while first > 0 and float(hist[first - 1].deltas[meter]) < 0.0:
 			first -= 1
 	var related := _related_modules(meter)
-	var lines := []
+	# Causes (storms, machines off...) come first, sorted by sol. Symptoms
+	# (rationing) come after the numbers, right before the failure itself.
+	var causes := []    # [[sol, text], ...]
+	var symptoms := []
 	var seen := {}
 	for i in range(first, last + 1):
 		var rec: Dictionary = hist[i]
@@ -471,22 +474,41 @@ func explain_failure(s: Dictionary, meter: String) -> Array:
 				continue
 			seen[f.key] = true
 			# Events remember the sol they began, which can be before the window.
-			lines.append("%s %d: %s" % [word, int(f.get("sol", rec.sol)), text])
-	# Add the numbers behind the failure.
+			var at := int(f.get("sol", rec.sol))
+			var line := "%s %d: %s" % [word, at, text]
+			if f.type == "low_supply":
+				symptoms.append(line)
+			else:
+				causes.append([at, line])
+	causes.sort_custom(func(a, b): return a[0] < b[0])
+	var lines := []
+	for c in causes:
+		lines.append(c[1])
+	# The numbers behind the failure.
 	if meter in RESOURCES:
-		var total_made := 0.0
-		var total_used := 0.0
-		for i in range(first, last + 1):
-			total_made += float(hist[i].made[meter])
-			total_used += float(hist[i].used[meter])
-		var n := last - first + 1
-		lines.append("From %s %d on, the base made about %s %s per %s but used about %s." % [
-			word, hist[first].sol, _fmt(total_made / n), meter, word.to_lower(), _fmt(total_used / n)])
+		var producers := []
+		var owned := 0
+		for id in modules:
+			if modules[id].outputs.has(meter):
+				producers.append(module_name(id))
+				owned += s.modules[id]
+		if owned == 0 and not producers.is_empty():
+			lines.append("The base had no %s, so nothing made %s." % [" or ".join(producers), meter])
+		else:
+			var total_made := 0.0
+			var total_used := 0.0
+			for i in range(first, last + 1):
+				total_made += float(hist[i].made[meter])
+				total_used += float(hist[i].used[meter])
+			var n := last - first + 1
+			lines.append("From %s %d on, the base made about %s %s per %s but used about %s." % [
+				word, hist[first].sol, _fmt(total_made / n), meter, word.to_lower(), _fmt(total_used / n)])
 	elif meter == "radiation":
 		var background := 0.0
 		for rec in hist:
 			background += float(rec.background_dose)
 		lines.append("Everyday radiation added %s in total over %d %s." % [_fmt(background), hist.size(), _plural(word, hist.size()).to_lower()])
+	lines.append_array(symptoms)
 	lines.append("%s %d: %s" % [word, hist[last].sol, crew.debrief[meter].fail])
 	return lines
 

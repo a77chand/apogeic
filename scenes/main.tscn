@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/build_menu.tscn" id="5_build"]
 [ext_resource type="PackedScene" path="res://scenes/ui/alerts_panel.tscn" id="6_alerts"]
 [ext_resource type="PackedScene" path="res://scenes/ui/report_panel.tscn" id="7_report"]
+[ext_resource type="PackedScene" path="res://scenes/ui/end_screen.tscn" id="8_end"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -77,6 +78,10 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="ReportPanel" parent="." instance=ExtResource("7_report")]
+visible = false
+layout_mode = 1
+
+[node name="EndScreen" parent="." instance=ExtResource("8_end")]
 visible = false
 layout_mode = 1
 
