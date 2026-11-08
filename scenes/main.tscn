@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/alerts_panel.tscn" id="6_alerts"]
 [ext_resource type="PackedScene" path="res://scenes/ui/report_panel.tscn" id="7_report"]
 [ext_resource type="PackedScene" path="res://scenes/ui/end_screen.tscn" id="8_end"]
+[ext_resource type="PackedScene" path="res://scenes/ui/tutorial_panel.tscn" id="9_tutorial"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -71,7 +72,17 @@ layout_mode = 2
 [node name="AlertsPanel" parent="Margin/Layout/Body/LeftColumn" instance=ExtResource("6_alerts")]
 layout_mode = 2
 
-[node name="BaseView" parent="Margin/Layout/Body" instance=ExtResource("4_base")]
+[node name="CenterColumn" type="VBoxContainer" parent="Margin/Layout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="BaseView" parent="Margin/Layout/Body/CenterColumn" instance=ExtResource("4_base")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TutorialPanel" parent="Margin/Layout/Body/CenterColumn" instance=ExtResource("9_tutorial")]
+visible = false
 layout_mode = 2
 
 [node name="BuildMenu" parent="Margin/Layout/Body" instance=ExtResource("5_build")]

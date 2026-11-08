@@ -28,6 +28,12 @@ tooltip_text = "Play on Mars (starts a new game)"
 toggle_mode = true
 text = "Mars"
 
+[node name="TutorialCheck" type="CheckBox" parent="Margin/HBox"]
+layout_mode = 2
+tooltip_text = "Guided first 5 sols (starts a new game)"
+button_pressed = true
+text = "Tutorial"
+
 [node name="SolLabel" type="Label" parent="Margin/HBox"]
 custom_minimum_size = Vector2(110, 0)
 layout_mode = 2

@@ -15,6 +15,12 @@ func run() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	await process_frame
+	await tutorial_walkthrough(main)
+
+	# The rest of the checks play without the tutorial.
+	main.top_bar.tutorial_check.button_pressed = false
+	await process_frame
+	check(not main.state.tutorial and not main.tutorial_panel.visible, "Tutorial checkbox off starts a game without the guide")
 
 	check(main.state.sol == 1, "game starts on sol 1")
 	check(main.top_bar.sol_label.text == "Sol 1 / 30", "sol label reads 'Sol 1 / 30' (got '%s')" % main.top_bar.sol_label.text)
@@ -30,11 +36,6 @@ func run() -> void:
 	check(main.report_panel.visible, "report pops up after End sol")
 	check(main.report_panel.title.text == "Sol 2 report", "report is about the sol that just ended (got '%s')" % main.report_panel.title.text)
 	check(main.report_panel.details_list.get_child_count() > 0, "report has detail lines")
-	# The tutorial storm arrives on sol 4, so on sol 3 the alerts must warn about it.
-	var alert_texts := []
-	for label in main.alerts_panel.list.get_children():
-		alert_texts.append(label.text)
-	check(alert_texts.has("Next sol: Solar particle event"), "alerts warn one sol ahead (got %s)" % str(alert_texts))
 	main.report_panel.continue_button.pressed.emit()
 	check(not main.report_panel.visible, "Continue closes the report")
 	check(water_bar.delta_label.text != "", "water bar shows a change after a sol")
@@ -112,6 +113,53 @@ func run() -> void:
 	check(main.state.sol == 1 and main.state.status == "playing", "Try again restarts")
 
 	finish()
+
+
+## Plays sols 1-5 the way the tutorial asks and checks the shelter saves the crew.
+func tutorial_walkthrough(main) -> void:
+	check(main.state.sol == 1 and main.tutorial_panel.visible, "tutorial panel shows on sol 1")
+	check(main.tutorial_panel.goal_module(main.sim, main.state) == "solar_panel", "sol 1 goal is a solar panel")
+	check(main.top_bar.end_sol_button.disabled, "End sol waits for the tutorial goal")
+	main.end_sol()
+	check(main.state.sol == 1, "end_sol() does nothing while the goal is missing")
+	var expected := {1: "solar_panel", 2: "electrolyzer", 3: "storm_shelter"}
+	for sol in [1, 2, 3]:
+		var goal: String = expected[sol]
+		if sol == 3:
+			# The tutorial storm arrives on sol 4, so on sol 3 the alerts must warn about it.
+			var alert_texts := []
+			for label in main.alerts_panel.list.get_children():
+				alert_texts.append(label.text)
+			check(alert_texts.has("Next sol: Solar particle event"), "alerts warn one sol ahead (got %s)" % str(alert_texts))
+		check(main.tutorial_panel.goal_module(main.sim, main.state) == goal, "sol %d goal is %s" % [sol, goal])
+		main.build_menu.buttons[goal].pressed.emit()
+		check(not main.top_bar.end_sol_button.disabled, "End sol unlocks once %s is planned" % goal)
+		check(main.tutorial_panel.goal_label.text.begins_with("Done!"), "goal shows as done")
+		main.top_bar.end_sol_button.pressed.emit()
+		main.report_panel.continue_button.pressed.emit()
+	check(main.state.sol == 4 and main.state.modules.storm_shelter == 1, "shelter is finished by sol 4")
+	var alerts := []
+	for label in main.alerts_panel.list.get_children():
+		alerts.append(label.text)
+	check(alerts.has("Now: Solar particle event (1 sol left)"), "storm is active on sol 4 (alerts: %s)" % str(alerts))
+	check(main.tutorial_panel.body.text.contains("hides in the shelter"), "sol 4 text praises the shelter")
+	main.top_bar.end_sol_button.pressed.emit()
+	var dose: float = main.state.history[-1].storm_dose
+	check(dose > 0.0 and dose < 10.0, "shelter cut the storm dose to %s" % dose)
+	var saw_shelter_line := false
+	for line in main.last_report:
+		if line.text.begins_with("The crew hid in the storm shelter"):
+			saw_shelter_line = true
+	check(saw_shelter_line, "report says the shelter saved the crew")
+	main.report_panel.continue_button.pressed.emit()
+	check(main.state.sol == 5 and main.tutorial_panel.visible, "sol 5 free-play intro shows")
+	main.top_bar.end_sol_button.pressed.emit()
+	check(main.state.sol == 6 and not main.tutorial_panel.visible, "tutorial ends after sol 5")
+
+	# Skipping hides the guide and unlocks End sol straight away.
+	main.start_game()
+	main.tutorial_panel.skip_button.pressed.emit()
+	check(not main.tutorial_panel.visible and not main.top_bar.end_sol_button.disabled, "Skip tutorial hides it and unlocks End sol")
 
 
 func check(ok: bool, message: String) -> void:
