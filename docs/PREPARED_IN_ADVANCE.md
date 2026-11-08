@@ -12,3 +12,4 @@ Work done before the NASA Space Apps Challenge weekend (Nov 14-15, 2026). Everyt
 | 2026-11-08 | Stage E: alerts panel (one-sol warnings, active events, sunlight) and end-of-sol report popup | Team (drafted with AI assistance) |
 | 2026-11-08 | Stage F: win/lose end screen with cause-chain debrief and tips | Team (drafted with AI assistance) |
 | 2026-11-08 | Stage G: tutorial for sols 1-5 (panel, goal highlight, End sol waits for affordable goal, skip, toggle) | Team (drafted with AI assistance) |
+| 2026-11-08 | Stage H: balance pass with bot players (tests/balance.gd, docs/BALANCE.md) | Team (drafted with AI assistance) |

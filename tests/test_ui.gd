@@ -25,7 +25,9 @@ func run() -> void:
 	check(main.state.sol == 1, "game starts on sol 1")
 	check(main.top_bar.sol_label.text == "Sol 1 / 30", "sol label reads 'Sol 1 / 30' (got '%s')" % main.top_bar.sol_label.text)
 	var water_bar = main.meter_panel.meters.get_node("Water")
-	check(water_bar.value_label.text == "50 / 60", "water bar shows 50 / 60 (got '%s')" % water_bar.value_label.text)
+	# Expected text comes from the data, so balance changes don't break this test.
+	var expected_water := "%d / %d" % [main.sim.scenario.start_meters.water, main.sim.scenario.storage_max.water]
+	check(water_bar.value_label.text == expected_water, "water bar shows %s (got '%s')" % [expected_water, water_bar.value_label.text])
 
 	# Press End sol twice, the same way a mouse click would.
 	main.top_bar.end_sol_button.pressed.emit()
