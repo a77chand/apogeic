@@ -61,6 +61,7 @@ func new_game(seed_value: int) -> Dictionary:
 		"power_priority": priorities.keys()[0],
 		"events": [],                      # [{id, start_sol, duration, target}]
 		"last_run": {},                    # module id -> units that worked last sol
+		"last_off": {},                    # module id -> units switched off last sol (no power/water)
 		"history": [],                     # one record per finished sol (for the debrief)
 		"failure": {},                     # {meter, sol, chain, tip} when lost
 		"tutorial": not tutorial.is_empty(),
@@ -272,6 +273,7 @@ func tick(state: Dictionary, actions: Dictionary) -> Dictionary:
 		crew_needs[r] = float(crew.needs_per_person_per_sol[r]) * crew_size
 
 	# --- 5. Modules that need inputs, in the chosen priority order ------------
+	var switched_off := {}
 	for id in _run_order(s.power_priority):
 		var def: Dictionary = modules[id]
 		var units := working_units(s, id)
@@ -292,12 +294,14 @@ func tick(state: Dictionary, actions: Dictionary) -> Dictionary:
 		if units == 0:
 			continue
 		if count < units:
+			switched_off[id] = units - count
 			_say(report, "bad", "%s: %d of %d switched off, not enough %s." % [
 				module_name(id), units - count, units, missing])
 			facts.append({"type": "off", "module": id, "missing": missing, "key": "off:%s:%s" % [id, missing]})
 		if count > 0 and not def.outputs.is_empty():
 			_say(report, "info", "%s made %s." % [_count_name(id, count), _amounts(def.outputs, count)])
 	s.last_run = ran
+	s.last_off = switched_off
 
 	# --- 6. The crew eats, drinks and breathes ----------------------------------
 	for r in crew_needs:
