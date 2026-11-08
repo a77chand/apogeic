@@ -80,8 +80,8 @@ How often an event happens is set per scenario, not here.
 
 ## tutorial.json
 
-`random_events_from_sol`: random events are off before this sol. `scripted_events`: events forced during the tutorial. `steps`: one per sol, with `title`, `text` and an optional `goal_build` module id.
+`random_events_from_sol`: random events are off before this sol. `scripted_events`: events forced during the tutorial. `steps`: one per sol, with `title`, `text` and an optional `goal_build` module id. Optional `needs_module` + `text_if_missing`: show the second text instead when the base has none of that module (for example, no storm shelter when the storm hits). While a goal is affordable and not yet planned, End sol waits for it.
 
 ## Text placeholders
 
-In event texts, `{day}` becomes "sol" on Mars and "day" on the Moon.
+In event and tutorial texts, `{day}` becomes "sol" on Mars and "day" on the Moon.

@@ -42,6 +42,21 @@ func setup(sim) -> void:
 		list.add_child(info)
 
 
+## Puts an orange frame around one module's button (the tutorial goal). "" clears it.
+func highlight(module_id: String) -> void:
+	for id in buttons:
+		var button: Button = buttons[id]
+		if id == module_id:
+			var frame := StyleBoxFlat.new()
+			frame.bg_color = Color(0.3, 0.2, 0.1)
+			frame.border_color = Color(0.95, 0.6, 0.25)
+			frame.set_border_width_all(3)
+			frame.set_corner_radius_all(4)
+			button.add_theme_stylebox_override("normal", frame)
+		else:
+			button.remove_theme_stylebox_override("normal")
+
+
 func show_state(sim, state: Dictionary, planned: Array) -> void:
 	for id in buttons:
 		var why: String = sim.can_build(state, id, planned)

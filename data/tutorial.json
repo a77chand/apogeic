@@ -8,7 +8,7 @@
     {
       "sol": {"value": 1, "source": "placeholder"},
       "title": "Power comes first",
-      "text": "Everything at the base runs on electricity. Build a Solar panel, then press End sol.",
+      "text": "Everything at the base runs on electricity. Build a Solar panel, then press End {day}.",
       "goal_build": "solar_panel"
     },
     {
@@ -20,13 +20,15 @@
     {
       "sol": {"value": 3, "source": "placeholder"},
       "title": "Storm warning!",
-      "text": "The Sun flared. Radiation arrives next sol. Build a Storm shelter now. It takes one sol to finish, so it is ready just in time.",
+      "text": "The Sun flared. Radiation arrives next {day}. Build a Storm shelter now. It takes one {day} to finish, so it is ready just in time.",
       "goal_build": "storm_shelter"
     },
     {
       "sol": {"value": 4, "source": "placeholder"},
       "title": "Into the shelter",
-      "text": "The solar particle event is here. Your crew hides in the shelter and gets only a small dose. Without it they could get sick. End the sol and read the report.",
+      "text": "The solar particle event is here. Your crew hides in the shelter and gets only a small dose. Without it they could get sick. End the {day} and read the report.",
+      "needs_module": "storm_shelter",
+      "text_if_missing": "The solar particle event is here, and there is no storm shelter. End the {day} and read the report to see what radiation does to the crew. Build a shelter before the next one!",
       "goal_build": ""
     },
     {
