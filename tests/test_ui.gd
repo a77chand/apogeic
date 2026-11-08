@@ -80,6 +80,37 @@ func run() -> void:
 	main.top_bar.restart_button.pressed.emit()
 	check(main.state.sol == 1, "Restart goes back to day 1")
 
+	# Lose on purpose: end sols without building until something runs out.
+	main.start_game()
+	var guard := 0
+	while main.state.status == "playing" and guard < 40:
+		main.end_sol()
+		guard += 1
+	check(main.state.status == "lost", "doing nothing loses the game")
+	check(main.end_screen.visible and not main.report_panel.visible, "end screen replaces the report")
+	check(main.end_screen.title.text == "Mission failed", "end screen says Mission failed")
+	var steps: int = main.state.failure.chain.size()
+	# Each step is a box, with an arrow between boxes.
+	check(main.end_screen.chain_list.get_child_count() == steps * 2 - 1, "cause chain shows %d steps with arrows" % steps)
+	check(main.end_screen.tip_label.text.begins_with("Tip: "), "end screen shows a tip")
+	check(main.top_bar.end_sol_button.disabled, "End sol is disabled after the mission ends")
+	print("     debrief: ", main.state.failure.chain)
+
+	# Try the other planet from the end screen.
+	var before: String = main.scenario_id
+	main.end_screen.switch_button.pressed.emit()
+	check(main.scenario_id != before and main.state.sol == 1 and not main.end_screen.visible, "end screen switches planet and restarts")
+
+	# Win: jump to the last sol with a healthy base, then end it.
+	main.state.sol = main.state.max_sols
+	main.state.meters.oxygen = 40.0
+	main.state.meters.water = 60.0
+	main.state.meters.food = 60.0
+	main.end_sol()
+	check(main.state.status == "won" and main.end_screen.title.text == "Mission complete!", "surviving the last sol shows Mission complete")
+	main.end_screen.restart_button.pressed.emit()
+	check(main.state.sol == 1 and main.state.status == "playing", "Try again restarts")
+
 	finish()
 
 

@@ -21,6 +21,7 @@ var last_report: Array = []
 @onready var meter_panel = $Margin/Layout/Body/LeftColumn/MeterPanel
 @onready var alerts_panel = $Margin/Layout/Body/LeftColumn/AlertsPanel
 @onready var report_panel = $ReportPanel
+@onready var end_screen = $EndScreen
 @onready var base_view = $Margin/Layout/Body/BaseView
 @onready var build_menu = $Margin/Layout/Body/BuildMenu
 @onready var error_label: Label = $ErrorLabel
@@ -44,6 +45,8 @@ func _ready() -> void:
 	top_bar.end_sol_pressed.connect(end_sol)
 	build_menu.build_requested.connect(plan_build)
 	build_menu.clear_requested.connect(clear_plan)
+	end_screen.restart_requested.connect(start_game)
+	end_screen.switch_mode_requested.connect(func(): _on_mode_selected("mars" if scenario_id == "moon" else "moon"))
 	start_game()
 
 
@@ -54,6 +57,7 @@ func start_game() -> void:
 	chosen_priority = state.power_priority
 	last_report = []
 	report_panel.hide()
+	end_screen.hide()
 	background_art.texture = Art.background_texture(scenario_id)
 	build_menu.setup(sim)
 	refresh()
@@ -68,7 +72,11 @@ func end_sol() -> void:
 	last_report = result.report
 	planned_builds = []
 	refresh()
-	report_panel.show_report(state.day_word, finished_sol, last_report)
+	if state.status == "playing":
+		report_panel.show_report(state.day_word, finished_sol, last_report)
+	else:
+		report_panel.hide()
+		end_screen.show_end(sim, state)  # win or loss: skip the report, show the debrief
 
 
 ## Redraws every UI piece from the current state.
