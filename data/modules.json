@@ -4,6 +4,7 @@
     "solar_panel": {
       "name": "Solar panel",
       "description": "Makes power from sunlight. Makes less in dust storms and nothing at lunar night.",
+      "uses_sunlight": true,
       "cost": {"value": 2, "source": "placeholder"},
       "build_time": {"value": 0, "source": "placeholder"},
       "max_count": {"value": 12, "source": "placeholder"},

@@ -19,7 +19,7 @@
       "start_meters": {
         "power": {"value": 10, "source": "placeholder"},
         "oxygen": {"value": 20, "source": "placeholder"},
-        "water": {"value": 30, "source": "placeholder"},
+        "water": {"value": 50, "source": "placeholder"},
         "food": {"value": 40, "source": "placeholder"},
         "radiation": {"value": 0, "source": "placeholder"},
         "health": {"value": 100, "source": "placeholder"}
@@ -56,7 +56,7 @@
       "start_meters": {
         "power": {"value": 10, "source": "placeholder"},
         "oxygen": {"value": 20, "source": "placeholder"},
-        "water": {"value": 30, "source": "placeholder"},
+        "water": {"value": 50, "source": "placeholder"},
         "food": {"value": 40, "source": "placeholder"},
         "radiation": {"value": 0, "source": "placeholder"},
         "health": {"value": 100, "source": "placeholder"}

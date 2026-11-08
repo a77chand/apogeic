@@ -19,5 +19,12 @@
     "low_supply_threshold": {"value": 0.15, "source": "placeholder", "note": "Fraction of storage. Below this the crew rations and worries."},
     "low_supply_penalty": {"value": 3, "source": "placeholder"}
   },
-  "fail_at_zero": ["oxygen", "water", "food", "health"]
+  "fail_at_zero": ["oxygen", "water", "food", "health"],
+  "debrief": {
+    "oxygen": {"fail": "Oxygen ran out, so the crew had to evacuate.", "tip": "Electrolyzers make oxygen but need power AND water. Keep them running with 'Life support first', and build an Ice miner to feed them."},
+    "water": {"fail": "Water ran out, so the crew had to evacuate.", "tip": "Ice miners make water. Greenhouses and electrolyzers both drink it, so add a miner before you add more of them."},
+    "food": {"fail": "Food ran out, so the crew had to evacuate.", "tip": "Greenhouses need lots of power and water. Build power first, then greenhouses, and add batteries for storms and nights."},
+    "health": {"fail": "The crew became too sick and unhappy to keep working, so they had to evacuate.", "tip": "Habitats keep the crew happy. Keep the heaters powered, don't let supplies run low, and shelter from solar storms."},
+    "radiation": {"fail": "The crew reached the radiation limit and had to go home early.", "tip": "Build a storm shelter as soon as a solar particle event is announced, and add regolith shielding early, because it takes time to build."}
+  }
 }

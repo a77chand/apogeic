@@ -32,6 +32,7 @@ Game units are made up and are kept simple for young players: "power", "oxygen",
 | `max_count` | Most you can own |
 | `inputs` | Per working unit per sol, e.g. `{"power": 3, "water": 2}` |
 | `outputs` | Per working unit per sol, e.g. `{"oxygen": 4}`. Solar `power` output is multiplied by sunlight |
+| `uses_sunlight` | (true/false) output is multiplied by the scenario's sunlight and by storms/night |
 | `power_storage` | (battery) extra power the base can store |
 | `crew_capacity`, `morale_per_sol` | (habitat) beds, and health gained per sol |
 | `background_dose_reduction` | (shielding) fraction of everyday radiation blocked per unit |
@@ -80,3 +81,7 @@ How often an event happens is set per scenario, not here.
 ## tutorial.json
 
 `random_events_from_sol`: random events are off before this sol. `scripted_events`: events forced during the tutorial. `steps`: one per sol, with `title`, `text` and an optional `goal_build` module id.
+
+## Text placeholders
+
+In event texts, `{day}` becomes "sol" on Mars and "day" on the Moon.
