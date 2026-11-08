@@ -28,7 +28,7 @@
       "build_time": {"value": 0, "source": "placeholder"},
       "max_count": {"value": 4, "source": "placeholder"},
       "inputs": {"power": {"value": 3, "source": "placeholder"}, "water": {"value": 2, "source": "placeholder"}},
-      "outputs": {"oxygen": {"value": 4, "source": "placeholder"}}
+      "outputs": {"oxygen": {"value": 5, "source": "placeholder"}}
     },
     "ice_miner": {
       "name": "Ice miner",
@@ -84,11 +84,11 @@
     "_comment": "Order in which modules get power (and water) when there is not enough for everything. Crew base power always comes first.",
     "life_support": {
       "name": "Life support first",
-      "order": ["habitat", "ice_miner", "electrolyzer", "greenhouse"]
+      "order": ["electrolyzer", "ice_miner", "habitat", "greenhouse"]
     },
     "food": {
       "name": "Food first",
-      "order": ["habitat", "greenhouse", "ice_miner", "electrolyzer"]
+      "order": ["greenhouse", "electrolyzer", "ice_miner", "habitat"]
     }
   }
 }

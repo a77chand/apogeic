@@ -24,6 +24,7 @@ Run the tests from a terminal in this folder (replace `godot` with the path to y
 godot --headless --path . --script res://tests/test_data.gd   # data files are valid
 godot --headless --path . --script res://tests/test_sim.gd    # 30-sol scripted game
 godot --headless --path . --script res://tests/test_ui.gd     # loads the real scenes and clicks buttons
+godot --headless --path . --script res://tests/balance.gd -- games=300   # bot players, win rates (see docs/BALANCE.md)
 godot --path . --script res://tests/screenshot.gd -- out=/tmp/shot.png sols=3 mode=moon   # needs a window
 ```
 
@@ -35,7 +36,7 @@ You need the export templates first: in the editor, open Editor > Manage Export 
 
 ```
 data/            Balance numbers (JSON). Edit these, not the scripts.
-docs/            DATA_SCHEMA, ART_GUIDE, CREDITS, PREPARED_IN_ADVANCE
+docs/            DATA_SCHEMA, BALANCE, ART_GUIDE, CREDITS, PREPARED_IN_ADVANCE
 art/             PNGs (modules/, icons/, backgrounds/). See docs/ART_GUIDE.md
 scripts/sim/     Pure simulation. No nodes, no UI. Testable headless.
 scripts/ui/      Scripts attached to UI scenes. They read state and send actions.
