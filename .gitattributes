@@ -1,0 +1,6 @@
+# Normalize line endings so Windows and Mac teammates don't fight over .tscn/.gd files
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ogg binary
+*.wav binary

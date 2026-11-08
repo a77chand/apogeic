@@ -1,0 +1,23 @@
+{
+  "_comment": "Crew needs and health rules. All numbers are placeholders for game balance, NOT real NASA data.",
+  "crew_size": {"value": 4, "source": "placeholder"},
+  "needs_per_person_per_sol": {
+    "oxygen": {"value": 1, "source": "placeholder"},
+    "water": {"value": 1, "source": "placeholder"},
+    "food": {"value": 1, "source": "placeholder"}
+  },
+  "base_power_per_sol": {"value": 4, "source": "placeholder", "note": "Heaters, air fans and computers. Always powered first."},
+  "radiation_limit": {"value": 100, "source": "placeholder", "note": "Game exposure limit in made-up 'dose points', not millisieverts."},
+  "health": {
+    "start": {"value": 100, "source": "placeholder"},
+    "max": {"value": 100, "source": "placeholder"},
+    "stress_per_sol": {"value": 4, "source": "placeholder", "note": "Isolation and hard work. Habitats cancel it out."},
+    "cold_penalty": {"value": 15, "source": "placeholder", "note": "Lost when base power cannot be met."},
+    "crowding_penalty": {"value": 5, "source": "placeholder", "note": "Lost per crew member without a habitat bed."},
+    "radiation_sickness_threshold": {"value": 10, "source": "placeholder", "note": "Daily dose above this hurts health."},
+    "radiation_sickness_penalty": {"value": 10, "source": "placeholder"},
+    "low_supply_threshold": {"value": 0.15, "source": "placeholder", "note": "Fraction of storage. Below this the crew rations and worries."},
+    "low_supply_penalty": {"value": 3, "source": "placeholder"}
+  },
+  "fail_at_zero": ["oxygen", "water", "food", "health"]
+}

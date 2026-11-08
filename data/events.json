@@ -1,0 +1,50 @@
+{
+  "_comment": "Event definitions. How OFTEN each happens is set per scenario in scenarios.json. All numbers are placeholders, NOT real NASA data.",
+  "events": {
+    "solar_particle_event": {
+      "name": "Solar particle event",
+      "warning_text": "The Sun just flared! A solar particle event arrives next sol. Build a storm shelter.",
+      "start_text": "A solar particle event is hitting the base. High radiation today.",
+      "warning_sols": {"value": 1, "source": "placeholder"},
+      "duration_min": {"value": 1, "source": "placeholder"},
+      "duration_max": {"value": 1, "source": "placeholder"},
+      "effects": {
+        "storm_dose": {"value": 30, "source": "placeholder", "note": "Extra radiation per sol, before the storm shelter cuts it."}
+      }
+    },
+    "dust_storm": {
+      "name": "Dust storm",
+      "warning_text": "Weather satellites see a dust storm coming. It arrives next sol and will dim the solar panels.",
+      "start_text": "A dust storm blocks most sunlight. Solar panels make much less power.",
+      "warning_sols": {"value": 1, "source": "placeholder"},
+      "duration_min": {"value": 3, "source": "placeholder"},
+      "duration_max": {"value": 5, "source": "placeholder"},
+      "effects": {
+        "solar_multiplier": {"value": 0.35, "source": "placeholder"}
+      }
+    },
+    "lunar_night": {
+      "name": "Lunar night",
+      "warning_text": "The Sun sets tomorrow. Lunar night means NO solar power. Charge your batteries!",
+      "start_text": "Lunar night. Solar panels make no power. The base runs on batteries.",
+      "warning_sols": {"value": 1, "source": "placeholder"},
+      "duration_min": {"value": 4, "source": "placeholder", "note": "Shortened for the game. A real lunar night lasts about two Earth weeks."},
+      "duration_max": {"value": 4, "source": "placeholder"},
+      "effects": {
+        "solar_multiplier": {"value": 0.0, "source": "placeholder"}
+      }
+    },
+    "equipment_failure": {
+      "name": "Equipment failure",
+      "warning_text": "",
+      "start_text": "Something broke! One module is offline while the crew repairs it.",
+      "warning_sols": {"value": 0, "source": "placeholder", "note": "Breakdowns come without warning."},
+      "duration_min": {"value": 2, "source": "placeholder"},
+      "duration_max": {"value": 2, "source": "placeholder"},
+      "effects": {
+        "disable_units": {"value": 1, "source": "placeholder"}
+      },
+      "targets": ["solar_panel", "electrolyzer", "ice_miner", "greenhouse"]
+    }
+  }
+}
