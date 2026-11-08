@@ -3,7 +3,7 @@
   "events": {
     "solar_particle_event": {
       "name": "Solar particle event",
-      "warning_text": "The Sun just flared! A solar particle event arrives next sol. Build a storm shelter.",
+      "warning_text": "The Sun just flared! A solar particle event arrives next {day}. Build a storm shelter.",
       "start_text": "A solar particle event is hitting the base. High radiation today.",
       "warning_sols": {"value": 1, "source": "placeholder"},
       "duration_min": {"value": 1, "source": "placeholder"},
@@ -14,7 +14,7 @@
     },
     "dust_storm": {
       "name": "Dust storm",
-      "warning_text": "Weather satellites see a dust storm coming. It arrives next sol and will dim the solar panels.",
+      "warning_text": "Weather satellites see a dust storm coming. It arrives next {day} and will dim the solar panels.",
       "start_text": "A dust storm blocks most sunlight. Solar panels make much less power.",
       "warning_sols": {"value": 1, "source": "placeholder"},
       "duration_min": {"value": 3, "source": "placeholder"},
