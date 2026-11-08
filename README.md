@@ -23,6 +23,8 @@ Run the tests from a terminal in this folder (replace `godot` with the path to y
 ```sh
 godot --headless --path . --script res://tests/test_data.gd   # data files are valid
 godot --headless --path . --script res://tests/test_sim.gd    # 30-sol scripted game
+godot --headless --path . --script res://tests/test_ui.gd     # loads the real scenes and clicks buttons
+godot --path . --script res://tests/screenshot.gd -- out=/tmp/shot.png sols=3 mode=moon   # needs a window
 ```
 
 ## Web export (HTML5)
@@ -37,7 +39,7 @@ docs/            DATA_SCHEMA, ART_GUIDE, CREDITS, PREPARED_IN_ADVANCE
 art/             PNGs (modules/, icons/, backgrounds/). See docs/ART_GUIDE.md
 scripts/sim/     Pure simulation. No nodes, no UI. Testable headless.
 scripts/ui/      Scripts attached to UI scenes. They read state and send actions.
-scenes/main.tscn Root scene. Wires the UI pieces to the simulation.
+scenes/main.tscn Root scene. scripts/ui/main.gd wires the UI pieces to the simulation.
 scenes/ui/       One small scene per UI piece (HUD, build menu, report, ...)
 tests/           Headless test scripts
 ```
@@ -45,7 +47,7 @@ tests/           Headless test scripts
 ## How the code fits together
 
 ```
- UI scenes ──actions──▶ main.gd ──tick(state, actions)──▶ scripts/sim/outpost_sim.gd
+ UI scenes ──signals──▶ main.gd ──tick(state, actions)──▶ scripts/sim/outpost_sim.gd
      ▲                     │                                       │
      └──── reads state ────┴───────── new state + report ◀─────────┘
 ```
