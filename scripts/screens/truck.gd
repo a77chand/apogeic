@@ -13,6 +13,7 @@ var _cond_rows: Dictionary = {}     # condition id -> {"bar", "text", "status"}
 var _limit_rows: Dictionary = {}    # "mass"/"power"/"cost" -> {"bar", "text"}
 var _verdict: Label = null
 var _causes: VBoxContainer = null
+var _popup: Control = null
 
 
 func _ready() -> void:
@@ -46,7 +47,7 @@ func _build_top_bar() -> void:
 	var spacer2: Control = Control.new()
 	spacer2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer2)
-	row.add_child(UI.label("PLACEHOLDER NUMBERS", 12, UI.C_ORANGE))
+	row.add_child(UI.label("MOSTLY ILLUSTRATIVE NUMBERS", 12, UI.C_ORANGE))
 
 
 func _build_sensors() -> void:
@@ -59,8 +60,9 @@ func _build_sensors() -> void:
 	for item in list:
 		var s: Dictionary = item
 		var id: String = str(s.get("id", ""))
-		var text: String = "%s   (%.1f kg, %d W, $%dk)\n%s" % [
-				str(s.get("name", id)), float(s.get("mass_kg", 0.0)), int(float(s.get("power_w", 0.0))),
+		var tag: String = "   [NASA data]" if _has_sourced(s) else ""
+		var text: String = "%s%s   (%.1f kg, %d W, $%dk)\n%s" % [
+				str(s.get("name", id)), tag, float(s.get("mass_kg", 0.0)), int(float(s.get("power_w", 0.0))),
 				int(float(s.get("cost_k", 0.0))), str(s.get("blurb", ""))]
 		var b: Button = UI.button(text, Callable(), 380.0, false)
 		b.toggle_mode = true
@@ -137,7 +139,8 @@ func _build_explain() -> void:
 	var back: Button = UI.button("Back to title", _on_back, 200.0, false)
 	_place(back, Vector2(20, 660), Vector2(200, 52))
 	var note: Label = UI.label(str(_cfg.get("fusion_note", "")), 11, UI.C_MUTED, true)
-	_place(note, Vector2(240, 662), Vector2(1020, 50))
+	_place(note, Vector2(240, 662), Vector2(740, 50))
+	_place(UI.button("Where is the data from?", _on_sources, 270.0, true), Vector2(990, 660), Vector2(270, 52))
 
 
 func _on_toggled(pressed: bool, id: String) -> void:
@@ -193,6 +196,69 @@ func _set_limit(key: String, value: float, limit: float, ok: bool, fmt: String) 
 		text.text = fmt % [value, limit]
 	else:
 		text.text = fmt % [int(round(value)), int(round(limit))]
+
+
+## True if any of this sensor's numbers come from a real source (not a placeholder).
+func _has_sourced(sensor: Dictionary) -> bool:
+	var basis: Dictionary = sensor.get("detect_basis", {})
+	for key in basis:
+		if str(basis[key]) == "sourced":
+			return true
+	return false
+
+
+## A popup that says which numbers are real and which are illustrative, with the sources.
+func _on_sources() -> void:
+	if _popup != null and is_instance_valid(_popup):
+		return
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_popup = overlay
+	var centre: CenterContainer = CenterContainer.new()
+	overlay.add_child(centre)
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel: PanelContainer = UI.panel(UI.C_CYAN, 18.0)
+	panel.custom_minimum_size = Vector2(1000.0, 560.0)
+	centre.add_child(panel)
+	var col: VBoxContainer = UI.vbox(8)
+	panel.add_child(col)
+	col.add_child(UI.label("Where do these numbers come from?", 24, UI.C_CYAN))
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(960.0, 440.0)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(scroll)
+	var body: VBoxContainer = UI.vbox(6)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(body)
+	body.add_child(_para("Honest summary: no published study gives detection rates for these sensors in these Moon conditions, so most numbers here are illustrative. Only the structured-light sensor uses real NASA numbers, and only for sunlit, shadowed and dark conditions. The ranking (radar best in dust, lidar and cameras hurt by dust, cameras blind in the dark) is supported by the sources below. The exact percentages are not.", UI.C_YELLOW, 14))
+	body.add_child(UI.label("Each sensor", 16, UI.C_MUTED))
+	var sensors: Array = _cfg.get("sensors", [])
+	for item in sensors:
+		var s: Dictionary = item
+		body.add_child(_para("%s: %s" % [str(s.get("name", "")), str(s.get("basis_note", ""))], UI.C_TEXT, 13))
+	body.add_child(UI.label("Sources", 16, UI.C_MUTED))
+	var evidence: Array = _cfg.get("evidence", [])
+	for item in evidence:
+		var e: Dictionary = item
+		body.add_child(_para("[%s] %s" % [str(e.get("kind", "")), str(e.get("title", ""))], UI.C_CYAN, 13))
+		body.add_child(_para(str(e.get("supports", "")), UI.C_TEXT, 12))
+		body.add_child(_para(str(e.get("url", "")), UI.C_MUTED, 11))
+	col.add_child(UI.button("Close", _on_close_sources, 160.0, true))
+
+
+func _para(text: String, color: Color, size: int) -> Label:
+	var l: Label = UI.label(text, size, color, true)
+	l.custom_minimum_size = Vector2(930.0, 0.0)
+	return l
+
+
+func _on_close_sources() -> void:
+	if _popup != null and is_instance_valid(_popup):
+		_popup.queue_free()
+	_popup = null
 
 
 func _on_back() -> void:

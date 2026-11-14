@@ -15,7 +15,13 @@ func check(ok: bool, msg: String) -> void:
 func _initialize() -> void:
 	var cfg: Dictionary = TruckSim.load_config()
 	check(cfg.size() > 0, "config loads")
-	check((cfg.get("sensors", []) as Array).size() == 5, "5 sensors")
+	check((cfg.get("sensors", []) as Array).size() == 6, "6 sensors")
+	check((cfg.get("evidence", []) as Array).size() >= 4, "sources are listed")
+	var sl: Dictionary = TruckSim.sensor_by_id(cfg, "structlight")
+	check(float(sl["detect"]["dark"]) == 0.97 and str(sl["detect_basis"]["dark"]) == "sourced", "structured light uses the NASA Ames 97% figure, marked sourced")
+	check(str(sl["detect_basis"]["dust"]) == "placeholder", "its dust value is marked placeholder")
+	for s in cfg["sensors"]:
+		check((s as Dictionary).has("basis_note") and (s as Dictionary).has("detect_basis"), str(s["id"]) + " states where its numbers come from")
 	check((cfg.get("conditions", []) as Array).size() == 5, "5 conditions")
 
 	var none: Dictionary = TruckSim.evaluate(cfg, [])
