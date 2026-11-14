@@ -1,34 +1,219 @@
 {
-  "_note": "Sensing-truck scenario. EVERY NUMBER HERE IS A PLACEHOLDER chosen to show the trade-offs, NOT measured or NASA data. Replace each value and its source when real figures are found. Only the general idea (lidar and cameras degrade in dust, cameras need light, radar sees through dust but is coarse) reflects commonly known behaviour.",
+  "_note": "Sensing-truck scenario. NO real-world dataset covers these sensors in these conditions, so most numbers are ILLUSTRATIVE placeholders. The exceptions are marked 'sourced' in each sensor's detect_basis, with the evidence listed under 'evidence'. The ordering (radar most robust in dust, lidar and cameras hurt by dust, cameras blind in the dark) is supported by the evidence; the exact percentages are not.",
   "title": "Can the truck see?",
   "intro": "Autonomous construction trucks must sense what is around them, but sensing accuracy is still a hard problem. No single sensor works everywhere. Pick a sensor set, then see where the truck would miss an obstacle.",
-  "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots, within mass, power and budget.",
+  "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots within mass, power and budget. No single dataset covers all of these conditions on the Moon, which is part of the real problem.",
   "fusion_note": "Sensors are treated as independent: the chance every sensor misses is the product of each miss chance. Real sensors are not fully independent, so this is a simplification.",
   "source": "placeholder",
   "target_detect_pct": 95.0,
-  "limits": {"mass_kg": 6.0, "power_w": 45.0, "budget_k": 170.0},
+  "limits": {
+    "mass_kg": 6.0,
+    "power_w": 45.0,
+    "budget_k": 170.0
+  },
   "conditions": [
-    {"id": "clear", "name": "Clear daylight", "why": "Good light and clean air. The easy case."},
-    {"id": "dust", "name": "Dust cloud", "why": "Dust scatters laser light and blurs cameras. Radar still sees through it, but with less detail."},
-    {"id": "shadow", "name": "Long shadows", "why": "Low sun hides rocks in deep shadow, so cameras struggle. Lidar brings its own light."},
-    {"id": "dark", "name": "Dark (night)", "why": "No sunlight at all. Cameras are blind. Lidar, radar and heat sensors do not need light."},
-    {"id": "slope", "name": "Steep slope", "why": "The truck tilts, so sensors point at the sky or the ground instead of ahead."}
+    {
+      "id": "clear",
+      "name": "Clear daylight",
+      "why": "Good light and clean air. The easy case."
+    },
+    {
+      "id": "dust",
+      "name": "Dust cloud",
+      "why": "Dust scatters laser light and blurs cameras. Radar still sees through it, but with less detail."
+    },
+    {
+      "id": "shadow",
+      "name": "Long shadows",
+      "why": "Low sun hides rocks in deep shadow, so cameras struggle. Lidar brings its own light."
+    },
+    {
+      "id": "dark",
+      "name": "Dark (night)",
+      "why": "No sunlight at all. Cameras are blind. Lidar, radar and heat sensors do not need light."
+    },
+    {
+      "id": "slope",
+      "name": "Steep slope",
+      "why": "The truck tilts, so sensors point at the sky or the ground instead of ahead."
+    }
   ],
   "sensors": [
-    {"id": "camera", "name": "Camera", "blurb": "Cheap and light, but needs light and clean air.",
-     "mass_kg": 0.5, "power_w": 5.0, "cost_k": 10.0,
-     "detect": {"clear": 0.90, "dust": 0.45, "shadow": 0.55, "dark": 0.05, "slope": 0.85}},
-    {"id": "stereo", "name": "Stereo camera", "blurb": "Depth from two cameras. Same weak spots as one.",
-     "mass_kg": 1.0, "power_w": 8.0, "cost_k": 25.0,
-     "detect": {"clear": 0.93, "dust": 0.50, "shadow": 0.60, "dark": 0.05, "slope": 0.90}},
-    {"id": "lidar", "name": "Lidar", "blurb": "Laser scanner: great in dark and shadow, hurt by dust.",
-     "mass_kg": 3.0, "power_w": 25.0, "cost_k": 90.0,
-     "detect": {"clear": 0.95, "dust": 0.55, "shadow": 0.95, "dark": 0.95, "slope": 0.85}},
-    {"id": "radar", "name": "Radar", "blurb": "Sees through dust and dark, but only coarse shapes.",
-     "mass_kg": 1.5, "power_w": 12.0, "cost_k": 60.0,
-     "detect": {"clear": 0.75, "dust": 0.85, "shadow": 0.75, "dark": 0.75, "slope": 0.70}},
-    {"id": "thermal", "name": "Thermal camera", "blurb": "Sees heat, so it works in the dark. Warm rocks only.",
-     "mass_kg": 1.2, "power_w": 10.0, "cost_k": 45.0,
-     "detect": {"clear": 0.70, "dust": 0.60, "shadow": 0.70, "dark": 0.80, "slope": 0.65}}
+    {
+      "id": "camera",
+      "name": "Camera",
+      "blurb": "Cheap and light, but needs light and clean air.",
+      "mass_kg": 0.5,
+      "power_w": 5.0,
+      "cost_k": 10.0,
+      "detect": {
+        "clear": 0.9,
+        "dust": 0.45,
+        "shadow": 0.55,
+        "dark": 0.05,
+        "slope": 0.85
+      },
+      "detect_basis": {
+        "clear": "placeholder",
+        "dust": "placeholder",
+        "shadow": "placeholder",
+        "dark": "placeholder",
+        "slope": "placeholder"
+      },
+      "basis_note": "Illustrative numbers. Only the direction is supported by evidence: cameras struggle in dark shadows and lose detail in dust."
+    },
+    {
+      "id": "stereo",
+      "name": "Stereo camera",
+      "blurb": "Depth from two cameras. Same weak spots as one.",
+      "mass_kg": 1.0,
+      "power_w": 8.0,
+      "cost_k": 25.0,
+      "detect": {
+        "clear": 0.93,
+        "dust": 0.5,
+        "shadow": 0.6,
+        "dark": 0.05,
+        "slope": 0.9
+      },
+      "detect_basis": {
+        "clear": "placeholder",
+        "dust": "placeholder",
+        "shadow": "placeholder",
+        "dark": "placeholder",
+        "slope": "placeholder"
+      },
+      "basis_note": "Illustrative numbers. Only the direction is supported by evidence: stereo imaging is 'promising' for polar rovers in NASA Ames early results, but still needs light."
+    },
+    {
+      "id": "lidar",
+      "name": "Lidar",
+      "blurb": "Laser scanner: great in dark and shadow, hurt by dust.",
+      "mass_kg": 3.0,
+      "power_w": 25.0,
+      "cost_k": 90.0,
+      "detect": {
+        "clear": 0.95,
+        "dust": 0.55,
+        "shadow": 0.95,
+        "dark": 0.95,
+        "slope": 0.85
+      },
+      "detect_basis": {
+        "clear": "placeholder",
+        "dust": "placeholder",
+        "shadow": "placeholder",
+        "dark": "placeholder",
+        "slope": "placeholder"
+      },
+      "basis_note": "Illustrative numbers. Only the direction is supported by evidence: lidar performance degrades in dust."
+    },
+    {
+      "id": "radar",
+      "name": "Radar",
+      "blurb": "Sees through dust and dark, but only coarse shapes.",
+      "mass_kg": 1.5,
+      "power_w": 12.0,
+      "cost_k": 60.0,
+      "detect": {
+        "clear": 0.75,
+        "dust": 0.85,
+        "shadow": 0.75,
+        "dark": 0.75,
+        "slope": 0.7
+      },
+      "detect_basis": {
+        "clear": "placeholder",
+        "dust": "placeholder",
+        "shadow": "placeholder",
+        "dark": "placeholder",
+        "slope": "placeholder"
+      },
+      "basis_note": "Illustrative numbers. Only the direction is supported by evidence: radar sees through dust with relatively low loss, but is coarse."
+    },
+    {
+      "id": "thermal",
+      "name": "Thermal camera",
+      "blurb": "Sees heat, so it works in the dark. Warm rocks only.",
+      "mass_kg": 1.2,
+      "power_w": 10.0,
+      "cost_k": 45.0,
+      "detect": {
+        "clear": 0.7,
+        "dust": 0.6,
+        "shadow": 0.7,
+        "dark": 0.8,
+        "slope": 0.65
+      },
+      "detect_basis": {
+        "clear": "placeholder",
+        "dust": "placeholder",
+        "shadow": "placeholder",
+        "dark": "placeholder",
+        "slope": "placeholder"
+      },
+      "basis_note": "Illustrative numbers. Only the direction is supported by evidence: no evidence was found; the values are a plain guess."
+    },
+    {
+      "id": "structlight",
+      "name": "Structured-light bumper",
+      "blurb": "A laser-dot pattern read by a camera. Tested by NASA Ames.",
+      "mass_kg": 0.8,
+      "power_w": 8.0,
+      "cost_k": 35.0,
+      "detect": {
+        "clear": 0.97,
+        "dust": 0.35,
+        "shadow": 0.97,
+        "dark": 0.97,
+        "slope": 0.8
+      },
+      "detect_basis": {
+        "clear": "sourced",
+        "shadow": "sourced",
+        "dark": "sourced",
+        "dust": "placeholder",
+        "slope": "placeholder",
+        "mass_power_cost": "placeholder"
+      },
+      "basis_note": "About 97% obstacle detection in NASA Ames K-REX2 tests lit like direct sunlight and like shadowed craters (day and night image sets). Dust and slope are not covered by that test, so they are placeholders; dust is set low because infrared light is expected to scatter in dust."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "virtual_bumper",
+      "kind": "sourced numbers",
+      "title": "A. Nefian, Structured light system detects hazards for planetary surface navigation (NASA Ames, K-REX2 rover). Laser Focus World.",
+      "url": "https://www.laserfocusworld.com/detectors-imaging/article/14175339/structured-light-system-detects-hazards-for-planetary-surface-navigation",
+      "supports": "About 97% positive-obstacle detection (over 99% after discarding transition images). False alarms from 1.7% at night to 4.1% in the worst daytime test. 1,158 day and 1,544 night images, lit to recreate direct sunlight and shadowed craters, on terrain about like lunar regolith in brightness."
+    },
+    {
+      "id": "dark_side",
+      "kind": "qualitative",
+      "title": "The Dark Side of the Crater: How Light Looks Different on the Moon (NASA Ames).",
+      "url": "https://www.nasa.gov/centers-and-facilities/ames/the-dark-side-of-the-crater-how-light-looks-different-on-the-moon-and-what-nasa-is-doing-about-it",
+      "supports": "Cameras lack the sensitivity to detect rocks and craters in very dark shadows; long polar shadows hide hazards; dust loses texture at some lighting angles; early stereo results are promising. The POLAR dataset has 2,500+ stereo image pairs. No detection rates are given."
+    },
+    {
+      "id": "lidar_dust",
+      "kind": "qualitative",
+      "title": "Design of Dust-Filtering Algorithms for LiDAR Sensors Using Intensity and Range Information in Off-Road Vehicles (Sensors).",
+      "url": "https://ouci.dntb.gov.ua/works/456o3j2l",
+      "supports": "Lidar performance degrades in dust and can cause perception failures. Read as a direction only; no percentages used."
+    },
+    {
+      "id": "radar_dust",
+      "kind": "qualitative, vendor article",
+      "title": "Why Dust Is One of the Most Complex Problems in Off-Highway Autonomy (Visage Technologies).",
+      "url": "https://visagetechnologies.com/dust-one-of-the-most-complex-problems-in-off-highway-autonomy/",
+      "supports": "Millimetre-wave radar shows relatively low attenuation in dust compared with optical sensing. A company article, not a measurement study, so used only for the ranking."
+    },
+    {
+      "id": "cratergrader",
+      "kind": "to verify",
+      "title": "CraterGrader: Autonomous Robotic Terrain Manipulation for Lunar Site Preparation and Earthmoving (arXiv 2311.01697).",
+      "url": "https://arxiv.org/abs/2311.01697",
+      "supports": "Chose passive stereo because infrared scattering is expected in dusty terrain. Taken from a search summary and not read in full, so this is why the structured-light dust value is low; please verify before relying on it."
+    }
   ]
 }
