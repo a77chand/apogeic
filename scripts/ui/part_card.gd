@@ -93,7 +93,8 @@ func _notification(what: int) -> void:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
-		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+		# Fire on release, so starting a drag does not also count as a click.
+		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
 			clicked.emit(part_id)
 
 
