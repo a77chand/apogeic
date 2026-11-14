@@ -12,15 +12,15 @@ const C_DEEP: Color = Color(0.078, 0.157, 0.290)  # 14284A
 const C_OUTLINE: Color = Color(0.027, 0.067, 0.122)  # 07111F
 const C_TEXT: Color = Color(0.949, 0.961, 0.980)  # F2F5FA
 const C_MUTED: Color = Color(0.780, 0.815, 0.870)  # brighter than A8B2C1 so it reads on dark panels
-## Style colours: warm gold for accents and headings, a chunky orange for main buttons.
+## Style: a restrained mission-control look. Dark steel-blue surfaces, thin cyan edges,
+## angled (chamfered) corners, uppercase technical headings. Gold is kept for stars only.
 const C_GOLD: Color = Color(0.98, 0.80, 0.33)
-const C_BTN_MAIN: Color = Color(0.96, 0.58, 0.16)
-const C_BTN_MAIN_EDGE: Color = Color(0.55, 0.28, 0.05)
-const C_BTN: Color = Color(0.16, 0.42, 0.76)
-const C_BTN_EDGE: Color = Color(0.05, 0.17, 0.38)
-const C_TEXT_EDGE: Color = Color(0.02, 0.04, 0.10, 0.92)   # outline around all text
-const FONT_PATH: String = "res://art/fonts/LilitaOne-Regular.ttf"
-const HEADING_SIZE: int = 18   # labels this size or bigger use the display font
+const C_ACCENT: Color = Color(0.36, 0.86, 0.95)           # the cyan used for edges and highlights
+const C_BTN_MAIN: Color = Color(0.20, 0.62, 0.74)         # main action: a solid teal
+const C_BTN: Color = Color(0.07, 0.13, 0.24)              # other buttons: dark, with a cyan edge
+const C_TEXT_EDGE: Color = Color(0.01, 0.03, 0.08, 0.85)  # thin outline around all text
+const FONT_PATH: String = "res://art/fonts/Rajdhani-Bold.ttf"
+const HEADING_SIZE: int = 18   # labels this size or bigger use the display font, in capitals
 const C_BORDER: Color = Color(0.310, 0.525, 0.839)  # 4F86D6
 const C_HOVER: Color = Color(0.169, 0.365, 0.659)  # 2B5DA8
 const C_CYAN: Color = Color(0.247, 0.816, 0.878)  # 3FD0E0
@@ -32,11 +32,15 @@ const C_DISABLED: Color = Color(0.227, 0.263, 0.322)  # 3A4352
 const C_DISABLED_BORDER: Color = Color(0.357, 0.396, 0.467)  # 5B6577
 
 
-## The chunky display font (Lilita One, OFL). Falls back to Godot's font if the file is missing.
+## The display font (Rajdhani Bold, OFL) with a little extra space between letters.
+## Falls back to Godot's font if the file is missing.
 static func display_font() -> Font:
-	if ResourceLoader.exists(FONT_PATH):
-		return load(FONT_PATH)
-	return ThemeDB.fallback_font
+	if not ResourceLoader.exists(FONT_PATH):
+		return ThemeDB.fallback_font
+	var f: FontVariation = FontVariation.new()
+	f.base_font = load(FONT_PATH)
+	f.spacing_glyph = 1
+	return f
 
 
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:
@@ -46,12 +50,14 @@ static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: boo
 	l.add_theme_color_override("font_color", color)
 	# A dark outline on every label, so text never blends into the background behind it.
 	l.add_theme_color_override("font_outline_color", C_TEXT_EDGE)
-	l.add_theme_constant_override("outline_size", clampi(size / 5, 2, 8))
+	l.add_theme_constant_override("outline_size", clampi(size / 8, 2, 4))
+	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+	l.add_theme_constant_override("shadow_offset_x", 0)
+	l.add_theme_constant_override("shadow_offset_y", 2)
 	if size >= HEADING_SIZE:
 		l.add_theme_font_override("font", display_font())
-		l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
-		l.add_theme_constant_override("shadow_offset_x", 0)
-		l.add_theme_constant_override("shadow_offset_y", 3)
+		l.add_theme_font_size_override("font_size", size + 4)   # the display font runs small
+		l.uppercase = true
 	if wrap:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -68,83 +74,55 @@ static func box(fill: Color, border: Color, radius: int = 16, border_width: int 
 	return sb
 
 
-## A chunky "game" button: a thick darker bottom edge makes it look raised, and pressing
-## it squashes that edge so it feels pushed in. It also bounces slightly when pressed.
-## primary = the orange main action. on_press may be an empty Callable.
+## A slim mission-control button: dark fill, thin cyan edge, angled corners. The main action is solid teal. Hover lights the edge with a soft glow; pressing
+## dims it and nudges the text down slightly. on_press may be an empty Callable.
 static func button(text: String, on_press: Callable, min_width: float = 220.0, primary: bool = false) -> Button:
 	var b: Button = Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(min_width, 52.0)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_override("font", display_font())
-	b.add_theme_font_size_override("font_size", 17)
-	var fill: Color = C_BTN
-	var edge: Color = C_BTN_EDGE
-	if primary:
-		fill = C_BTN_MAIN
-		edge = C_BTN_MAIN_EDGE
-	b.add_theme_stylebox_override("normal", chunky(fill, edge, false))
-	b.add_theme_stylebox_override("hover", chunky(fill.lightened(0.12), edge, false))
-	b.add_theme_stylebox_override("pressed", chunky(fill.darkened(0.12), edge, true))
-	b.add_theme_stylebox_override("hover_pressed", chunky(fill.darkened(0.12), edge, true))
-	b.add_theme_stylebox_override("disabled", chunky(Color(0.30, 0.33, 0.40), Color(0.17, 0.19, 0.24), false))
+	b.add_theme_font_size_override("font_size", 18)
+	var fill: Color = C_BTN_MAIN if primary else C_BTN
+	var edge: Color = C_ACCENT if not primary else Color(0.62, 0.95, 1.0)
+	b.add_theme_stylebox_override("normal", chunky(fill, Color(edge, 0.75), false))
+	b.add_theme_stylebox_override("hover", _glow(chunky(fill.lightened(0.10), edge, false)))
+	b.add_theme_stylebox_override("pressed", chunky(fill.darkened(0.15), edge, true))
+	b.add_theme_stylebox_override("hover_pressed", chunky(fill.darkened(0.15), edge, true))
+	b.add_theme_stylebox_override("disabled", chunky(Color(0.10, 0.12, 0.16), Color(0.30, 0.34, 0.42), false))
 	b.add_theme_color_override("font_color", C_TEXT)
 	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	b.add_theme_color_override("font_pressed_color", C_TEXT)
-	b.add_theme_color_override("font_disabled_color", Color(0.62, 0.65, 0.72))
+	b.add_theme_color_override("font_pressed_color", Color(0.85, 0.92, 1.0))
+	b.add_theme_color_override("font_disabled_color", Color(0.45, 0.49, 0.56))
 	b.add_theme_color_override("font_outline_color", C_TEXT_EDGE)
-	b.add_theme_constant_override("outline_size", 5)
+	b.add_theme_constant_override("outline_size", 2)
 	if on_press.is_valid():
 		b.pressed.connect(on_press)
 	b.pressed.connect(_click_sound)
-	b.button_down.connect(_squash.bind(b))
-	b.button_up.connect(_bounce.bind(b))
 	return b
 
 
-## The raised button look. pressed = edge squashed, text pushed down.
+## The button shape: angled corners (corner_detail 1 turns a rounded corner into a straight
+## cut). pressed = text nudged down 2 px. Kept the name "chunky" so existing calls still work.
 static func chunky(fill: Color, edge: Color, pressed: bool) -> StyleBoxFlat:
 	var sb: StyleBoxFlat = StyleBoxFlat.new()
 	sb.bg_color = fill
 	sb.border_color = edge
-	sb.set_corner_radius_all(14)
-	sb.border_width_left = 2
-	sb.border_width_right = 2
-	sb.border_width_top = 2
-	sb.border_width_bottom = 2 if pressed else 6
-	sb.content_margin_left = 14.0
-	sb.content_margin_right = 14.0
-	sb.content_margin_top = 12.0 if pressed else 8.0
-	sb.content_margin_bottom = 8.0 if pressed else 12.0
-	sb.shadow_color = Color(0, 0, 0, 0.35)
-	sb.shadow_size = 2 if pressed else 6
-	sb.shadow_offset = Vector2(0, 2 if pressed else 4)
+	sb.set_border_width_all(1)
+	sb.border_width_left = 3              # a thicker left edge, like a HUD tab
+	sb.set_corner_radius_all(9)
+	sb.corner_detail = 1
+	sb.content_margin_left = 16.0
+	sb.content_margin_right = 16.0
+	sb.content_margin_top = 11.0 if pressed else 9.0
+	sb.content_margin_bottom = 9.0 if pressed else 11.0
 	return sb
 
 
-## Makes a button look locked (grey) while still letting it be clicked, e.g. to explain why.
-static func look_locked(b: Button) -> void:
-	var grey: Color = Color(0.30, 0.33, 0.40)
-	var edge: Color = Color(0.17, 0.19, 0.24)
-	b.add_theme_stylebox_override("normal", chunky(grey, edge, false))
-	b.add_theme_stylebox_override("hover", chunky(grey.lightened(0.08), edge, false))
-	b.add_theme_stylebox_override("pressed", chunky(grey.darkened(0.1), edge, true))
-	b.add_theme_color_override("font_color", Color(0.72, 0.75, 0.82))
-	b.add_theme_color_override("font_hover_color", Color(0.80, 0.83, 0.90))
-
-
-static func _squash(b: Button) -> void:
-	if b.disabled:
-		return
-	b.pivot_offset = b.size / 2.0
-	var t: Tween = b.create_tween()
-	t.tween_property(b, "scale", Vector2(0.95, 0.95), 0.06)
-
-
-static func _bounce(b: Button) -> void:
-	b.pivot_offset = b.size / 2.0
-	var t: Tween = b.create_tween()
-	t.tween_property(b, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+static func _glow(sb: StyleBoxFlat) -> StyleBoxFlat:
+	sb.shadow_color = Color(C_ACCENT, 0.30)
+	sb.shadow_size = 8
+	return sb
 
 
 ## Static code cannot use the GameState autoload by name, so find it through the tree.
@@ -157,33 +135,45 @@ static func _click_sound() -> void:
 		state.call("play_sound", "click")
 
 
-## A panel with a deep shadow and gold corner brackets, like a mission HUD frame.
+## Makes a button look locked (grey) while still letting it be clicked, e.g. to explain why.
+static func look_locked(b: Button) -> void:
+	var fill: Color = Color(0.09, 0.11, 0.15)
+	var edge: Color = Color(0.32, 0.36, 0.44)
+	b.add_theme_stylebox_override("normal", chunky(fill, edge, false))
+	b.add_theme_stylebox_override("hover", chunky(fill.lightened(0.06), edge, false))
+	b.add_theme_stylebox_override("pressed", chunky(fill, edge, true))
+	b.add_theme_color_override("font_color", Color(0.52, 0.56, 0.64))
+	b.add_theme_color_override("font_hover_color", Color(0.62, 0.66, 0.74))
+
+
+## A panel: deep steel-blue, a thin cyan edge, angled corners, a soft shadow, and short
+## cyan tick marks in the corners like a HUD frame (main panels only).
 static func panel(border: Color = C_BORDER, margin: float = 16.0) -> PanelContainer:
 	var p: PanelContainer = PanelContainer.new()
-	var sb: StyleBoxFlat = box(Color(0.09, 0.17, 0.31, 0.97), border, 18, 2, margin)
-	sb.shadow_color = Color(0, 0, 0, 0.45)
-	sb.shadow_size = 12
-	sb.shadow_offset = Vector2(0, 5)
+	var sb: StyleBoxFlat = box(Color(0.05, 0.10, 0.19, 0.95), Color(border, 0.55), 12, 1, margin)
+	sb.corner_detail = 1
+	sb.shadow_color = Color(0, 0, 0, 0.5)
+	sb.shadow_size = 14
+	sb.shadow_offset = Vector2(0, 6)
 	p.add_theme_stylebox_override("panel", sb)
-	if margin >= 12.0:   # main panels only; small cards inside panels stay plain
+	if margin >= 12.0:
 		p.draw.connect(_brackets.bind(p))
 	return p
 
 
-## Draws short gold L-shapes in the four corners of a panel (drawn under its contents).
+## Short cyan ticks at the four corners of a panel (drawn under its contents).
 static func _brackets(p: Control) -> void:
 	var s: Vector2 = p.size
-	var arm: float = minf(22.0, minf(s.x, s.y) * 0.2)
-	var inset: float = 6.0
-	var c: Color = Color(C_GOLD, 0.85)
-	var w: float = 3.0
+	var arm: float = minf(16.0, minf(s.x, s.y) * 0.15)
+	var inset: float = 5.0
+	var c: Color = Color(C_ACCENT, 0.75)
 	for corner in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
 		var x: float = inset if corner.x == 0 else s.x - inset
 		var y: float = inset if corner.y == 0 else s.y - inset
 		var dx: float = arm if corner.x == 0 else -arm
 		var dy: float = arm if corner.y == 0 else -arm
-		p.draw_line(Vector2(x, y), Vector2(x + dx, y), c, w)
-		p.draw_line(Vector2(x, y), Vector2(x, y + dy), c, w)
+		p.draw_line(Vector2(x, y), Vector2(x + dx, y), c, 2.0)
+		p.draw_line(Vector2(x, y), Vector2(x, y + dy), c, 2.0)
 
 
 ## A dark vignette over the background, so the edges fall into shadow and the middle glows.

@@ -378,31 +378,23 @@ func _orbit_bg() -> void:
 
 
 func _logo() -> void:
-	var c: Vector2 = _p(0.17, 0.50)
+	var c: Vector2 = _p(0.15, 0.50)
 	_earth(c, size.y * 0.30)
-	draw_arc(c, size.y * 0.44, -0.9 * PI, 0.05 * PI, 40, ORANGE, 4.0)
-	draw_circle(c + Vector2(cos(0.05 * PI), sin(0.05 * PI)) * size.y * 0.44, size.y * 0.04, YELLOW)
+	draw_arc(c, size.y * 0.42, -0.85 * PI, 0.10 * PI, 48, Color(CYAN, 0.8), 2.0)
+	draw_circle(c + Vector2(cos(0.10 * PI), sin(0.10 * PI)) * size.y * 0.42, size.y * 0.025, SOFT_WHITE)
 	var font: Font = ThemeDB.fallback_font
-	if ResourceLoader.exists("res://art/fonts/LilitaOne-Regular.ttf"):
-		font = load("res://art/fonts/LilitaOne-Regular.ttf")
-	var x: float = size.x * 0.33
-	var big: int = int(size.y * 0.30)
-	var small: int = int(size.y * 0.20)
-	# soft glow behind the words
-	for i in range(6):
-		draw_circle(_p(0.62, 0.50), size.y * (0.55 - 0.06 * float(i)), Color(0.25, 0.55, 1.0, 0.025))
-	_title_text(font, Vector2(x, size.y * 0.44), "SPACE MISSION", small, SOFT_WHITE, Color(0.55, 0.75, 1.0))
-	_title_text(font, Vector2(x, size.y * 0.80), "DESIGNER", big, Color(1.0, 0.82, 0.30), Color(1.0, 0.55, 0.15))
-
-
-## Chunky title text: a drop shadow, a thick dark outline, the main colour, and the lighter
-## colour nudged up a little on top, which reads as a bevelled highlight on the letters.
-func _title_text(font: Font, pos: Vector2, text: String, font_size: int, top_col: Color, bottom_col: Color) -> void:
-	var w: float = size.x * 0.66
-	draw_string_outline(font, pos + Vector2(0, 5), text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, 12, Color(0, 0, 0, 0.55))
-	draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, 10, OUTLINE)
-	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, bottom_col)
-	draw_string(font, pos + Vector2(0, -2), text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, Color(top_col, 0.55))
+	if ResourceLoader.exists("res://art/fonts/Rajdhani-Bold.ttf"):
+		var v: FontVariation = FontVariation.new()
+		v.base_font = load("res://art/fonts/Rajdhani-Bold.ttf")
+		v.spacing_glyph = 6   # wide letter spacing reads as "mission control"
+		font = v
+	var x: float = size.x * 0.32
+	var w: float = size.x * 0.68
+	draw_string(font, Vector2(x, size.y * 0.36), "SPACE MISSION", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.16), Color(CYAN, 0.95))
+	draw_string_outline(font, Vector2(x, size.y * 0.70), "DESIGNER", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.34), 4, Color(0, 0, 0, 0.6))
+	draw_string(font, Vector2(x, size.y * 0.70), "DESIGNER", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.34), SOFT_WHITE)
+	draw_line(Vector2(x, size.y * 0.80), Vector2(x + w * 0.80, size.y * 0.80), Color(CYAN, 0.6), 2.0)
+	draw_line(Vector2(x, size.y * 0.80), Vector2(x + w * 0.12, size.y * 0.80), CYAN, 4.0)
 
 
 # ---------------------------------------------------------------- small icons for part cards

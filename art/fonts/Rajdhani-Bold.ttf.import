@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://buueuyvwh0olx"
-path="res://.godot/imported/LilitaOne-Regular.ttf-892235c786626b2282d699fb249c13ba.fontdata"
+uid="uid://g6mejart4dnh"
+path="res://.godot/imported/Rajdhani-Bold.ttf-08fbd96cb1293f4dbae8fbb01564d543.fontdata"
 
 [deps]
 
-source_file="res://art/fonts/LilitaOne-Regular.ttf"
-dest_files=["res://.godot/imported/LilitaOne-Regular.ttf-892235c786626b2282d699fb249c13ba.fontdata"]
+source_file="res://art/fonts/Rajdhani-Bold.ttf"
+dest_files=["res://.godot/imported/Rajdhani-Bold.ttf-08fbd96cb1293f4dbae8fbb01564d543.fontdata"]
 
 [params]
 
