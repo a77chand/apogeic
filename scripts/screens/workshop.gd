@@ -128,11 +128,13 @@ func _build_centre() -> void:
 
 
 func _build_right_panel() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
+	# This panel must stay 420 px tall (spec 12.9), or the readiness meter ends up
+	# hidden behind the tray. So spacing, bar height and text size are kept small.
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 10.0)
 	_place(panel, Vector2(942, 88), Vector2(318, 420))
-	var col: VBoxContainer = UI.vbox(6)
+	var col: VBoxContainer = UI.vbox(2)
 	panel.add_child(col)
-	col.add_child(UI.label("Checks", 20))
+	col.add_child(UI.label("Checks", 18))
 	# bar key, title, requirement id
 	var defs: Array = [
 		["mass", "Mass", "R1"],
@@ -153,16 +155,17 @@ func _build_right_panel() -> void:
 		head.add_child(status)
 		col.add_child(head)
 		var bar: ProgressBar = UI.meter(290.0)
+		bar.custom_minimum_size = Vector2(290.0, 10.0)
 		bar.mouse_filter = Control.MOUSE_FILTER_STOP
 		bar.mouse_entered.connect(_on_bar_hover.bind(key))
 		bar.mouse_exited.connect(_rest_tip)
 		col.add_child(bar)
-		var text: Label = UI.label("", 13, UI.C_TEXT, true)
+		var text: Label = UI.label("", 12, UI.C_TEXT, true)
 		text.custom_minimum_size = Vector2(290.0, 0.0)
 		col.add_child(text)
 		_bars[key] = {"req": str(def[2]), "bar": bar, "text": text, "status": status}
-	col.add_child(UI.label("Readiness", 14, UI.C_MUTED))
 	_readiness_bar = UI.meter(290.0)
+	_readiness_bar.custom_minimum_size = Vector2(290.0, 10.0)
 	col.add_child(_readiness_bar)
 	_readiness_label = UI.label("", 14)
 	col.add_child(_readiness_label)
