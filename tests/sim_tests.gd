@@ -163,6 +163,27 @@ static func run() -> Array:
 	_same(fails, "m5 end", m5["st"]["end_reason"], "battery_empty")
 	_same(fails, "m5 week", m5["st"]["week"], 5)
 
+	# --- launch rule: the share of checks passed must reach the line in level1.json
+	var lo1: Dictionary = Sim.launch_outcome(level, m1["results"])
+	_same(fails, "lo1 reaches orbit at 83%", lo1["reached_orbit"], true)
+	_same(fails, "lo1 climb is full", lo1["climb_pct"], 100.0)
+	var lo4: Dictionary = Sim.launch_outcome(level, m4["results"])
+	_same(fails, "lo4 fails at 67%", lo4["reached_orbit"], false)
+	_near(fails, "lo4 climbs as far as readiness", lo4["climb_pct"], 66.6667)
+	_same(fails, "lo3 reaches orbit when all pass", Sim.launch_outcome(level, m3["results"])["reached_orbit"], true)
+	var dead: Dictionary = Sim.new_ops_state(level, m4["ev"], m4["results"])
+	Sim.fail_launch(dead)
+	_same(fails, "fail_launch ends the mission", dead["end_reason"], "launch_failed")
+	_same(fails, "fail_launch scores 0 stars", Sim.score_mission(level, dead, m4["results"])["stars"], 0)
+	var launch_ev: Dictionary = (m4["ev"] as Dictionary).duplicate()
+	launch_ev["launch_min_readiness_pct"] = float(level["launch_min_readiness_pct"])
+	var launch_causes: Array = Sim.build_causes(launch_ev, m4["results"], dead)
+	_same(fails, "launch failure is the first cause", str(launch_causes[0]["cause"]).contains("rocket needs at least 80%"), true)
+	_same(fails, "light design gets the small rocket", Sim.rocket_for_mass(level, 2.0), "small")
+	_same(fails, "3.0 kg gets the medium rocket", Sim.rocket_for_mass(level, 3.0), "medium")
+	_same(fails, "3.4 kg (85% of the limit) gets the medium rocket", Sim.rocket_for_mass(level, 3.4), "medium")
+	_same(fails, "3.8 kg gets the heavy rocket", Sim.rocket_for_mass(level, 3.8), "heavy")
+
 	# --- puzzles
 	var p1: Dictionary = puzzles["mass"]
 	_same(fails, "p1 good", Sim.puzzle_mass(p1, parts, ["camera_std", "solar_small", "battery_std", "radio_sband"])["passed"], true)

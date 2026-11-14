@@ -3,6 +3,10 @@ extends Control
 ## begin_ops() is the first thing that happens, so Skip is always safe.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Sim = preload("res://scripts/core/sim.gd")
+
+const START_Y: float = 230.0     # where the rocket stands
+const TOP_Y: float = -520.0      # off the top of the screen: reached orbit
 
 var _done: bool = false
 var _tween: Tween = null
@@ -10,10 +14,14 @@ var _rocket: Control = null
 var _count: Label = null
 var _note: Label = null
 var _orbit_bg: Control = null
+var _reached: bool = true
+var _climb: float = 100.0
 
 
 func _ready() -> void:
 	GameState.begin_ops()
+	_reached = bool(GameState.launch_outcome.get("reached_orbit", true))
+	_climb = float(GameState.launch_outcome.get("climb_pct", 100.0))
 	add_child(UI.background("res://art/backgrounds/bg_launch_pad.png"))
 	_orbit_bg = UI.background("res://art/backgrounds/bg_earth_orbit.png")
 	_orbit_bg.modulate = Color(1, 1, 1, 0)
@@ -24,7 +32,9 @@ func _ready() -> void:
 	add_child(_rocket)
 	_rocket.position = Vector2(565.0, 230.0)
 	_rocket.size = Vector2(150.0, 450.0)
-	var pic: Control = UI.picture("res://art/modules/rocket_medium.png", Vector2(150, 450), "rocket_medium")
+	# The rocket drawn depends on the design's mass: small, medium or heavy.
+	var rocket: String = "rocket_" + Sim.rocket_for_mass(GameState.level, float(GameState.launch_eval.get("mass_kg", 0.0)))
+	var pic: Control = UI.picture("res://art/modules/%s.png" % rocket, Vector2(150, 450), rocket)
 	_rocket.add_child(pic)
 	var frames: SpriteFrames = UI.frames("res://art/animations/exhaust_flame", "exhaust_flame", 6, 12.0, true)
 	if frames != null:
@@ -46,8 +56,9 @@ func _ready() -> void:
 	_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_note.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_note)
-	_note.position = Vector2(240.0, 640.0)
-	_note.size = Vector2(800.0, 40.0)
+	_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_note.position = Vector2(240.0, 590.0)
+	_note.size = Vector2(800.0, 100.0)
 
 	var skip: Button = UI.button("Skip", _finish, 140.0, false)
 	add_child(skip)
@@ -68,10 +79,21 @@ func _run_sequence() -> void:
 		_tween.tween_interval(1.0)
 	_tween.tween_callback(_count_to.bind(""))
 	_tween.tween_callback(_flame_on)
-	_tween.tween_property(_rocket, "position:y", -520.0, 4.0)
-	_tween.tween_property(_orbit_bg, "modulate:a", 1.0, 1.0)
-	_tween.tween_callback(_open_cubesat)
-	_tween.tween_interval(2.0)
+	if _reached:
+		_tween.tween_property(_rocket, "position:y", TOP_Y, 4.0)
+		_tween.tween_property(_orbit_bg, "modulate:a", 1.0, 1.0)
+		_tween.tween_callback(_open_cubesat)
+		_tween.tween_interval(2.0)
+	else:
+		# The climb height comes from the readiness number: more checks passed, higher it gets.
+		var peak: float = START_Y + (TOP_Y - START_Y) * (_climb / 100.0) * 0.8
+		var rise: float = maxf(0.8, 4.0 * _climb / 100.0)
+		_tween.tween_property(_rocket, "position:y", peak, rise)
+		_tween.tween_callback(_flame_off)
+		_tween.tween_callback(_say.bind(_failure_text()))
+		_tween.tween_property(_rocket, "position:y", START_Y + 120.0, 2.5)
+		_tween.parallel().tween_property(_rocket, "modulate:a", 0.25, 2.5)
+		_tween.tween_interval(2.5)
 	_tween.tween_callback(_finish)
 
 
@@ -93,6 +115,19 @@ func _flame_on() -> void:
 		sprite.play("exhaust_flame")
 
 
+func _flame_off() -> void:
+	var flame: Node = _rocket.get_node_or_null("Flame")
+	if flame != null:
+		var sprite: AnimatedSprite2D = flame
+		sprite.visible = false
+
+
+func _failure_text() -> String:
+	return "The launch failed. Only %d%% of the checks passed (needs %d%%), so the satellite never reached orbit." % [
+			int(round(float(GameState.launch_outcome.get("readiness_pct", 0.0)))),
+			int(round(float(GameState.launch_outcome.get("needed_pct", 0.0))))]
+
+
 func _open_cubesat() -> void:
 	_rocket.visible = false
 	_say("Satellite released")
@@ -112,4 +147,7 @@ func _finish() -> void:
 	_done = true
 	if _tween != null:
 		_tween.kill()
-	GameState.go("ops")
+	if _reached:
+		GameState.go("ops")
+	else:
+		GameState.go("report")  # no operations phase: the satellite never worked

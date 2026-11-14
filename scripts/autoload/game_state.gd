@@ -25,6 +25,7 @@ var design: Dictionary = {}         # slot id -> part id or ""
 var sched: Dictionary = {}          # see Sim.new_schedule()
 var launch_eval: Dictionary = {}    # evaluate() frozen at launch
 var launch_results: Array = []      # requirement results frozen at launch
+var launch_outcome: Dictionary = {} # Sim.launch_outcome() frozen at launch
 var ops: Dictionary = {}            # see Sim.new_ops_state()
 var log_lines: Array = []           # event log lines for the report
 var events_seen: Dictionary = {}    # event id -> true
@@ -52,6 +53,7 @@ func reset_mission() -> void:
 	sched = Sim.new_schedule()
 	launch_eval = {}
 	launch_results = []
+	launch_outcome = {}
 	ops = {}
 	log_lines = []
 	events_seen = {}
@@ -63,6 +65,7 @@ func retry_mission() -> void:
 	sched = Sim.new_schedule()
 	launch_eval = {}
 	launch_results = []
+	launch_outcome = {}
 	ops = {}
 	log_lines = []
 	events_seen = {}
@@ -112,6 +115,10 @@ func begin_ops() -> void:
 	launch_eval = evaluate()
 	launch_results = Sim.check_requirements(level, launch_eval)
 	ops = Sim.new_ops_state(level, launch_eval, launch_results)
+	launch_outcome = Sim.launch_outcome(level, launch_results)
+	launch_eval["launch_min_readiness_pct"] = float(level.get("launch_min_readiness_pct", 0.0))
+	if not bool(launch_outcome.get("reached_orbit", true)):
+		Sim.fail_launch(ops)
 
 
 # ---- puzzle ladder

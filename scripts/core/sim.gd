@@ -286,6 +286,39 @@ static func apply_ops_choice(st: Dictionary, part_ids: Array, event: Dictionary,
 
 # ---------------------------------------------------------------- operations
 
+## Does the rocket reach orbit? Fixed rule, no randomness: the share of checks passed
+## (readiness) must reach launch_min_readiness_pct in level1.json. Below that the rocket
+## climbs only as far as the readiness number says, then the launch fails.
+## Returns { reached_orbit, readiness_pct, needed_pct, climb_pct }
+static func launch_outcome(level: Dictionary, results: Array) -> Dictionary:
+	var needed: float = float(level.get("launch_min_readiness_pct", 0.0))
+	var ready: float = readiness_pct(results)
+	var ok: bool = ready >= needed - EPS
+	var climb: float = 100.0
+	if not ok:
+		climb = ready
+	return {"reached_orbit": ok, "readiness_pct": ready, "needed_pct": needed, "climb_pct": climb}
+
+
+## Which of "small", "medium" or "heavy" rocket to draw, from the design's mass.
+static func rocket_for_mass(level: Dictionary, mass_kg: float) -> String:
+	var limit: float = float(level.get("limits", {}).get("mass_kg", 1.0))
+	var cfg: Dictionary = level.get("rocket_by_mass", {})
+	var fraction: float = mass_kg / maxf(0.001, limit)
+	if fraction <= float(cfg.get("small_max_fraction", 0.6)):
+		return "small"
+	if fraction <= float(cfg.get("medium_max_fraction", 0.9)):
+		return "medium"
+	return "heavy"
+
+
+## Ends the mission at launch: the satellite never works.
+static func fail_launch(st: Dictionary) -> void:
+	st["ended"] = true
+	st["alive"] = false
+	st["end_reason"] = "launch_failed"
+
+
 ## The state at the moment the satellite is released. results = check_requirements() at launch.
 static func new_ops_state(level: Dictionary, ev: Dictionary, results: Array) -> Dictionary:
 	var sc: Dictionary = level.get("schedule", {})
@@ -436,7 +469,10 @@ static func score_mission(level: Dictionary, st: Dictionary, results: Array) -> 
 static func build_causes(ev: Dictionary, results: Array, st: Dictionary) -> Array:
 	var out: Array = []
 	var reason: String = str(st.get("end_reason", ""))
-	if reason == "no_battery":
+	if reason == "launch_failed":
+		var o: Dictionary = launch_outcome({"launch_min_readiness_pct": float(ev.get("launch_min_readiness_pct", 0.0))}, results)
+		out.append({"cause": "Only %d%% of the checks passed, and the rocket needs at least %d%% to reach orbit." % [int(round(float(o["readiness_pct"]))), int(round(float(o["needed_pct"])))], "effect": "The launch failed, so the satellite never reached orbit and never worked.", "tip": "Fix the failed checks first. Aim for the marker on the readiness meter."})
+	elif reason == "no_battery":
 		out.append({"cause": "The satellite had no battery.", "effect": "It lost power in its first eclipse and never woke up.", "tip": "Add a battery. Every orbit has a dark part."})
 	elif reason == "battery_empty":
 		out.append({"cause": "The parts used more power than the panels made.", "effect": "The battery drained a little more each week until it was empty in week %d." % int(st.get("week", 0)), "tip": "Use larger panels, or parts that need less power."})

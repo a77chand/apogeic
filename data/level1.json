@@ -6,6 +6,8 @@
   "goal_data_type": "images",
   "bus": {"name": "3U CubeSat bus", "mass_kg": 1.3, "power_use_w": 2.4, "cost_k": 200},
   "launch": {"name": "Rideshare launch", "cost_k": 120},
+  "launch_min_readiness_pct": 80,
+  "rocket_by_mass": {"small_max_fraction": 0.6, "medium_max_fraction": 0.9},
   "limits": {"mass_kg": 4.0, "budget_k": 1000, "deadline_day": 180},
   "orbit": {"name": "Low Earth orbit, 550 km", "period_min": 95.0, "eclipse_min": 35.0},
   "slots": [
