@@ -7,9 +7,13 @@ const Sim = preload("res://scripts/core/sim.gd")
 const Data = preload("res://scripts/core/data.gd")
 const EventCard = preload("res://scripts/ui/event_card.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
+const OrbitRing = preload("res://scripts/ui/orbit_ring.gd")
 
 const CENTRE: Vector2 = Vector2(640.0, 372.0)
-const RADIUS: float = 250.0
+const ORBIT_A: float = 300.0     # half-width of the orbit ellipse
+const ORBIT_B: float = 105.0     # half-height: a flat ellipse looks like a tilted orbit
+const ORBIT_TILT: float = -0.22  # radians; tips the ellipse a little
+const GROUND_POS: Vector2 = Vector2(350.0, 590.0)
 
 var _week_label: Label = null
 var _battery_bar: ProgressBar = null
@@ -34,6 +38,10 @@ var _event_open: bool = false
 var _pulse: AnimatedSprite2D = null
 var _warning: AnimatedSprite2D = null
 var _brownout: bool = false
+var _space: Control = null           # holds, back to front: orbit back half, Earth, ground, orbit front half
+var _ring_back: Control = null
+var _ring_front: Control = null
+var _sat_in_front: bool = true
 var _pulse_left: float = 0.0   # 1 right after data is sent, fades to 0 (drawn rings and link)
 
 
@@ -75,11 +83,34 @@ func _build() -> void:
 	spacer2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer2)
 
+	# The space layer keeps a fixed back-to-front order: far half of the orbit, Earth, ground
+	# station, near half of the orbit. The satellite is moved in between as it goes round,
+	# so it passes behind the Earth and in front of it.
+	_space = Control.new()
+	_space.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_space)
+	_space.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_ring_back = _make_ring(false)
+	_space.add_child(_ring_back)
 	var earth: Control = UI.picture("res://art/backgrounds/earth_large.png", Vector2(440, 440), "Earth")
-	_place(earth, CENTRE - Vector2(220.0, 220.0), Vector2(440, 440))
-	_place(UI.picture("res://art/modules/ground_station.png", Vector2(100, 100), "ground station"), Vector2(300, 540), Vector2(100, 100))
+	earth.position = CENTRE - Vector2(220.0, 220.0)
+	earth.size = Vector2(440, 440)
+	earth.custom_minimum_size = Vector2(440, 440)
+	if earth.get("kind") == "earth_large":
+		earth.set("spin_speed", 0.10)   # the drawn Earth turns slowly
+	_space.add_child(earth)
+	var ground: Control = UI.picture("res://art/modules/ground_station.png", Vector2(100, 100), "ground station")
+	ground.position = Vector2(300, 540)
+	ground.size = Vector2(100, 100)
+	_space.add_child(ground)
+	_ring_front = _make_ring(true)
+	_space.add_child(_ring_front)
 	_marker = UI.picture("res://art/modules/spacecraft_marker.png", Vector2(64, 64), "satellite")
-	_place(_marker, Vector2(0, 0), Vector2(64, 64))
+	_marker.size = Vector2(64, 64)
+	_marker.custom_minimum_size = Vector2(64, 64)
+	_marker.pivot_offset = Vector2(32, 32)
+	_space.add_child(_marker)
+	_place_satellite()
 
 	# left panel: numbers
 	var left: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
@@ -178,21 +209,38 @@ func _toggle(text: String, handler: Callable) -> Button:
 	return b
 
 
-## The dashed orbit circle, drawn behind the children.
-func _draw() -> void:
-	var segments: int = 48
-	for i in range(segments):
-		if i % 2 == 1:
-			continue
-		var a0: float = TAU * float(i) / float(segments)
-		var a1: float = TAU * float(i + 1) / float(segments)
-		draw_arc(CENTRE, RADIUS, a0, a1, 6, UI.C_CYAN, 2.0)
-	if _pulse_left > 0.0 and _marker != null:
-		var sat: Vector2 = _marker.position + Vector2(32.0, 32.0)
-		for i in range(3):
-			var ring: float = (1.0 - _pulse_left) * 70.0 + float(i) * 16.0
-			draw_arc(sat, ring, 0.0, TAU, 32, Color(0.25, 0.82, 0.88, _pulse_left * 0.7), 2.0)
-		draw_dashed_line(sat, Vector2(350.0, 590.0), Color(0.25, 0.82, 0.88, _pulse_left * 0.8), 2.0, 8.0)
+func _make_ring(front: bool) -> Control:
+	var ring: Control = OrbitRing.new()
+	ring.set("centre", CENTRE)
+	ring.set("radius_a", ORBIT_A)
+	ring.set("radius_b", ORBIT_B)
+	ring.set("tilt", ORBIT_TILT)
+	ring.set("front", front)
+	ring.set("ground_pos", GROUND_POS)
+	ring.size = Vector2(1280, 720)
+	return ring
+
+
+## Puts the satellite on the orbit for the current angle. Near the viewer (sin > 0) it is
+## bigger and bright and drawn over the Earth; far side it is smaller, dimmer, and hidden
+## by the Earth where they overlap.
+func _place_satellite() -> void:
+	if _marker == null or _space == null:
+		return
+	var depth: float = sin(_angle)
+	var local: Vector2 = Vector2(cos(_angle) * ORBIT_A, sin(_angle) * ORBIT_B).rotated(ORBIT_TILT)
+	_marker.position = CENTRE + local - Vector2(32.0, 32.0)
+	var near: float = (depth + 1.0) / 2.0
+	_marker.scale = Vector2.ONE * (0.68 + 0.42 * near)
+	var shade: float = 0.62 + 0.38 * near
+	_marker.modulate = Color(shade, shade, minf(1.0, shade + 0.08), 1.0)
+	var in_front: bool = depth >= 0.0
+	if in_front != _sat_in_front:
+		_sat_in_front = in_front
+		if in_front:
+			_space.move_child(_marker, _space.get_child_count() - 2)   # just below the near half
+		else:
+			_space.move_child(_marker, 1)                              # just above the far half, below the Earth
 
 
 # ---------------------------------------------------------------- loop
@@ -200,14 +248,17 @@ func _draw() -> void:
 func _process(delta: float) -> void:
 	if _pulse_left > 0.0:
 		_pulse_left = maxf(0.0, _pulse_left - delta)
-		queue_redraw()
+		if _ring_front != null:
+			_ring_front.set("pulse_left", _pulse_left)
+			_ring_front.set("sat_pos", _marker.position + Vector2(32.0, 32.0))
+			_ring_front.queue_redraw()
 	if _pulse != null and _marker != null:
 		_pulse.position = _marker.position + Vector2(32.0, 32.0)
 	if _paused or _ending or _event_open or GameState.tutorial_open:
 		return
 	var week_seconds: float = maxf(0.5, float(_ops_cfg().get("seconds_per_week", 5.0)))
 	_angle += delta * _speed * TAU / week_seconds
-	_marker.position = CENTRE + Vector2(cos(_angle), sin(_angle)) * RADIUS - Vector2(32.0, 32.0)
+	_place_satellite()
 	_acc += delta * _speed
 	if _acc >= week_seconds:
 		_acc -= week_seconds

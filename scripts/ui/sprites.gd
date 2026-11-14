@@ -36,6 +36,11 @@ const KINDS: Array = [
 ]
 
 var kind: String = ""
+## Radians per second the Earth turns (0 = still). The ops screen turns it on.
+var spin_speed: float = 0.0
+var _phase: float = 0.0
+var _since_draw: float = 0.0
+var _clock: float = 0.0
 ## Part ids fitted on the live satellite (only used by kind "cubesat_live").
 var parts: Array = []
 ## 0 = panels folded, 1 = fully unfolded. Setting it redraws, so a Tween can animate it.
@@ -59,6 +64,19 @@ static func live_satellite(pic_size: Vector2) -> Control:
 	return make("cubesat_live", pic_size)
 
 
+func _process(delta: float) -> void:
+	_clock += delta
+	if spin_speed > 0.0:
+		_phase += delta * spin_speed
+		_since_draw += delta
+		if _since_draw >= 0.05:   # redraw about 20 times a second
+			_since_draw = 0.0
+			queue_redraw()
+	elif kind == "cubesat_live":
+		pivot_offset = size / 2.0
+		rotation = sin(_clock * 0.7) * 0.03   # the satellite sways a little, as if floating
+
+
 func set_parts(part_ids: Array) -> void:
 	if part_ids == parts:
 		return
@@ -72,7 +90,11 @@ func set_parts(part_ids: Array) -> void:
 
 func _draw() -> void:
 	match kind:
-		"earth_large": _earth(Vector2(size.x * 0.5, size.y * 0.5), minf(size.x, size.y) * 0.44)
+		"earth_large":
+			if spin_speed > 0.0:
+				_earth_spin(Vector2(size.x * 0.5, size.y * 0.5), minf(size.x, size.y) * 0.44, _phase)
+			else:
+				_earth(Vector2(size.x * 0.5, size.y * 0.5), minf(size.x, size.y) * 0.44)
 		"ground_station": _ground_station()
 		"spacecraft_marker": _marker()
 		"cubesat_1u": _satellite(["solar_small", "camera_std", "radio_uhf"], 0.55, 1.0)
@@ -138,6 +160,54 @@ func _earth(c: Vector2, r: float) -> void:
 	draw_arc(c, r, 0.0, TAU, 64, Color(0.6, 0.85, 1.0, 0.7), 2.0)
 
 
+## Continents as longitude/latitude points (degrees). They are projected onto a ball, so
+## turning the phase makes the Earth rotate, with land sliding off one edge and onto the other.
+const CONTINENTS: Array = [
+	[[-125, 50], [-95, 60], [-70, 48], [-80, 25], [-97, 18], [-78, 8], [-60, -5], [-50, -20], [-65, -40], [-72, -55], [-78, -20], [-90, 5], [-105, 20], [-118, 33]],
+	[[-10, 36], [10, 52], [40, 55], [55, 40], [50, 12], [40, -5], [32, -28], [18, -34], [8, -5], [-5, 5], [-17, 15], [-15, 30]],
+	[[60, 50], [90, 65], [130, 60], [150, 45], [120, 25], [105, 8], [90, 22], [75, 10], [68, 25], [55, 35]],
+	[[114, -22], [135, -12], [152, -25], [146, -38], [130, -33], [115, -34]],
+]
+const CLOUDS: Array = [[-100, 40], [-60, -20], [20, 10], [70, 35], [130, -5], [-150, 15], [160, 50], [0, -45]]
+
+
+func _earth_spin(c: Vector2, r: float, phase: float) -> void:
+	for i in range(6):
+		draw_circle(c, r * (1.16 - 0.025 * float(i)), Color(0.35, 0.65, 1.0, 0.045 + 0.012 * float(i)))
+	draw_circle(c, r, OCEAN)
+	for item in CONTINENTS:
+		var pts: PackedVector2Array = PackedVector2Array()
+		var any_front: bool = false
+		for pair in item:
+			var lon: float = deg_to_rad(float(pair[0])) - phase
+			var lat: float = deg_to_rad(float(pair[1]))
+			var x: float = cos(lat) * sin(lon)
+			var y: float = sin(lat)
+			var z: float = cos(lat) * cos(lon)
+			if z > 0.0:
+				any_front = true
+			elif Vector2(x, y).length() > 0.001:
+				var edge: Vector2 = Vector2(x, y).normalized()   # behind the limb: pin it to the edge
+				x = edge.x
+				y = edge.y
+			pts.append(c + Vector2(x, -y) * r)
+		if any_front and Geometry2D.triangulate_polygon(pts).size() > 0:
+			draw_colored_polygon(pts, LAND)
+	for cloud in CLOUDS:
+		var lon: float = deg_to_rad(float(cloud[0])) - phase * 1.25   # clouds drift a little faster
+		var lat: float = deg_to_rad(float(cloud[1]))
+		var z: float = cos(lat) * cos(lon)
+		if z > 0.15:
+			var p: Vector2 = c + Vector2(cos(lat) * sin(lon), -sin(lat)) * r
+			draw_circle(p, r * 0.085 * (0.6 + z * 0.6), Color(1, 1, 1, 0.55 + 0.3 * z))
+			draw_circle(p + Vector2(r * 0.07, r * 0.02), r * 0.06 * (0.6 + z * 0.6), Color(1, 1, 1, 0.5 + 0.3 * z))
+	draw_circle(c + Vector2(-0.30, -0.32) * r, r * 0.55, Color(1, 1, 1, 0.10))
+	draw_circle(c + Vector2(-0.22, -0.24) * r, r * 0.30, Color(1, 1, 1, 0.08))
+	for i in range(8):   # the far edge gets darker, so it reads as a ball
+		draw_arc(c, r * (0.99 - 0.035 * float(i)), -0.15 * PI, 0.85 * PI, 24, Color(0.01, 0.04, 0.14, 0.05), r * 0.07)
+	draw_arc(c, r, 0.0, TAU, 64, Color(0.6, 0.85, 1.0, 0.7), 2.0)
+
+
 func _ground_station() -> void:
 	_rect(0.18, 0.66, 0.64, 0.30, METAL)
 	_rect(0.40, 0.76, 0.20, 0.20, METAL_DARK)
@@ -176,6 +246,8 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 			var x0: float = bx - pw if side < 0 else bx + bw
 			draw_line(_p(bx if side < 0 else bx + bw, 0.5), _p(x0 + (pw if side < 0 else 0.0), 0.5), METAL_DARK, 4.0)
 			_rect(x0, py, pw, ph, SOLAR)
+			_poly([Vector2(x0, py), Vector2(x0 + pw * 0.55, py), Vector2(x0, py + ph * 0.55)], Color(1, 1, 1, 0.16), false)
+			_rect(x0, py + ph * 0.85, pw, ph * 0.15, Color(0, 0, 0, 0.22), false)
 			var cols: int = 5 if large else 3
 			for i in range(1, cols):
 				var gx: float = x0 + pw * float(i) / float(cols)
@@ -187,6 +259,8 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 	for i in range(1, cubes):
 		var gy: float = top + bh * float(i) / float(cubes)
 		draw_line(_p(bx, gy), _p(bx + bw, gy), GOLD_DARK, 2.0)
+	_poly([Vector2(bx, top), Vector2(bx + bw * 0.7, top), Vector2(bx, top + bh * 0.55)], Color(1, 1, 1, 0.20), false)
+	_rect(bx, top + bh * 0.84, bw, bh * 0.16, Color(0, 0, 0, 0.20), false)
 	_rect(bx, top, 0.02, bh, METAL, false)
 	_rect(bx + bw - 0.02, top, 0.02, bh, METAL, false)
 	var cx: float = bx + bw / 2.0
@@ -234,6 +308,8 @@ func _rocket(half_width: float, boosters: bool) -> void:
 			_poly([Vector2(bx, 0.34), Vector2(bx + 0.09, 0.34), Vector2(bx + 0.045, 0.26)], ROCKET_RED)
 	_poly([Vector2(x0, 0.18), Vector2(x1, 0.18), Vector2(0.5, 0.02)], ROCKET_RED)     # nose cone
 	_rect(x0, 0.18, half_width * 2.0, 0.66, ROCKET_WHITE)                             # body
+	_rect(x0, 0.18, half_width * 0.55, 0.66, Color(1, 1, 1, 0.45), false)             # light from the left
+	_rect(x1 - half_width * 0.6, 0.18, half_width * 0.6, 0.66, Color(0.1, 0.15, 0.35, 0.20), false)  # shade on the right
 	_rect(x0, 0.40, half_width * 2.0, 0.07, ROCKET_RED, false)                        # stripe
 	draw_circle(_p(0.5, 0.29), size.x * 0.06, OUTLINE)                                # window
 	draw_circle(_p(0.5, 0.29), size.x * 0.045, CYAN)

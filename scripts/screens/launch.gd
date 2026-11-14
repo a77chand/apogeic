@@ -16,6 +16,7 @@ var _rocket: Control = null
 var _count: Label = null
 var _note: Label = null
 var _orbit_bg: Control = null
+var _pad: Control = null
 var _reached: bool = true
 var _climb: float = 100.0
 
@@ -25,9 +26,15 @@ func _ready() -> void:
 	_reached = bool(GameState.launch_outcome.get("reached_orbit", true))
 	_climb = float(GameState.launch_outcome.get("climb_pct", 100.0))
 	if ResourceLoader.exists("res://art/backgrounds/bg_launch_pad.png"):
-		add_child(UI.background("res://art/backgrounds/bg_launch_pad.png"))
+		_pad = UI.background("res://art/backgrounds/bg_launch_pad.png")
 	else:
-		add_child(Sprites.make("bg_launch_pad", Vector2(1280, 720)))   # drawn sky, ground and tower
+		_pad = Sprites.make("bg_launch_pad", Vector2(1280, 720))   # drawn sky, ground and tower
+	# more sky above the picture, so there is no seam when the ground drops away on the climb
+	var upper_sky: Control = Starfield.new()
+	upper_sky.position = Vector2(0, -720)
+	upper_sky.size = Vector2(1280, 720)
+	_pad.add_child(upper_sky)
+	add_child(_pad)
 	if ResourceLoader.exists("res://art/backgrounds/bg_earth_orbit.png"):
 		_orbit_bg = UI.background("res://art/backgrounds/bg_earth_orbit.png")
 	else:
@@ -46,6 +53,7 @@ func _ready() -> void:
 	add_child(_rocket)
 	_rocket.position = Vector2(565.0, 230.0)
 	_rocket.size = Vector2(150.0, 450.0)
+	_rocket.pivot_offset = Vector2(75.0, 225.0)
 	# The rocket drawn depends on the design's mass: small, medium or heavy.
 	var rocket: String = "rocket_" + Sim.rocket_for_mass(GameState.level, float(GameState.launch_eval.get("mass_kg", 0.0)))
 	var pic: Control = UI.picture("res://art/modules/%s.png" % rocket, Vector2(150, 450), rocket)
@@ -96,7 +104,10 @@ func _run_sequence() -> void:
 	_tween.tween_callback(_count_to.bind(""))
 	_tween.tween_callback(_flame_on)
 	if _reached:
-		_tween.tween_property(_rocket, "position:y", TOP_Y, 4.0)
+		_tween.tween_property(_rocket, "position:y", TOP_Y, 4.0).set_ease(Tween.EASE_IN)
+		# the camera pulls away: the rocket shrinks and the ground drops out of view
+		_tween.parallel().tween_property(_rocket, "scale", Vector2(0.55, 0.55), 4.0)
+		_tween.parallel().tween_property(_pad, "position:y", 420.0, 4.0).set_ease(Tween.EASE_IN)
 		_tween.tween_property(_orbit_bg, "modulate:a", 1.0, 1.0)
 		_tween.tween_callback(_open_cubesat)
 		_tween.tween_interval(2.0)
@@ -104,7 +115,10 @@ func _run_sequence() -> void:
 		# The climb height comes from the readiness number: more checks passed, higher it gets.
 		var peak: float = START_Y + (TOP_Y - START_Y) * (_climb / 100.0) * 0.8
 		var rise: float = maxf(0.8, 4.0 * _climb / 100.0)
-		_tween.tween_property(_rocket, "position:y", peak, rise)
+		_tween.tween_property(_rocket, "position:y", peak, rise).set_ease(Tween.EASE_IN)
+		var pull: float = _climb / 100.0
+		_tween.parallel().tween_property(_rocket, "scale", Vector2.ONE * (1.0 - 0.45 * pull), rise)
+		_tween.parallel().tween_property(_pad, "position:y", 420.0 * pull * 0.8, rise).set_ease(Tween.EASE_IN)
 		_tween.tween_callback(_flame_off)
 		_tween.tween_callback(_play.bind("fail"))
 		_tween.tween_callback(_say.bind(_failure_text()))
