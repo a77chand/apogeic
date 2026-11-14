@@ -16,7 +16,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 ## A 72 px bar across the top. Game name left, title centre, one pill per entry in pills on the right.
 static func top_bar(title: String, pills: Array) -> Control:
 	var bar: PanelContainer = PanelContainer.new()
-	bar.add_theme_stylebox_override("panel", UI.box(UI.C_DEEP, UI.C_BORDER, 0, 2, 12.0))
+	bar.add_theme_stylebox_override("panel", UI.bar_style(true))
 	bar.position = Vector2(0.0, 0.0)
 	bar.custom_minimum_size = Vector2(1280.0, 72.0)
 	bar.size = Vector2(1280.0, 72.0)
@@ -56,7 +56,7 @@ static func set_pill(bar: Control, index: int, text: String) -> void:
 ## A 58 px bar across the bottom with one line of tip text and a PLACEHOLDER NUMBERS tag.
 static func tip_bar(text: String) -> Control:
 	var bar: PanelContainer = PanelContainer.new()
-	bar.add_theme_stylebox_override("panel", UI.box(UI.C_DEEP, UI.C_BORDER, 0, 2, 10.0))
+	bar.add_theme_stylebox_override("panel", UI.bar_style(false))
 	bar.position = Vector2(0.0, 662.0)
 	bar.custom_minimum_size = Vector2(1280.0, 58.0)
 	bar.size = Vector2(1280.0, 58.0)

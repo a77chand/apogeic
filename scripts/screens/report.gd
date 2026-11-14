@@ -50,7 +50,7 @@ func _build_empty() -> void:
 
 func _build_top_bar(grade: String) -> void:
 	var bar: PanelContainer = PanelContainer.new()
-	bar.add_theme_stylebox_override("panel", UI.box(UI.C_DEEP, UI.C_BORDER, 0, 2, 12.0))
+	bar.add_theme_stylebox_override("panel", UI.bar_style(true))
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var title_text: String = "Mission failed"
 	var color: Color = UI.C_RED
