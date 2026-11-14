@@ -6,11 +6,15 @@ signal design_changed
 
 const Data = preload("res://scripts/core/data.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const Craft = preload("res://scripts/core/craft.gd")
 const SAVE_PATH: String = "user://save.json"
 
 # ---- loaded once from data/*.json
 var parts: Dictionary = {}
-var level: Dictionary = {}
+var level: Dictionary = {}          # the level for the chosen craft (see set_craft)
+var base_level: Dictionary = {}     # level1.json as loaded
+var craft_cfg: Dictionary = {}      # data/craft.json
+var craft_id: String = "3u"
 var puzzles: Dictionary = {}
 var events: Array = []
 
@@ -35,10 +39,22 @@ var router: Node = null             # set by main.gd
 
 func _ready() -> void:
 	parts = Data.load_parts()
-	level = Data.load_level1()
+	base_level = Data.load_level1()
+	craft_cfg = Craft.load_config()
+	craft_id = str(craft_cfg.get("default", "3u"))
+	level = Craft.apply(base_level, craft_cfg, craft_id)
 	puzzles = Data.load_puzzles()
 	events = Data.load_events()
 	load_save()
+	reset_mission()
+
+
+## Chooses the craft size (1u, 3u or 6u) and starts a fresh design for it.
+func set_craft(id: String) -> void:
+	if Craft.by_id(craft_cfg, id).is_empty():
+		return
+	craft_id = id
+	level = Craft.apply(base_level, craft_cfg, id)
 	reset_mission()
 
 

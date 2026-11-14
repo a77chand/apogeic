@@ -13,6 +13,7 @@ Read `docs/SOFTWARE_SPEC.md` first (sections 4, 6, 17 and 19). Short version:
 ```sh
 godot --headless --path . --script res://tests/run_tests.gd
 godot --headless --path . --script res://tests/truck_tests.gd
+godot --headless --path . --script res://tests/craft_tests.gd
 ```
 
 ## Who owns what
