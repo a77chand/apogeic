@@ -1,0 +1,27 @@
+{
+  "_note": "Shown by the menu's Resources and sources button (scripts/ui/sources.gd). Keep it honest: say what is real, what is rounded, and what is invented for gameplay. Check every link before the final submission.",
+  "accuracy": [
+    "Real physics: one low Earth orbit at about 550 km takes about 95 minutes, and the Earth hides the Sun for up to about 35 of them. That is why every satellite needs a battery.",
+    "Real rules: CubeSats come in standard sizes (1U is a 10 cm cube, 3U is three of them), and a rideshare rocket sells a slot with a hard mass limit.",
+    "Real process: build, test, licence and ship really do run in that order, and radio and imaging licences can take months.",
+    "Real launch stages: max-Q, the second-stage burn and separation are the moments a real launch is most likely to go wrong.",
+    "Rounded: part masses, power and data rates are in the right range for CubeSat parts, but rounded so the maths is easy.",
+    "Invented for gameplay: prices, the exact risk rules, fuel use and the event cards. They teach the trade-off, not the exact number.",
+    "Every screen with made-up numbers says PLACEHOLDER NUMBERS in the bottom bar."
+  ],
+  "sources": [
+    {"title": "CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers", "by": "NASA CubeSat Launch Initiative, 2017", "where": "nasa.gov", "used_for": "Sizes, the build-test-launch order, licensing steps, rideshare launches"},
+    {"title": "CubeSat Design Specification", "by": "Cal Poly CubeSat programme", "where": "cubesat.org", "used_for": "1U, 3U and 6U sizes and their mass limits"},
+    {"title": "State-of-the-Art of Small Spacecraft Technology", "by": "NASA Small Spacecraft Systems Virtual Institute", "where": "nasa.gov/smallsat-institute", "used_for": "Typical ranges for solar panels, batteries, radios and cameras on small satellites"},
+    {"title": "Beginner's Guide to Rockets", "by": "NASA Glenn Research Center", "where": "grc.nasa.gov", "used_for": "Rocket stages, maximum dynamic pressure (max-Q) and why mass matters"},
+    {"title": "Orbit period and eclipse time", "by": "Worked out with Kepler's third law (Earth radius 6371 km, altitude 550 km)", "where": "standard orbital mechanics", "used_for": "The 95-minute orbit and the 35-minute eclipse"},
+    {"title": "Commercial Remote Sensing licensing", "by": "NOAA Office of Space Commerce", "where": "space.commerce.gov", "used_for": "Why an imaging satellite needs a licence before launch, and why it takes months"},
+    {"title": "Structured light system detects hazards for planetary surface navigation", "by": "A. Nefian (NASA Ames), Laser Focus World", "where": "laserfocusworld.com", "used_for": "The 97% detection figure in the truck problem (see docs/TRUCK_SOURCES.md)"},
+    {"title": "The Dark Side of the Crater", "by": "NASA Ames", "where": "nasa.gov", "used_for": "How shadows and dust affect cameras in the truck problem (direction only, no numbers)"}
+  ],
+  "made_with": [
+    "Godot Engine (MIT licence).",
+    "Rajdhani font by Indian Type Foundry (SIL Open Font License).",
+    "Sound effects and music are generated in code. No audio files are used."
+  ]
+}

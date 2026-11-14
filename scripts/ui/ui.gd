@@ -44,6 +44,13 @@ static func display_font() -> Font:
 
 
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:
+	# The menu's text size setting changes body text only: labels that wrap, so they can
+	# reflow. Headings and single-line labels in tight spots (bars, pills) keep their size,
+	# and small print on part cards is never made bigger, so cards do not overflow.
+	if wrap and size < HEADING_SIZE:
+		var scale: float = _font_scale()
+		if size > 13 or scale < 1.0:
+			size = int(round(float(size) * scale))
 	var l: Label = Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
@@ -133,6 +140,32 @@ static func _click_sound() -> void:
 	var state: Node = tree.root.get_node_or_null("GameState")
 	if state != null:
 		state.call("play_sound", "click")
+
+
+static func _font_scale() -> float:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return 1.0
+	var state: Node = tree.root.get_node_or_null("GameState")
+	if state == null:
+		return 1.0
+	return float(state.call("font_scale"))
+
+
+## A list of short lines, each with a bullet in front. Use instead of a long paragraph.
+## width is the wrapping width of each line.
+static func bullets(lines: Array, size: int = 15, color: Color = C_TEXT, width: float = 260.0, mark_color: Color = C_ACCENT) -> VBoxContainer:
+	var col: VBoxContainer = vbox(6)
+	for item in lines:
+		var row: HBoxContainer = hbox(8)
+		var mark: Label = label("•", size, mark_color)
+		mark.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		row.add_child(mark)
+		var text: Label = label(str(item), size, color, true)
+		text.custom_minimum_size = Vector2(width - 20.0, 0.0)
+		row.add_child(text)
+		col.add_child(row)
+	return col
 
 
 ## Makes a button look locked (grey) while still letting it be clicked, e.g. to explain why.

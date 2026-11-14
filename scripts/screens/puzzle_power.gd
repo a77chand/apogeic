@@ -51,17 +51,16 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 func _build_intro() -> void:
 	var panel: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
 	_place(panel, Vector2(20, 84), Vector2(280, 430))
-	var col: VBoxContainer = UI.vbox(12)
+	var col: VBoxContainer = UI.vbox(6)
 	panel.add_child(col)
 	col.add_child(UI.label("The challenge", 20))
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
 	intro.custom_minimum_size = Vector2(248.0, 0.0)
 	col.add_child(intro)
-	var facts: String = "The satellite uses %d W all the time. One orbit takes %d minutes. The Earth blocks the Sun for %d of them." % [
-			int(round(float(_pz.get("load_w", 0.0)))), int(round(float(_pz.get("period_min", 0.0)))), int(round(float(_pz.get("eclipse_min", 0.0))))]
-	var fact_label: Label = UI.label(facts, 13, UI.C_MUTED, true)
-	fact_label.custom_minimum_size = Vector2(248.0, 0.0)
-	col.add_child(fact_label)
+	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
+	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 250.0, UI.C_ORANGE))
+	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
+	col.add_child(UI.bullets(_pz.get("goal", []), 13, UI.C_TEXT, 250.0, UI.C_GREEN))
 
 
 func _make_slider(min_v: float, max_v: float, step: float, start: float) -> HSlider:

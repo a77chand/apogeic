@@ -6,11 +6,14 @@ extends Control
 const UI = preload("res://scripts/ui/ui.gd")
 const Stub = preload("res://scripts/screens/stub.gd")
 const Sfx = preload("res://scripts/ui/sfx.gd")
+const Music = preload("res://scripts/ui/music.gd")
+const Menu = preload("res://scripts/ui/menu.gd")
 
 ## screen id -> script path. A missing script shows the stub screen instead of crashing.
 const SCREENS: Dictionary = {
 	"title": "res://scripts/screens/title.gd",
 	"profile": "res://scripts/screens/profile.gd",
+	"guide": "res://scripts/screens/guide.gd",
 	"ladder": "res://scripts/screens/ladder.gd",
 	"puzzle_mass": "res://scripts/screens/puzzle_mass.gd",
 	"puzzle_power": "res://scripts/screens/puzzle_power.gd",
@@ -53,6 +56,10 @@ func _ready() -> void:
 	var sfx: Node = Sfx.new()
 	add_child(sfx)
 	GameState.sfx = sfx
+	var music: Node = Music.new()
+	add_child(music)
+	GameState.music = music
+	GameState.apply_audio()
 	add_child(UI.background())
 	add_child(UI.vignette())
 	# Screens are laid out for 1280 x 720. They sit centred in this holder, and the
@@ -65,6 +72,19 @@ func _ready() -> void:
 	_holder.offset_right = 640.0
 	_holder.offset_top = -360.0
 	_holder.offset_bottom = 360.0
+	# The menu tab sits over every screen, in the same 1280 x 720 frame.
+	var overlay: Control = Control.new()
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(overlay)
+	overlay.set_anchors_preset(Control.PRESET_CENTER)
+	overlay.offset_left = -640.0
+	overlay.offset_right = 640.0
+	overlay.offset_top = -360.0
+	overlay.offset_bottom = 360.0
+	var menu: Control = Menu.new()
+	overlay.add_child(menu)
+	menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	go("title")
 
 

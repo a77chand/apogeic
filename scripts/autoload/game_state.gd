@@ -26,7 +26,13 @@ var missions_done: Dictionary = {}  # mission id -> best grade ("partial" or "su
 var mission_stars: Dictionary = {}  # mission id -> best stars
 var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
 var tutorial_open: bool = false     # true while a tip box is on screen (clocks wait)
-var muted: bool = false             # sound on/off, saved
+var muted: bool = false             # sound effects on/off, saved
+var sfx_volume: float = 0.8         # sound effects volume, 0..1, saved
+var music_volume: float = 0.5       # background music volume, 0..1, saved
+var music_muted: bool = false       # background music on/off, saved
+var font_size: String = "medium"    # "small", "medium" or "large", saved (see UI.label)
+var last_design: Dictionary = {}    # the parts of the last finished attempt, so "Start over" can be undone
+var music: Node = null              # set by main.gd (scripts/ui/music.gd)
 var player_name: String = ""       # the player's astronaut, saved (see scripts/ui/player.gd)
 var player_title: String = "Commander"
 var avatar_suit: int = 0            # index into Player.SUITS
@@ -70,7 +76,92 @@ func play_sound(id: String) -> void:
 
 func set_muted(value: bool) -> void:
 	muted = value
+	apply_audio()
 	save_game()
+
+
+func set_sfx_volume(value: float) -> void:
+	sfx_volume = clampf(value, 0.0, 1.0)
+	apply_audio()
+	save_game()
+
+
+func set_music_volume(value: float) -> void:
+	music_volume = clampf(value, 0.0, 1.0)
+	apply_audio()
+	save_game()
+
+
+func set_music_muted(value: bool) -> void:
+	music_muted = value
+	apply_audio()
+	save_game()
+
+
+func set_font_size(value: String) -> void:
+	if value in ["small", "medium", "large"]:
+		font_size = value
+		save_game()
+
+
+## How much body text is scaled (UI.label reads this).
+func font_scale() -> float:
+	if font_size == "small":
+		return 0.9
+	if font_size == "large":
+		return 1.15
+	return 1.0
+
+
+## Sends the saved volumes to the sound and music players.
+func apply_audio() -> void:
+	if sfx != null:
+		sfx.call("set_volume", 0.0 if muted else sfx_volume)
+	if music != null:
+		music.call("set_volume", 0.0 if music_muted else music_volume)
+
+
+## How much of the game is finished, 0..100: the four training puzzles and every mission.
+func progress_pct() -> float:
+	var total: int = puzzle_order().size() + Data.MISSIONS.size()
+	if total == 0:
+		return 0.0
+	var done: int = 0
+	for id in puzzle_order():
+		if is_puzzle_done(str(id)):
+			done += 1
+	for id in Data.MISSIONS:
+		if is_mission_done(str(id)):
+			done += 1
+	return 100.0 * float(done) / float(total)
+
+
+## True while a mission attempt is under way (parts fitted, or the satellite is flying).
+## The menu asks before leaving, because leaving loses the attempt.
+func in_mission() -> bool:
+	if router == null:
+		return false
+	var screen: String = str(router.call("current_id"))
+	return screen in ["workshop", "test_lab", "launch", "ops"]
+
+
+## Keeps the parts of this attempt so "Start over" can be undone from the workshop.
+func remember_design() -> void:
+	var any: bool = false
+	for key in design.keys():
+		if str(design[key]) != "":
+			any = true
+	if any:
+		last_design = design.duplicate()
+
+
+func restore_last_design() -> void:
+	if last_design.is_empty():
+		return
+	for key in last_design.keys():
+		if design.has(key):
+			design[key] = str(last_design[key])
+	design_changed.emit()
 
 
 ## Chooses the craft size (1u, 3u or 6u) and starts a fresh design for it.
@@ -274,7 +365,8 @@ func save_game() -> void:
 		push_warning("Could not write the save file.")
 		return
 	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
-			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch}))
+			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch,
+			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size}))
 	file.close()
 
 
@@ -285,6 +377,10 @@ func load_save() -> void:
 	mission_stars = {}
 	tutorial_seen = {}
 	muted = false
+	sfx_volume = 0.8
+	music_volume = 0.5
+	music_muted = false
+	font_size = "medium"
 	player_name = ""
 	player_title = "Commander"
 	avatar_suit = 0
@@ -307,6 +403,10 @@ func load_save() -> void:
 	player_title = str(data.get("player_title", "Commander"))
 	avatar_suit = int(data.get("avatar_suit", 0))
 	avatar_patch = int(data.get("avatar_patch", 0))
+	sfx_volume = clampf(float(data.get("sfx_volume", 0.8)), 0.0, 1.0)
+	music_volume = clampf(float(data.get("music_volume", 0.5)), 0.0, 1.0)
+	music_muted = bool(data.get("music_muted", false))
+	font_size = str(data.get("font_size", "medium"))
 	var seen: Variant = data.get("tutorial_seen", {})
 	if typeof(seen) == TYPE_DICTIONARY:
 		tutorial_seen = seen

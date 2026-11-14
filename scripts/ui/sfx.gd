@@ -15,12 +15,23 @@ var _next: int = 0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # clicks still sound while the menu pauses the game
 	_streams = build_streams()
 	for i in range(VOICES):
 		var p: AudioStreamPlayer = AudioStreamPlayer.new()
 		p.volume_db = -6.0
 		add_child(p)
 		_players.append(p)
+
+
+## volume is 0..1 (0 = silent). The loudest setting is the old fixed level.
+func set_volume(volume: float) -> void:
+	var db: float = -80.0
+	if volume > 0.001:
+		db = -6.0 + linear_to_db(volume)
+	for item in _players:
+		var p: AudioStreamPlayer = item
+		p.volume_db = db
 
 
 func play(id: String) -> void:
@@ -43,6 +54,10 @@ static func build_streams() -> Dictionary:
 	out["chime"] = _wav(_join([_tone(523.25, 0.14, 0.35, 9.0), _tone(659.25, 0.14, 0.35, 9.0), _tone(783.99, 0.55, 0.35, 5.0)]))
 	out["fail"] = _wav(_slide(420.0, 170.0, 0.55, 0.32))
 	out["rumble"] = _wav(_rumble(2.4, 0.5))
+	# a harsh alarm buzzer: two low square-ish blasts
+	out["error"] = _wav(_join([_buzz(150.0, 0.28, 0.30), _silence(0.07), _buzz(150.0, 0.28, 0.30), _silence(0.07), _buzz(110.0, 0.5, 0.30)]))
+	# an explosion: a loud burst of noise that dies away
+	out["boom"] = _wav(_boom(1.6, 0.9))
 	# countdown: a short beep for 3, 2, 1, then a higher, longer tone at lift-off
 	out["beep"] = _wav(_bell(740.0, 0.16, 0.30, 18.0))
 	out["go"] = _wav(_bell(1110.0, 0.45, 0.32, 6.0))
@@ -145,6 +160,39 @@ static func _slide(f0: float, f1: float, seconds: float, volume: float) -> Packe
 		var attack: float = minf(1.0, t / 0.01)
 		var release: float = minf(1.0, (seconds - t) / 0.12)
 		out[i] = sin(phase) * attack * maxf(0.0, release) * volume
+	return out
+
+
+## A buzzer: a sine pushed hard so it clips into a rough, square-like tone.
+static func _buzz(freq: float, seconds: float, volume: float) -> PackedFloat32Array:
+	var n: int = int(seconds * float(RATE))
+	var out: PackedFloat32Array = PackedFloat32Array()
+	out.resize(n)
+	for i in range(n):
+		var t: float = float(i) / float(RATE)
+		var attack: float = minf(1.0, t / 0.005)
+		var release: float = minf(1.0, (seconds - t) / 0.02)
+		var wave: float = clampf(sin(TAU * freq * t) * 3.0, -1.0, 1.0) * 0.7 + clampf(sin(TAU * freq * 1.5 * t) * 3.0, -1.0, 1.0) * 0.3
+		out[i] = wave * attack * maxf(0.0, release) * volume
+	return out
+
+
+## An explosion: a sharp crack of noise, then a low rumble that fades. Fixed seed, so it
+## sounds the same every time.
+static func _boom(seconds: float, volume: float) -> PackedFloat32Array:
+	var n: int = int(seconds * float(RATE))
+	var out: PackedFloat32Array = PackedFloat32Array()
+	out.resize(n)
+	var seed_value: int = 777
+	var low: float = 0.0
+	for i in range(n):
+		var t: float = float(i) / float(RATE)
+		seed_value = (seed_value * 1103515245 + 12345) & 0x7fffffff
+		var noise: float = float(seed_value) / float(0x7fffffff) * 2.0 - 1.0
+		low += (noise - low) * 0.04
+		var crack: float = noise * exp(-t * 18.0)
+		var body: float = low * 3.0 * exp(-t * 2.2) + sin(TAU * 40.0 * t) * 0.4 * exp(-t * 3.0)
+		out[i] = clampf((crack * 0.6 + body) * volume, -1.0, 1.0)
 	return out
 
 

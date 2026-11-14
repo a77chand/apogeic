@@ -13,7 +13,7 @@ var _title: String = ""
 var _steps: Array = []
 var _index: int = 0
 var _step_label: Label = null
-var _body: Label = null
+var _body: VBoxContainer = null
 var _next: Button = null
 
 
@@ -78,8 +78,8 @@ func _ready() -> void:
 	col.add_child(UI.label("How to play: " + _title, 24, UI.C_CYAN))
 	_step_label = UI.label("", 13, UI.C_MUTED)
 	col.add_child(_step_label)
-	_body = UI.label("", 18, UI.C_TEXT, true)
-	_body.custom_minimum_size = Vector2(556.0, 100.0)
+	_body = VBoxContainer.new()
+	_body.custom_minimum_size = Vector2(556.0, 110.0)
 	col.add_child(_body)
 	var row: HBoxContainer = UI.hbox(12)
 	col.add_child(row)
@@ -98,7 +98,15 @@ func _exit_tree() -> void:
 
 func _show_step() -> void:
 	_step_label.text = "Tip %d of %d" % [_index + 1, _steps.size()]
-	_body.text = fill(str(_steps[_index]))
+	UI.clear(_body)
+	var step: Variant = _steps[_index]
+	var lines: Array = []
+	if typeof(step) == TYPE_ARRAY:
+		for item in step:
+			lines.append(fill(str(item)))
+	else:
+		lines.append(fill(str(step)))
+	_body.add_child(UI.bullets(lines, 17, UI.C_TEXT, 556.0))
 	_next.text = "Got it" if _index == _steps.size() - 1 else "Next"
 
 

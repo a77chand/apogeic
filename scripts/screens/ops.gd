@@ -14,7 +14,8 @@ const CENTRE: Vector2 = Vector2(640.0, 372.0)
 const ORBIT_A: float = 300.0     # half-width of the orbit ellipse
 const ORBIT_B: float = 105.0     # half-height: a flat ellipse looks like a tilted orbit
 const ORBIT_TILT: float = -0.22  # radians; tips the ellipse a little
-const GROUND_POS: Vector2 = Vector2(350.0, 590.0)
+const GROUND_POS: Vector2 = Vector2(488.0, 500.0)   # a point just inside the edge of the Earth (lower left)
+const GROUND_BUBBLE: Vector2 = Vector2(372.0, 604.0) # the callout circle that shows the station up close
 
 var _week_label: Label = null
 var _battery_bar: ProgressBar = null
@@ -102,10 +103,21 @@ func _build() -> void:
 	if earth.get("kind") == "earth_large":
 		earth.set("spin_speed", 0.10)   # the drawn Earth turns slowly
 	_space.add_child(earth)
-	var ground: Control = UI.picture("res://art/modules/ground_station.png", Vector2(100, 100), "ground station")
-	ground.position = Vector2(300, 540)
-	ground.size = Vector2(100, 100)
+	# The ground station is a dot on the Earth, with a circle beside it showing it up close.
+	var pin: Control = Control.new()
+	pin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pin.size = Vector2(1280, 720)
+	pin.draw.connect(_draw_ground_pin.bind(pin))
+	_space.add_child(pin)
+	var ground: Control = UI.picture("res://art/modules/ground_station.png", Vector2(64, 64), "ground station")
+	ground.position = GROUND_BUBBLE - Vector2(32, 34)
+	ground.size = Vector2(64, 64)
 	_space.add_child(ground)
+	var ground_label: Label = UI.label("Ground station", 12, UI.C_MUTED)
+	ground_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ground_label.position = GROUND_BUBBLE + Vector2(-60, 46)
+	ground_label.size = Vector2(120, 18)
+	_space.add_child(ground_label)
 	_ring_front = _make_ring(true)
 	_space.add_child(_ring_front)
 	_marker = UI.picture("res://art/modules/spacecraft_marker.png", Vector2(64, 64), "satellite")
@@ -168,6 +180,19 @@ func _build() -> void:
 	if _warning != null:
 		_warning.position = Vector2(290.0, 150.0)
 		_warning.visible = false
+
+
+## The station's spot on the Earth (a glowing dot), a line out to a circle, and the circle.
+func _draw_ground_pin(pin: Control) -> void:
+	var dot: Vector2 = GROUND_POS
+	var bubble: Vector2 = GROUND_BUBBLE
+	var r: float = 44.0
+	pin.draw_circle(dot, 9.0, Color(UI.C_ACCENT, 0.25))
+	pin.draw_circle(dot, 5.0, UI.C_ACCENT)
+	var dir: Vector2 = (bubble - dot).normalized()
+	pin.draw_line(dot + dir * 6.0, bubble - dir * r, Color(UI.C_ACCENT, 0.8), 2.0)
+	pin.draw_circle(bubble, r, Color(0.03, 0.08, 0.17, 0.92))
+	pin.draw_arc(bubble, r, 0.0, TAU, 48, Color(UI.C_ACCENT, 0.9), 2.0)
 
 
 ## Builds an animation from art/animations/<base>/<base>_01.png onward. Null if missing.

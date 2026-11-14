@@ -138,24 +138,74 @@ func _build_stars(score: Dictionary) -> void:
 
 
 func _build_causes(causes: Array) -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
 	_place(panel, Vector2(436, 88), Vector2(824, 330))
 	var col: VBoxContainer = UI.vbox(8)
 	panel.add_child(col)
 	col.add_child(UI.label("Why it happened", 20))
-	var shown: int = mini(3, causes.size())
-	for i in range(shown):
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(796.0, 266.0)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(scroll)
+	var list: VBoxContainer = UI.vbox(8)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	var start: int = 0
+	if str(GameState.ops.get("end_reason", "")) == "launch_failed":
+		list.add_child(_launch_card())
+		start = 1   # the first cause is the launch failure, already shown above
+	var shown: int = mini(start + 3, causes.size())
+	for i in range(start, shown):
 		var c: Dictionary = causes[i]
-		var card: PanelContainer = UI.panel(UI.C_DISABLED_BORDER, 8.0)
-		var inner: VBoxContainer = UI.vbox(2)
-		card.add_child(inner)
-		var line: Label = UI.label("%s   ->   %s" % [str(c.get("cause", "")), str(c.get("effect", ""))], 14, UI.C_TEXT, true)
-		line.custom_minimum_size = Vector2(760.0, 0.0)
-		inner.add_child(line)
-		var tip: Label = UI.label("Tip: " + str(c.get("tip", "")), 13, UI.C_CYAN, true)
-		tip.custom_minimum_size = Vector2(760.0, 0.0)
-		inner.add_child(tip)
-		col.add_child(card)
+		list.add_child(_cause_card(str(c.get("cause", "")), str(c.get("effect", "")), str(c.get("tip", ""))))
+
+
+## One problem as three short rows: what went wrong, what it did, how to fix it.
+func _cause_card(cause: String, effect: String, tip: String) -> Control:
+	var card: PanelContainer = UI.panel(UI.C_DISABLED_BORDER, 8.0)
+	var inner: VBoxContainer = UI.vbox(3)
+	card.add_child(inner)
+	inner.add_child(_row("Problem", cause, UI.C_RED))
+	inner.add_child(_row("Result", effect, UI.C_ORANGE))
+	inner.add_child(_row("Fix", tip, UI.C_GREEN))
+	return card
+
+
+func _row(tag: String, text: String, color: Color) -> HBoxContainer:
+	var row: HBoxContainer = UI.hbox(10)
+	var t: Label = UI.label(tag.to_upper(), 12, color)
+	t.custom_minimum_size = Vector2(70.0, 0.0)
+	t.add_theme_constant_override("outline_size", 1)
+	t.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(t)
+	var body: Label = UI.label(text, 14, UI.C_TEXT, true)
+	body.custom_minimum_size = Vector2(680.0, 0.0)
+	row.add_child(body)
+	return row
+
+
+## The launch failure: where it broke, and every reason as its own bullet.
+func _launch_card() -> Control:
+	var outcome: Dictionary = GameState.launch_outcome
+	var card: PanelContainer = UI.panel(UI.C_RED, 10.0)
+	var inner: VBoxContainer = UI.vbox(4)
+	card.add_child(inner)
+	var stage: String = str(outcome.get("stage_name", ""))
+	var head: String = "The rocket failed at %s" % stage if stage != "" else "The rocket never reached orbit"
+	inner.add_child(UI.label(head, 16, UI.C_RED, true))
+	var lines: Array = []
+	var ready: float = float(outcome.get("readiness_pct", 100.0))
+	var needed: float = float(outcome.get("needed_pct", 0.0))
+	if ready < needed - 0.01:
+		lines.append("Only %d%% of the checks passed. The rocket needs %d%%." % [int(round(ready)), int(round(needed))])
+	for item in outcome.get("risks", []):
+		var r: Dictionary = item
+		lines.append(str(r.get("text", "")))
+	if lines.is_empty():
+		lines.append(str(outcome.get("fail_text", "")))
+	inner.add_child(UI.bullets(lines, 14, UI.C_TEXT, 760.0, UI.C_RED))
+	inner.add_child(_row("Fix", "Repair known problems in the test lab, and keep the spacecraft well under the mass limit.", UI.C_GREEN))
+	return card
 
 
 func _build_chart() -> void:
@@ -204,9 +254,13 @@ func _build_log() -> void:
 
 
 func _build_buttons() -> void:
-	_place(UI.button("Retry with changes", _on_retry, 260.0, true), Vector2(20, 660), Vector2(260, 52))
-	_place(UI.button("New design", _on_new, 220.0, false), Vector2(296, 660), Vector2(220, 52))
-	_place(UI.button("Choose mission", _on_missions, 220.0, false), Vector2(532, 660), Vector2(220, 52))
+	var retry: Button = UI.button("Fix my satellite", _on_retry, 260.0, true)
+	retry.tooltip_text = "Back to the workshop with the same parts, so you only change what went wrong."
+	_place(retry, Vector2(20, 660), Vector2(260, 52))
+	var fresh: Button = UI.button("Start with empty satellite", _on_new, 300.0, false)
+	fresh.tooltip_text = "Clears every part. Your old parts can be brought back from the workshop."
+	_place(fresh, Vector2(296, 660), Vector2(300, 52))
+	_place(UI.button("Choose mission", _on_missions, 220.0, false), Vector2(612, 660), Vector2(220, 52))
 	_place(UI.button("Title", _on_title, 160.0, false), Vector2(1100, 660), Vector2(160, 52))
 
 
@@ -220,6 +274,7 @@ func _on_missions() -> void:
 
 
 func _on_new() -> void:
+	GameState.remember_design()   # so the workshop can offer "Bring back my last parts"
 	GameState.reset_mission()
 	GameState.go("briefing")
 

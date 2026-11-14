@@ -42,11 +42,11 @@ func _build_top_bar() -> void:
 func _build_mission() -> void:
 	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
 	_place(panel, Vector2(20, 88), Vector2(400, 480))
-	var col: VBoxContainer = UI.vbox(10)
+	var col: VBoxContainer = UI.vbox(7)
 	panel.add_child(col)
-	col.add_child(UI.label(GameState.display_name() + ", your mission", 20))
+	col.add_child(UI.label(str(GameState.level.get("level_label", "")), 13, UI.C_MUTED))
 	col.add_child(UI.label(str(GameState.level.get("name", "")), 24, UI.C_CYAN))
-	var pic: Control = UI.picture("res://art/modules/cubesat_%s.png" % GameState.craft_id, Vector2(360, 120), "CubeSat " + GameState.craft_id.to_upper())
+	var pic: Control = UI.picture("res://art/modules/cubesat_%s.png" % GameState.craft_id, Vector2(360, 80), "CubeSat " + GameState.craft_id.to_upper())
 	col.add_child(pic)
 	var goal: Label = UI.label(str(GameState.level.get("goal_text", "")), 15, UI.C_TEXT, true)
 	goal.custom_minimum_size = Vector2(360.0, 0.0)
@@ -54,9 +54,13 @@ func _build_mission() -> void:
 	var limits: Dictionary = GameState.level.get("limits", {})
 	var words: String = "Limits: at most %.1f kg, a budget of %s, and launch by day %d." % [
 			float(limits.get("mass_kg", 0.0)), UI.money(float(limits.get("budget_k", 0.0))), int(float(limits.get("deadline_day", 0.0)))]
-	var limit_label: Label = UI.label(words, 15, UI.C_YELLOW, true)
+	var limit_label: Label = UI.label(words, 14, UI.C_YELLOW, true)
 	limit_label.custom_minimum_size = Vector2(360.0, 0.0)
 	col.add_child(limit_label)
+	var diffs: Array = GameState.level.get("differences", [])
+	if not diffs.is_empty():
+		col.add_child(UI.label("Why this mission is different", 14, UI.C_ORANGE))
+		col.add_child(UI.bullets(diffs, 13, UI.C_TEXT, 360.0, UI.C_ORANGE))
 
 
 func _build_concept() -> void:
@@ -118,7 +122,7 @@ func _build_facts(col: VBoxContainer) -> void:
 		"Size: %s cm" % dim_words,
 		"Mass limit here: %s kg" % _num(float(game.get("mass_limit_kg", 0.0))),
 		"Peak power: %s W" % _range(power, 1.0, ""),
-		"Launch cost: %s (this game uses %s)" % [UI.money(float(cost.get("min", 0.0))) + " to " + UI.money(float(cost.get("max", 0.0))), UI.money(float(game.get("launch_cost_k", 0.0)))],
+		"Launch cost: %s (this mission pays %s)" % [UI.money(float(cost.get("min", 0.0))) + " to " + UI.money(float(cost.get("max", 0.0))), UI.money(float((GameState.level.get("launch", {}) as Dictionary).get("cost_k", 0.0)))],
 		"Data downlink: %s" % (_rate(float(down.get("min", 0.0))) + " to " + _rate(float(down.get("max", 0.0)))),
 	]
 	for line in lines:
@@ -182,9 +186,19 @@ func _build_requirements() -> void:
 	var list: Array = GameState.level.get("requirements", [])
 	for item in list:
 		var r: Dictionary = item
-		var text: Label = UI.label("%s  %s" % [str(r.get("id", "")), str(r.get("text", ""))], 15, UI.C_TEXT, true)
+		var text: Label = UI.label("%s  %s" % [str(r.get("id", "")), str(r.get("text", ""))], 14, UI.C_TEXT, true)
 		text.custom_minimum_size = Vector2(350.0, 0.0)
 		col.add_child(text)
+	# the rocket this mission rides, and why it is the right one
+	var rocket: Dictionary = GameState.level.get("rocket", {})
+	if not rocket.is_empty():
+		col.add_child(UI.label("Your ride: " + str(rocket.get("name", "")), 14, UI.C_ACCENT))
+		var row: HBoxContainer = UI.hbox(10)
+		col.add_child(row)
+		row.add_child(UI.picture("res://art/modules/%s.png" % str(rocket.get("kind", "")), Vector2(54, 150), "rocket"))
+		var why: Label = UI.label(str(rocket.get("why", "")), 13, UI.C_TEXT, true)
+		why.custom_minimum_size = Vector2(286.0, 0.0)
+		row.add_child(why)
 
 
 func _build_bottom() -> void:

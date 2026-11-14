@@ -1,13 +1,269 @@
 {
   "_note": "ALL NUMBERS ARE PLACEHOLDERS for gameplay.",
-  "order": ["mass", "power", "link", "time"],
-  "mass": {"title": "Puzzle 1: Mass", "intro": "The rocket slot can lift 4.0 kg. Load the parts for a photo mission without going over.", "lesson": "Every part has mass, and the rocket has a hard limit.", "limit_kg": 4.0, "bus_kg": 1.3,
-	"bin": ["camera_std", "spectrometer", "solar_small", "solar_large", "battery_std", "radio_uhf", "radio_sband", "antenna_big"],
-	"needs": [{"category": "instrument", "data_type": "images", "missing": "You need a camera to take photos."}, {"category": "solar", "data_type": "", "missing": "You need solar panels for power."}, {"category": "battery", "data_type": "", "missing": "You need a battery for the dark part of the orbit."}, {"category": "radio", "data_type": "", "missing": "You need a radio to send the photos down."}]},
-  "power": {"title": "Puzzle 2: Power", "intro": "The Earth blocks the Sun for part of every orbit. Size the panels and battery so the satellite survives.", "lesson": "Panels must make enough power on average, and the battery must cover the eclipse.", "load_w": 12.0, "period_min": 95.0, "eclipse_min": 35.0, "panel_min_w": 6.0, "panel_max_w": 24.0, "panel_step_w": 1.0, "panel_start_w": 8.0, "battery_min_wh": 0.0, "battery_max_wh": 40.0, "battery_step_wh": 2.0, "battery_start_wh": 4.0, "panel_kg_per_w": 0.04, "battery_kg_per_wh": 0.0125, "mass_limit_kg": 0.7, "min_level_pct": 10.0},
-  "link": {"title": "Puzzle 3: Data link", "intro": "The camera makes more photos than the radio can send. Fix it with the mass and money you have left.", "lesson": "Data only counts when it reaches the ground. The slowest step sets the pace.", "make_mb_wk": 60.0, "send_mb_wk": 36.0, "need_mb_wk": 40.0, "spare_mass_kg": 0.3, "spare_cost_k": 120.0,
-	"options": [{"id": "antenna", "label": "Big antenna", "detail": "+20 MB/wk sent, +0.4 kg, $40k", "add_send": 20.0, "set_make": -1.0, "mass_kg": 0.4, "cost_k": 40.0}, {"id": "ground2", "label": "Second ground station", "detail": "+18 MB/wk sent, no mass, $100k", "add_send": 18.0, "set_make": -1.0, "mass_kg": 0.0, "cost_k": 100.0}, {"id": "lowres", "label": "Smaller photos", "detail": "Camera makes 40 MB/wk, free", "add_send": 0.0, "set_make": 40.0, "mass_kg": 0.0, "cost_k": 0.0}]},
-  "time": {"title": "Puzzle 4: Budget and time", "intro": "Get everything ready for the launch on day 180 without overspending.", "lesson": "Paperwork takes months. Start it early, because waiting costs money every day.", "launch_day": 180, "budget_k": 400.0, "reserve_pct": 10.0, "staff_cost_k_per_day": 1.0, "licence_days": 120, "licence_cost_k": 10.0, "licence_start_min": 0, "licence_start_max": 90, "licence_start_step": 5, "licence_start_default": 60, "ship_days": 20, "ship_cost_k": 10.0,
-	"build_options": [{"id": "normal", "label": "Normal build", "days": 90, "cost_k": 150.0}, {"id": "rushed", "label": "Rushed build", "days": 60, "cost_k": 220.0}],
-	"test_options": [{"id": "full", "label": "Full testing", "days": 30, "cost_k": 40.0}, {"id": "short", "label": "Short testing", "days": 15, "cost_k": 25.0}]}
+  "order": [
+	"mass",
+	"power",
+	"link",
+    "time"
+  ],
+  "mass": {
+	"title": "Puzzle 1: Mass",
+	"intro": "Pack a photo satellite into a 3.6 kg rocket slot.",
+	"lesson": "Mass, power and data are linked: a faster radio needs more power, and power needs mass.",
+	"limit_kg": 3.6,
+	"bus_kg": 1.3,
+	"bin": [
+	  "camera_std",
+	  "spectrometer",
+	  "solar_small",
+	  "solar_large",
+	  "battery_small",
+	  "battery_std",
+	  "radio_uhf",
+	  "radio_sband",
+      "antenna_big"
+	],
+	"needs": [
+	  {
+		"category": "instrument",
+		"data_type": "images",
+		"missing": "You need a camera to take photos."
+	  },
+	  {
+		"category": "solar",
+		"data_type": "",
+		"missing": "You need solar panels for power."
+	  },
+	  {
+		"category": "battery",
+		"data_type": "",
+		"missing": "You need a battery for the dark part of the orbit."
+	  },
+	  {
+		"category": "radio",
+		"data_type": "",
+		"missing": "You need a radio to send the photos down."
+	  }
+	],
+	"budget_k": 380.0,
+	"bus_w": 2.4,
+	"need_send_mb": 40.0,
+	"why_hard": [
+	  "Four limits at once: mass, money, power and data rate.",
+	  "The camera makes 60 MB of photos a week. 40 MB must reach the ground.",
+	  "Every radio and antenna uses power, and power comes from heavy panels.",
+      "Fixing one limit often breaks another."
+	],
+	"goal": [
+	  "A camera, panels, a battery and a radio",
+	  "At most 3.6 kg and $380k",
+	  "Panels make at least the power used",
+      "Send at least 40 MB a week"
+	]
+  },
+  "power": {
+	"title": "Puzzle 2: Power",
+	"intro": "Keep the satellite alive through the dark part of every orbit.",
+	"lesson": "Panels must make enough power on average, and the battery must cover the eclipse.",
+	"load_w": 12.0,
+	"period_min": 95.0,
+	"eclipse_min": 35.0,
+	"panel_min_w": 6.0,
+	"panel_max_w": 24.0,
+	"panel_step_w": 1.0,
+	"panel_start_w": 8.0,
+	"battery_min_wh": 0.0,
+	"battery_max_wh": 40.0,
+	"battery_step_wh": 2.0,
+	"battery_start_wh": 4.0,
+	"panel_kg_per_w": 0.04,
+	"battery_kg_per_wh": 0.0125,
+	"mass_limit_kg": 0.7,
+	"min_level_pct": 10.0,
+	"why_hard": [
+	  "It needs 12 W every minute, day and night.",
+	  "The Earth blocks the Sun for 35 of every 95 minutes.",
+	  "In sunlight the panels must run the satellite AND refill the battery.",
+      "A bigger battery is heavier. Limit: 0.7 kg."
+	],
+	"goal": [
+	  "Battery stays above 10%",
+	  "Full again before the next eclipse",
+      "Panels + battery: 0.7 kg or less"
+	]
+  },
+  "link": {
+	"title": "Puzzle 3: Data link",
+	"intro": "The camera makes 60 MB of photos a week, but the radio sends only 36 MB. Find a way to get 40 MB a week to the ground.",
+	"lesson": "The slowest step sets the pace. The best fixes are often free: change how you use what you already have.",
+	"make_mb_wk": 60.0,
+	"send_mb_wk": 36.0,
+	"need_mb_wk": 40.0,
+	"spare_mass_kg": 0.3,
+	"spare_cost_k": 120.0,
+	"options": [
+	  {
+		"id": "antenna",
+		"label": "Bolt on a big antenna",
+		"detail": "+20 MB/wk sent, 0.4 kg, $40k, 1 W",
+		"add_send": 20.0,
+		"set_make": -1.0,
+		"mass_kg": 0.4,
+		"cost_k": 40.0,
+		"power_w": 1.0,
+		"why": "It works, but 0.4 kg is more than the 0.3 kg you have left."
+	  },
+	  {
+		"id": "ground2",
+		"label": "Rent a second ground station",
+		"detail": "+18 MB/wk sent, no mass, $100k",
+		"add_send": 18.0,
+		"set_make": -1.0,
+		"mass_kg": 0.0,
+		"cost_k": 100.0,
+		"power_w": 0.0,
+		"why": "More passes over a station means more time to send. Costly, but simple."
+	  },
+	  {
+		"id": "lowres",
+		"label": "Take smaller photos",
+		"detail": "Camera makes 40 MB/wk, free",
+		"add_send": 0.0,
+		"set_make": 40.0,
+		"mass_kg": 0.0,
+		"cost_k": 0.0,
+		"power_w": 0.0,
+		"why": "Less data to send, but the radio still only manages 36 MB a week."
+	  },
+	  {
+		"id": "coast",
+		"label": "Only photograph coastlines",
+		"detail": "Camera makes 45 MB/wk, free",
+		"add_send": 0.0,
+		"set_make": 45.0,
+		"mass_kg": 0.0,
+		"cost_k": 0.0,
+		"power_w": 0.0,
+		"why": "Smart: skip photos you do not need. But sending is still the bottleneck."
+	  },
+	  {
+		"id": "compress",
+		"label": "Compress photos on board",
+		"detail": "Radio carries +10 MB/wk of photos, $20k, 2 W",
+		"add_send": 10.0,
+		"set_make": -1.0,
+		"mass_kg": 0.0,
+		"cost_k": 20.0,
+		"power_w": 2.0,
+		"why": "Software, not hardware: the same radio carries more photos. Costs computer power."
+	  },
+	  {
+		"id": "boost",
+		"label": "Run the radio at full power",
+		"detail": "+12 MB/wk sent, free, 4 W",
+		"add_send": 12.0,
+		"set_make": -1.0,
+		"mass_kg": 0.0,
+		"cost_k": 0.0,
+		"power_w": 4.0,
+		"why": "Free speed, but it needs 4 W and you only have 3 W spare. Can you free some power?"
+	  },
+	  {
+		"id": "heater",
+		"label": "Switch off the camera heater in sunlight",
+		"detail": "Frees 2 W, free",
+		"add_send": 0.0,
+		"set_make": -1.0,
+		"mass_kg": 0.0,
+		"cost_k": 0.0,
+		"power_w": -2.0,
+		"why": "The camera is warm enough in the Sun. This frees power for something else."
+	  },
+	  {
+		"id": "store",
+		"label": "Save photos and send them later",
+		"detail": "No change to speed, free",
+		"add_send": 0.0,
+		"set_make": -1.0,
+		"mass_kg": 0.0,
+		"cost_k": 0.0,
+		"power_w": 0.0,
+		"why": "A trap: storage only delays the problem. The radio still sends 36 MB a week."
+	  },
+	  {
+		"id": "relay",
+		"label": "Rent a relay satellite",
+		"detail": "+40 MB/wk sent, $300k",
+		"add_send": 40.0,
+		"set_make": -1.0,
+		"mass_kg": 0.0,
+		"cost_k": 300.0,
+		"power_w": 0.0,
+		"why": "Very fast, and far too expensive for this mission."
+	  }
+	],
+	"why_hard": [
+	  "Data only counts once it reaches the ground.",
+	  "The slowest step in the chain sets the pace.",
+	  "You have 0.3 kg, $120k and 3 W of power to spare. No more.",
+      "Not every idea helps. Some only look like they do."
+	],
+	"spare_power_w": 3.0,
+	"best_cost_k": 0.0
+  },
+  "time": {
+	"title": "Puzzle 4: Budget and time",
+	"intro": "Plan the year so the satellite is ready for its rocket without running out of money.",
+	"lesson": "Paperwork takes months. Start it early, because waiting costs money every day.",
+	"launch_day": 180,
+	"budget_k": 400.0,
+	"reserve_pct": 10.0,
+	"staff_cost_k_per_day": 1.0,
+	"licence_days": 120,
+	"licence_cost_k": 10.0,
+	"licence_start_min": 0,
+	"licence_start_max": 90,
+	"licence_start_step": 5,
+	"licence_start_default": 60,
+	"ship_days": 20,
+	"ship_cost_k": 10.0,
+	"build_options": [
+	  {
+		"id": "normal",
+		"label": "Normal build",
+		"days": 90,
+		"cost_k": 150.0
+	  },
+	  {
+		"id": "rushed",
+		"label": "Rushed build",
+		"days": 60,
+		"cost_k": 220.0
+	  }
+	],
+	"test_options": [
+	  {
+		"id": "full",
+		"label": "Full testing",
+		"days": 30,
+		"cost_k": 40.0
+	  },
+	  {
+		"id": "short",
+		"label": "Short testing",
+		"days": 15,
+		"cost_k": 25.0
+	  }
+	],
+	"why_hard": [
+	  "Build, then test, then ship: each waits for the one before.",
+	  "The licence runs alongside, but takes 120 days.",
+	  "The team is paid every day until shipping.",
+      "Rushing is faster, but costs more."
+	],
+	"goal": [
+	  "Ready before launch day 180",
+      "Keep 10% of the $400k budget spare"
+	]
+  }
 }
