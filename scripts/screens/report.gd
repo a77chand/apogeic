@@ -184,7 +184,7 @@ func _build_log() -> void:
 	_place(panel, Vector2(676, 430), Vector2(584, 138))
 	var col: VBoxContainer = UI.vbox(4)
 	panel.add_child(col)
-	col.add_child(UI.label("What happened on the way", 16))
+	col.add_child(UI.label("What happened on the way", 18))
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(550.0, 84.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -205,7 +205,7 @@ func _build_compare() -> void:
 	_place(panel, Vector2(676, 576), Vector2(584, 74))
 	var col: VBoxContainer = UI.vbox(3)
 	panel.add_child(col)
-	col.add_child(UI.label("Compare with a real mission", 15))
+	col.add_child(UI.label("Compare with a real mission", 18))
 	var text: Label = UI.label("Real mission figures will be added from verified NASA data.", 12, UI.C_MUTED, true)
 	text.custom_minimum_size = Vector2(550.0, 0.0)
 	col.add_child(text)
