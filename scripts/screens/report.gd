@@ -24,7 +24,8 @@ func _ready() -> void:
 	_build_log()
 	_build_compare()
 	_build_buttons()
-	GameState.play_sound("chime" if int(score.get("stars", 0)) > 0 else "fail")
+	var grade: String = str(score.get("grade", "failed"))
+	GameState.play_sound("fanfare" if grade == "success" else ("chime" if int(score.get("stars", 0)) > 0 else "fail"))
 	Tutorial.maybe_show(self, "report")
 
 

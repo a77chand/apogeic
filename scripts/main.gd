@@ -52,6 +52,7 @@ func _ready() -> void:
 	add_child(sfx)
 	GameState.sfx = sfx
 	add_child(UI.background())
+	add_child(UI.vignette())
 	# Screens are laid out for 1280 x 720. They sit centred in this holder, and the
 	# space background behind it fills any extra window area.
 	_holder = Control.new()

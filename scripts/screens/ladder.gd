@@ -81,7 +81,9 @@ func _step(title: String, blurb: String, done: bool, open: bool, handler: Callab
 	if open or done:
 		col.add_child(UI.button("Play", handler, 190.0, open and not done))
 	else:
-		col.add_child(UI.button("Locked", _on_locked, 190.0, false))
+		var locked: Button = UI.button("Locked", _on_locked, 190.0, false)
+		UI.look_locked(locked)
+		col.add_child(locked)
 	return panel
 
 
