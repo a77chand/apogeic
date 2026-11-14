@@ -1,0 +1,31 @@
+{
+  "_note": "Craft size choice for the main mission. Scope agreed with the team: LEO (550 km) and rideshare only; no orbit or launch-type choice. Values come from the team's research table and still need a check against the primary sources. 'dimension' is the nominal CubeSat standard size, not from that table. Ranges are given as min/max so the game can pick one value or show the range.",
+  "orbit": "LEO 550 km",
+  "launch": "Rideshare",
+  "craft": [
+    {
+      "id": "1u", "name": "1U CubeSat",
+      "dimension_cm": {"value": [10, 10, 10], "source": "CubeSat standard, nominal size. Verify."},
+      "max_mass_kg": {"value": 2.0, "note": "1.33 kg in older rules", "source": "team table, verify"},
+      "peak_power_w": {"min": 1.0, "max": 2.5, "source": "team table, verify"},
+      "launch_cost_k": {"min": 40.0, "max": 90.0, "source": "team table, verify"},
+      "downlink_kbps": {"min": 9.6, "max": 256.0, "source": "team table, verify"}
+    },
+    {
+      "id": "3u", "name": "3U CubeSat",
+      "dimension_cm": {"value": [10, 10, 30], "source": "CubeSat standard, nominal size. Verify."},
+      "max_mass_kg": {"value": 6.0, "note": "4 kg in older rules", "source": "team table, verify"},
+      "peak_power_w": {"min": 7.0, "max": 56.0, "typical": 30.0, "source": "team table, verify"},
+      "launch_cost_k": {"min": 100.0, "max": 270.0, "source": "team table, verify"},
+      "downlink_kbps": {"min": 9.6, "max": 12500.0, "source": "team table, verify"}
+    },
+    {
+      "id": "6u", "name": "6U CubeSat",
+      "dimension_cm": {"value": [10, 20, 30], "source": "CubeSat standard, nominal size. Verify."},
+      "max_mass_kg": {"value": 12.0, "note": "8 kg in older rules", "source": "team table, verify"},
+      "peak_power_w": {"min": 42.0, "max": 112.0, "typical": 100.0, "source": "team table, verify"},
+      "launch_cost_k": {"min": 250.0, "max": 540.0, "source": "team table, verify"},
+      "downlink_kbps": {"min": 500.0, "max": 10000.0, "source": "team table, verify"}
+    }
+  ]
+}
