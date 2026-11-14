@@ -6,6 +6,8 @@ extends PanelContainer
 const UI = preload("res://scripts/ui/ui.gd")
 
 signal clicked(part_id: String)
+signal hovered(part_id: String)
+signal unhovered
 
 var part_id: String = ""
 var _icon_path: String = ""
@@ -81,9 +83,11 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_MOUSE_ENTER:
 		_hover = true
 		_restyle()
+		hovered.emit(part_id)
 	elif what == NOTIFICATION_MOUSE_EXIT:
 		_hover = false
 		_restyle()
+		unhovered.emit()
 
 
 func _gui_input(event: InputEvent) -> void:
