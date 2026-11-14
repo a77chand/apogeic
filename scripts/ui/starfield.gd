@@ -42,7 +42,8 @@ func _draw() -> void:
 		var twinkle: float = 0.55 + 0.45 * sin(_time * float(s[4]) + float(s[3]))
 		var c: Color = COLORS[int(s[5])]
 		c.a = twinkle
-		draw_circle(Vector2(float(s[0]) * size.x, float(s[1]) * size.y), float(s[2]), c)
+		var drift: float = fposmod(float(s[0]) + _time * 0.0025 * float(s[2]), 1.0)   # near stars move faster
+		draw_circle(Vector2(drift * size.x, float(s[1]) * size.y), float(s[2]), c)
 
 
 ## A soft round glow: stacked circles that get fainter towards the edge.
