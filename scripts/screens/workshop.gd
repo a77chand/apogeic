@@ -455,7 +455,7 @@ func _refresh() -> void:
 			"launch day %d of %d" % [int(round(launch_day)), int(round(deadline))], results)
 
 	var ready: float = Sim.readiness_pct(results)
-	UI.set_meter(_readiness_bar, ready, UI.status_for(ready >= 99.99, ready >= 80.0))
+	UI.set_meter(_readiness_bar, ready, UI.status_for(ready >= 99.99, ready >= float(GameState.level.get("launch_min_readiness_pct", 80.0))))
 	_readiness_label.text = "%d%% ready" % int(round(ready))
 
 	_day_pill.text = "Day %d of %d" % [int(GameState.sched.get("day", 1)), int(deadline)]

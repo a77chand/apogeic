@@ -148,16 +148,17 @@ func _build_side() -> void:
 	col.add_child(UI.label("Readiness", 20))
 	var ready: float = Sim.readiness_pct(_results)
 	var bar: ProgressBar = UI.meter(280.0)
-	UI.set_meter(bar, ready, UI.status_for(ready >= 99.99, ready >= 80.0))
+	var need: float = float(GameState.level.get("launch_min_readiness_pct", 80.0))
+	UI.set_meter(bar, ready, UI.status_for(ready >= 99.99, ready >= need))
 	col.add_child(bar)
 	# a marker at 80%
 	var marker: ColorRect = ColorRect.new()
 	marker.color = UI.C_TEXT
 	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(marker)
-	marker.position = Vector2(280.0 * 0.8, -3.0)
+	marker.position = Vector2(280.0 * need / 100.0, -3.0)
 	marker.size = Vector2(2.0, 22.0)
-	col.add_child(UI.label("%d%% ready (marker at 80%%)" % int(round(ready)), 13, UI.C_MUTED))
+	col.add_child(UI.label("%d%% ready. The rocket needs %d%% (the marker) to reach orbit." % [int(round(ready)), int(round(need))], 13, UI.C_MUTED, true))
 	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(288.0, 340.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -239,6 +240,9 @@ func _on_launch_anyway() -> void:
 	var col: VBoxContainer = UI.vbox(10)
 	panel.add_child(col)
 	col.add_child(UI.label("Launch with failed checks?", 24))
+	var need: float = float(GameState.level.get("launch_min_readiness_pct", 80.0))
+	if Sim.readiness_pct(_results) < need - Sim.EPS:
+		col.add_child(UI.label("Only %d%% ready. Below %d%% the rocket will NOT reach orbit, and the mission ends at launch." % [int(round(Sim.readiness_pct(_results))), int(round(need))], 15, UI.C_RED, true))
 	col.add_child(UI.label("These will happen in orbit:", 14, UI.C_MUTED))
 	for item in _results:
 		var r: Dictionary = item
