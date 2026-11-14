@@ -1,25 +1,26 @@
 ; Engine configuration file.
-; Edit settings through Project > Project Settings in the Godot editor when possible.
+; Hand-written starter. Open the folder in Godot 4 and let it update this file.
+; Everyone on the team must use the SAME Godot 4 version.
 
 config_version=5
 
 [application]
 
-config/name="Sol by Sol"
-config/description="Run a lunar or Martian outpost for 30 sols. NASA Space Apps Challenge 2026."
+config/name="Space Mission Designer"
 run/main_scene="res://scenes/main.tscn"
-config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+GameState="*res://scripts/autoload/game_state.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+window/stretch/aspect="keep"
 
 [rendering]
 
-; The Web (HTML5) export only supports the Compatibility renderer.
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/vram_compression/import_etc2_astc=true
