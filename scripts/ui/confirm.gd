@@ -27,6 +27,7 @@ func setup(title: String, body: String, yes_text: String, on_yes: Callable) -> v
 
 
 func _ready() -> void:
+	z_index = 100   # always above the screen
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var dim: ColorRect = ColorRect.new()

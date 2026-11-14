@@ -121,63 +121,64 @@ static func star_row(count: int, size: float = 24.0) -> HBoxContainer:
 	return row
 
 
-## A heart for the lives display: red when full, a dim outline when used.
+## A pixel heart for the lives display: red when full, a dim outline when used.
+const HEART_PIXELS: Array = [
+	".XX.XX.",
+	"XXXXXXX",
+	"XXXXXXX",
+	".XXXXX.",
+	"..XXX..",
+	"...X...",
+]
+
+
 static func heart_icon(full: bool, size: float = 20.0) -> Control:
 	var c: Control = Control.new()
 	c.custom_minimum_size = Vector2(size, size)
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.draw.connect(func() -> void:
-		var pts: PackedVector2Array = PackedVector2Array()
-		for i in range(40):
-			var t: float = TAU * float(i) / 40.0
-			var x: float = 16.0 * pow(sin(t), 3)
-			var y: float = -(13.0 * cos(t) - 5.0 * cos(2.0 * t) - 2.0 * cos(3.0 * t) - cos(4.0 * t))
-			pts.append(Vector2(size * 0.5, size * 0.46) + Vector2(x, y) * size / 36.0)
-		if full:
-			c.draw_colored_polygon(pts, C_RED)
-		else:
-			pts.append(pts[0])
-			c.draw_polyline(pts, Color(C_MUTED, 0.5), 1.5, true))
+		var px: float = floorf(size / 7.0)
+		var off: Vector2 = Vector2((size - px * 7.0) * 0.5, (size - px * 6.0) * 0.5)
+		for y in range(HEART_PIXELS.size()):
+			var row: String = HEART_PIXELS[y]
+			for x in range(row.length()):
+				if row[x] != "X":
+					continue
+				var r: Rect2 = Rect2(off + Vector2(x, y) * px, Vector2(px, px))
+				if full:
+					c.draw_rect(r, C_RED if not (y == 1 and x == 1) else Color(1, 0.75, 0.75))
+				else:
+					c.draw_rect(r, Color(C_MUTED, 0.22)))
 	return c
 
 
-## A short message in the bottom-right corner that fades out after a few seconds.
-## Used for feedback after a choice: how good it was and why.
-static func toast(host: Node, title: String, text: String, color: Color, seconds: float = 6.0) -> void:
-	var panel: PanelContainer = PanelContainer.new()
-	var sb: StyleBoxFlat = box(Color(0.02, 0.05, 0.11, 0.95), color, 8, 2, 12.0)
-	sb.border_width_left = 6
-	panel.add_theme_stylebox_override("panel", sb)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.z_index = 50
-	var col: VBoxContainer = vbox(4)
-	panel.add_child(col)
-	col.add_child(label(title, 18, color))
-	var l: Label = label(text, 14, C_TEXT, true)
-	l.custom_minimum_size = Vector2(380.0, 0.0)
-	col.add_child(l)
-	host.add_child(panel)
-	panel.position = Vector2(1270.0, 470.0)
-	panel.size = Vector2(410.0, 0.0)
-	var tw: Tween = panel.create_tween()
-	tw.tween_property(panel, "position:x", 850.0, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_interval(seconds)
-	tw.tween_property(panel, "modulate:a", 0.0, 0.8)
-	tw.tween_callback(panel.queue_free)
+## The star dust sparkle: a four-pointed star with a small one beside it (from the
+## reference sheet of sparkles), in pale violet.
+static func sparkle_icon(size: float = 22.0, color: Color = Color(0.80, 0.72, 1.0)) -> Control:
+	var c: Control = Control.new()
+	c.custom_minimum_size = Vector2(size, size)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func() -> void:
+		_draw_sparkle(c, Vector2(size * 0.42, size * 0.56), size * 0.42, color)
+		_draw_sparkle(c, Vector2(size * 0.86, size * 0.18), size * 0.13, color))
+	return c
 
 
-## The feedback toast for an event choice (see Sim.choice_rating).
-static func choice_toast(host: Node, rating: Dictionary, late: bool) -> void:
-	var r: String = str(rating.get("rating", "fair"))
-	var why: String = str(rating.get("why", ""))
-	if late:
-		toast(host, "Time ran out", "The default was picked for you. " + why, C_RED)
-	elif r == "best":
-		toast(host, "Optimal choice. Well done!", why, C_GREEN)
-	elif r == "fair":
-		toast(host, "Fair choice", why, C_YELLOW)
-	else:
-		toast(host, "Costly choice", why, C_RED)
+## A four-pointed sparkle with curved sides: long points up, down, left and right.
+static func _draw_sparkle(ci: CanvasItem, m: Vector2, r: float, color: Color) -> void:
+	var pts: PackedVector2Array = PackedVector2Array()
+	var steps: int = 8
+	for q in range(4):
+		var a0: float = -PI * 0.5 + PI * 0.5 * float(q)
+		var a1: float = a0 + PI * 0.5
+		var tip0: Vector2 = m + Vector2(cos(a0), sin(a0)) * r
+		var tip1: Vector2 = m + Vector2(cos(a1), sin(a1)) * r
+		for i in range(steps):
+			var t: float = float(i) / float(steps)
+			# a curve that bows in towards the centre between two points
+			var p: Vector2 = tip0.lerp(tip1, t)
+			pts.append(p.lerp(m, sin(t * PI) * 0.78))
+	ci.draw_colored_polygon(pts, color)
 
 
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:

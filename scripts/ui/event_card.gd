@@ -51,6 +51,7 @@ func setup(event: Dictionary) -> void:
 
 
 func _ready() -> void:
+	z_index = 100   # always above the screen, including raised cards
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var dim: ColorRect = ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.6)

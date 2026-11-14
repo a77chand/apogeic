@@ -39,8 +39,8 @@ func _build_header() -> void:
 		_place(UI.picture("res://art/ui/ui_logo.png", Vector2(900, 200), "AP0GEIC 11"), Vector2(190, 40), Vector2(900, 200))
 		return
 	var logo: Control = Logo.new()
-	logo.planet_centre = Vector2(400, 730)
-	logo.planet_radius = 250.0
+	logo.planet_centre = Vector2(390, 1090)
+	logo.planet_radius = 580.0
 	_place(logo, Vector2.ZERO, Vector2(1280, 720))
 
 
