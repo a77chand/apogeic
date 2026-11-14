@@ -2,11 +2,17 @@ extends Control
 ## Puzzle 4: Budget and time. Plan the year on an interactive timeline:
 ## click the Build and Test bars to switch options, drag the Licence bar to choose when
 ## the paperwork starts. The satellite must be ready by launch day without overspending.
+## Then "Play the year": a day line runs across the plan and the surprises every real
+## project hits appear (a fault found in testing, a licence delay). A plan with no room
+## for them fails, and short testing lets the fault through to orbit. After the first play
+## the surprises stay visible on the plan.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Chrome = preload("res://scripts/ui/chrome.gd")
 const PlanTimeline = preload("res://scripts/ui/plan_timeline.gd")
+const Film = preload("res://scripts/ui/film.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const ID: String = "time"
 
@@ -22,6 +28,7 @@ var _message: Label = null
 var _lock_btn: Button = null
 var _back_btn: Button = null
 var _locked: bool = false
+var _revealed: bool = false   # true once the year has been played and the surprises are known
 
 
 func _ready() -> void:
@@ -40,6 +47,7 @@ func _ready() -> void:
 	_build_plan()
 	_build_bottom()
 	_refresh()
+	Tutorial.maybe_show(self, "puzzle_time")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -58,10 +66,10 @@ func _build_intro() -> void:
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 14, UI.C_TEXT, true)
 	intro.custom_minimum_size = Vector2(262.0, 0.0)
 	col.add_child(intro)
-	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
-	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 262.0, UI.C_ORANGE))
 	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
-	col.add_child(UI.bullets(_pz.get("goal", []), 13, UI.C_TEXT, 262.0, UI.C_GREEN))
+	col.add_child(UI.bullets(_pz.get("goal", []), 14, UI.C_TEXT, 262.0, UI.C_GREEN))
+	col.add_child(UI.label("Real projects", 14, UI.C_ORANGE))
+	col.add_child(UI.bullets(["Something always goes wrong", "Leave room for it", "Testing finds faults on the ground, not in orbit"], 14, UI.C_TEXT, 262.0, UI.C_ORANGE))
 
 
 func _build_plan() -> void:
@@ -94,7 +102,7 @@ func _build_bottom() -> void:
 	panel.add_child(_message)
 	_back_btn = UI.button("Back", _on_back, 160.0, false)
 	_place(_back_btn, Vector2(20, 598), Vector2(160, 52))
-	_lock_btn = UI.button("Lock it in", _on_lock, 220.0, true)
+	_lock_btn = UI.button("Play the year", _on_lock, 220.0, true)
 	_place(_lock_btn, Vector2(1040, 598), Vector2(220, 52))
 
 
@@ -107,8 +115,17 @@ func _on_plan_changed(build_id: String, test_id: String, licence_start: int) -> 
 	_refresh()
 
 
+## The plan as the player sees it: before the year is played, without the surprises.
+func _result() -> Dictionary:
+	if _revealed:
+		return Sim.puzzle_time(_pz, _build_id, _test_id, _licence_start)
+	var plain: Dictionary = _pz.duplicate()
+	plain["surprises"] = []
+	return Sim.puzzle_time(plain, _build_id, _test_id, _licence_start)
+
+
 func _refresh() -> void:
-	var res: Dictionary = Sim.puzzle_time(_pz, _build_id, _test_id, _licence_start)
+	var res: Dictionary = _result()
 	_plan.call("set_result", res)
 	var passed: bool = bool(res.get("passed", false))
 	var reasons: Array = res.get("reasons", [])
@@ -121,21 +138,67 @@ func _refresh() -> void:
 	_cost_big.text = "%s / %s" % [UI.money(cost), UI.money(limit)]
 	_cost_big.add_theme_color_override("font_color", UI.C_GREEN if cost <= limit + Sim.EPS else UI.C_RED)
 	if passed:
-		_message.text = "It works. " + str(_pz.get("lesson", ""))
+		_message.text = "On paper it works. Press Play the year to see if it survives real life." if not _revealed else "It works, surprises included."
 		_message.add_theme_color_override("font_color", UI.C_GREEN)
-		Chrome.set_tip(_tip, "Ready in time and inside the budget. Press Lock it in.")
+		Chrome.set_tip(_tip, "Ready in time and inside the budget. Press Play the year.")
 	else:
 		_message.text = "  •  ".join(PackedStringArray(reasons))
 		_message.add_theme_color_override("font_color", UI.C_RED)
 		Chrome.set_tip(_tip, "Watch the READY DAY line and the money bar as you drag the Licence bar.")
-	_lock_btn.disabled = not passed or _locked
+	_lock_btn.disabled = _locked
 
 
+## Plays the year: the day line runs across the plan, the surprises appear as it reaches
+## them, then a short film shows how it ended.
 func _on_lock() -> void:
 	if _locked:
 		return
 	_locked = true
 	_lock_btn.disabled = true
+	_revealed = true
+	var res: Dictionary = Sim.puzzle_time(_pz, _build_id, _test_id, _licence_start)
+	_plan.set("locked", true)
+	var end_day: float = maxf(float(res.get("finish_day", 0)), float(_pz.get("launch_day", 0)))
+	var notes: Array = []
+	for item in res.get("bars", []):
+		var b: Dictionary = item
+		if int(b.get("extra", 0)) > 0:
+			for sp in res.get("surprises", []):
+				if str((sp as Dictionary).get("phase", "")) == str(b.get("label", "")):
+					notes.append([float(int(b.get("end", 0)) - int(b.get("extra", 0))), str((sp as Dictionary).get("text", ""))])
+	_message.text = ""
+	_message.add_theme_color_override("font_color", UI.C_YELLOW)
+	var day: float = 0.0
+	while day <= end_day:
+		_plan.set("cursor_day", day)
+		for n in notes:
+			var note: Array = n
+			if day >= float(note[0]) and not _message.text.contains(str(note[1])):
+				_message.text = (_message.text + "  " + str(note[1])).strip_edges()
+				_plan.call("set_result", res)
+				GameState.play_sound("alert")
+		_plan.queue_redraw()
+		await get_tree().process_frame
+		if not is_inside_tree():
+			return
+		day += 0.8
+	_plan.set("cursor_day", -1.0)
+	_plan.set("locked", false)
+	_refresh()
+	if not bool(res.get("passed", false)):
+		var film: Control = null
+		if bool(res.get("fault_escaped", false)):
+			film = Film.play(self, "fault", [str((_pz.get("surprises", [])[0] as Dictionary).get("missed", ""))])
+		elif int(res.get("finish_day", 0)) > int(_pz.get("launch_day", 0)):
+			film = Film.play(self, "late", ["Ready on day %d, but the rocket left on day %d." % [int(res.get("finish_day", 0)), int(_pz.get("launch_day", 0))], "Rideshare rockets do not wait. The surprises ate the time you did not leave spare."])
+		else:
+			film = Film.play(self, "budget_fail", ["The surprises cost days, and the team is paid every day.", "The money ran out before launch."])
+		await film.finished
+		_locked = false
+		_refresh()
+		return
+	var ok: Control = Film.play(self, "launch_ok", ["Ready in time, inside the budget, surprises and all.", str(_pz.get("lesson", ""))])
+	await ok.finished
 	GameState.mark_puzzle_done(ID)
 	GameState.play_sound("fanfare")
 	_message.text = str(_pz.get("lesson", ""))

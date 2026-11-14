@@ -4,8 +4,10 @@ extends RefCounted
 
 const PARTS_PATH: String = "res://data/parts.json"
 const LEVEL1_PATH: String = "res://data/level1.json"
-## The missions in the order they unlock. Each is data/<id>.json.
-const MISSIONS: Array = ["level1", "level2", "level3"]
+## The missions in the order they unlock. Each is data/<id>.json, each based on a real
+## spaceflight (its "based_on" block). Levels 4-20 are built by tools/make_missions.py.
+const MISSIONS: Array = ["level1", "level4", "level5", "level6", "level7", "level8", "level9", "level2", "level10", "level11",
+		"level12", "level13", "level14", "level3", "level15", "level16", "level17", "level18", "level19", "level20"]
 const EVENTS_PATH: String = "res://data/events.json"
 const PUZZLES_PATH: String = "res://data/puzzles.json"
 

@@ -46,6 +46,7 @@ func _build_mission() -> void:
 	panel.add_child(col)
 	col.add_child(UI.label(str(GameState.level.get("level_label", "")), 13, UI.C_MUTED))
 	col.add_child(UI.label(str(GameState.level.get("name", "")), 24, UI.C_CYAN))
+	col.add_child(UI.based_on_tag(GameState.level))
 	var pic: Control = UI.picture("res://art/modules/cubesat_%s.png" % GameState.craft_id, Vector2(360, 80), "CubeSat " + GameState.craft_id.to_upper())
 	col.add_child(pic)
 	var goal: Label = UI.label(str(GameState.level.get("goal_text", "")), 15, UI.C_TEXT, true)
@@ -59,7 +60,7 @@ func _build_mission() -> void:
 	col.add_child(limit_label)
 	var diffs: Array = GameState.level.get("differences", [])
 	if not diffs.is_empty():
-		col.add_child(UI.label("Why this mission is different", 14, UI.C_ORANGE))
+		col.add_child(UI.label("The real story", 14, UI.C_ORANGE))
 		col.add_child(UI.bullets(diffs, 13, UI.C_TEXT, 360.0, UI.C_ORANGE))
 
 

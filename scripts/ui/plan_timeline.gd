@@ -5,6 +5,8 @@ extends Control
 ## - Drag the Licence bar left or right to choose when the paperwork starts.
 ## Under the plan, a money bar fills up as days pass (the team is paid every day),
 ## with a line at the most you can spend. It emits plan_changed when anything moves.
+## The surprise days (a fault fix, a licence delay) are drawn striped at the end of their
+## bar, and cursor_day draws a moving "today" line while the year is played.
 
 const UI = preload("res://scripts/ui/ui.gd")
 
@@ -24,6 +26,8 @@ var _res: Dictionary = {}
 var _dragging: bool = false
 var _drag_offset: float = 0.0
 var _hover_row: int = -1
+var cursor_day: float = -1.0   # the "today" line while the year plays; -1 hides it
+var locked: bool = false       # no dragging while the year plays
 
 
 func _init() -> void:
@@ -74,6 +78,8 @@ func _other(options: Array, current: String) -> String:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if locked:
+		return
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
 		if mb.button_index != MOUSE_BUTTON_LEFT:
@@ -168,8 +174,26 @@ func _draw() -> void:
 		var b: Dictionary = _bar(name_text)
 		var days: int = int(b.get("end", 0)) - int(b.get("start", 0))
 		draw_string(font, Vector2(r.position.x + (22.0 if i == 2 else 8.0), r.position.y + r.size.y * 0.5 + 5.0), "%d days" % days, HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 10.0, 13, Color(0.02, 0.04, 0.08))
+		# the surprise days, striped red at the end of the bar
+		var extra: int = int(b.get("extra", 0))
+		if extra > 0:
+			var ex0: float = _day_x(float(int(b.get("end", 0)) - extra))
+			var er: Rect2 = Rect2(ex0, r.position.y, r.end.x - ex0, r.size.y)
+			draw_rect(er, Color(UI.C_RED, 0.75))
+			var sx: float = er.position.x - er.size.y
+			while sx < er.end.x:
+				var a: Vector2 = Vector2(maxf(sx, er.position.x), er.end.y - maxf(0.0, er.position.x - sx))
+				var bb: Vector2 = Vector2(minf(sx + er.size.y, er.end.x), er.position.y + maxf(0.0, sx + er.size.y - er.end.x))
+				draw_line(a, bb, Color(0, 0, 0, 0.35), 2.0)
+				sx += 8.0
+			draw_string(font, Vector2(er.position.x + 3.0, er.position.y - 2.0), "+%d" % extra, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 11, UI.C_RED)
 		if str(notes[i]) != "":
 			draw_string(font, Vector2(r.end.x + 8.0, r.position.y + r.size.y * 0.5 + 5.0), str(notes[i]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, UI.C_MUTED)
+	# today, while the year plays
+	if cursor_day >= 0.0:
+		var cx: float = _day_x(cursor_day)
+		draw_line(Vector2(cx, ROWS_TOP - 8.0), Vector2(cx, rows_bottom + 4.0), Color(1, 1, 1, 0.9), 2.0)
+		draw_string(font, Vector2(cx + 4.0, rows_bottom + 2.0), "DAY %d" % int(cursor_day), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, Color(1, 1, 1))
 	# finish marker
 	var fx: float = _day_x(finish)
 	var fc: Color = UI.C_GREEN if finish <= launch_day else UI.C_RED

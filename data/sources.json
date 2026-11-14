@@ -1,5 +1,5 @@
 {
-  "_note": "Shown by the menu's Resources and sources button (scripts/ui/sources.gd). Keep it honest: say what is real, what is rounded, and what is invented for gameplay. Check every link before the final submission.",
+  "_note": "Shown by the menu's Resources and sources button (scripts/ui/sources.gd). Keep it honest: say what is real, what is rounded, and what is invented for gameplay. Every url was checked (HTTP 200) on 14 Nov 2026; check again before the final submission. The missions' own sources are in each level file's based_on block and are listed automatically.",
   "accuracy": [
     "Real physics: one low Earth orbit at about 550 km takes about 95 minutes, and the Earth hides the Sun for up to about 35 of them. That is why every satellite needs a battery.",
     "Real rules: CubeSats come in standard sizes (1U is a 10 cm cube, 3U is three of them), and a rideshare rocket sells a slot with a hard mass limit.",
@@ -10,18 +10,96 @@
     "Every screen with made-up numbers says PLACEHOLDER NUMBERS in the bottom bar."
   ],
   "sources": [
-    {"title": "CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers", "by": "NASA CubeSat Launch Initiative, 2017", "where": "nasa.gov", "used_for": "Sizes, the build-test-launch order, licensing steps, rideshare launches"},
-    {"title": "CubeSat Design Specification", "by": "Cal Poly CubeSat programme", "where": "cubesat.org", "used_for": "1U, 3U and 6U sizes and their mass limits"},
-    {"title": "State-of-the-Art of Small Spacecraft Technology", "by": "NASA Small Spacecraft Systems Virtual Institute", "where": "nasa.gov/smallsat-institute", "used_for": "Typical ranges for solar panels, batteries, radios and cameras on small satellites"},
-    {"title": "Beginner's Guide to Rockets", "by": "NASA Glenn Research Center", "where": "grc.nasa.gov", "used_for": "Rocket stages, maximum dynamic pressure (max-Q) and why mass matters"},
-    {"title": "Orbit period and eclipse time", "by": "Worked out with Kepler's third law (Earth radius 6371 km, altitude 550 km)", "where": "standard orbital mechanics", "used_for": "The 95-minute orbit and the 35-minute eclipse"},
-    {"title": "Commercial Remote Sensing licensing", "by": "NOAA Office of Space Commerce", "where": "space.commerce.gov", "used_for": "Why an imaging satellite needs a licence before launch, and why it takes months"},
-    {"title": "Structured light system detects hazards for planetary surface navigation", "by": "A. Nefian (NASA Ames), Laser Focus World", "where": "laserfocusworld.com", "used_for": "The 97% detection figure in the truck problem (see docs/TRUCK_SOURCES.md)"},
-    {"title": "The Dark Side of the Crater", "by": "NASA Ames", "where": "nasa.gov", "used_for": "How shadows and dust affect cameras in the truck problem (direction only, no numbers)"}
+    {
+      "title": "CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers",
+      "by": "NASA CubeSat Launch Initiative, 2017",
+      "where": "nasa.gov",
+      "used_for": "Sizes, the build-test-launch order, licensing steps, rideshare launches",
+      "url": "https://www.nasa.gov/wp-content/uploads/2017/03/nasa_csli_cubesat_101_508.pdf",
+      "author": "NASA CubeSat Launch Initiative",
+      "year": "2017"
+    },
+    {
+      "title": "CubeSat Design Specification",
+      "by": "Cal Poly CubeSat programme",
+      "where": "cubesat.org",
+      "used_for": "1U, 3U and 6U sizes and their mass limits",
+      "url": "https://www.cubesat.org/cubesatinfo",
+      "author": "Cal Poly CubeSat Program",
+      "year": "n.d."
+    },
+    {
+      "title": "State-of-the-Art of Small Spacecraft Technology",
+      "by": "NASA Small Spacecraft Systems Virtual Institute",
+      "where": "nasa.gov/smallsat-institute",
+      "used_for": "Typical ranges for solar panels, batteries, radios and cameras on small satellites",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/",
+      "author": "NASA Small Spacecraft Systems Virtual Institute",
+      "year": "2024"
+    },
+    {
+      "title": "Beginner's Guide to Rockets",
+      "by": "NASA Glenn Research Center",
+      "where": "grc.nasa.gov",
+      "used_for": "Rocket stages, maximum dynamic pressure (max-Q) and why mass matters",
+      "url": "https://www.grc.nasa.gov/www/k-12/rocket/bgmr.html",
+      "author": "NASA Glenn Research Center",
+      "year": "n.d."
+    },
+    {
+      "title": "Catalog of Earth Satellite Orbits, and the orbit period worked out with Kepler's third law",
+      "by": "Worked out with Kepler's third law (Earth radius 6371 km, altitude 550 km)",
+      "where": "standard orbital mechanics",
+      "used_for": "The 95-minute orbit and the 35-minute eclipse",
+      "url": "https://earthobservatory.nasa.gov/features/OrbitsCatalog",
+      "author": "NASA Earth Observatory (background); figures worked out by the team",
+      "year": "2009"
+    },
+    {
+      "title": "Commercial Remote Sensing licensing",
+      "by": "NOAA Office of Space Commerce",
+      "where": "space.commerce.gov",
+      "used_for": "Why an imaging satellite needs a licence before launch, and why it takes months",
+      "url": "https://www.space.commerce.gov/regulations/commercial-remote-sensing-regulatory-affairs/",
+      "author": "NOAA Office of Space Commerce",
+      "year": "n.d."
+    },
+    {
+      "title": "Structured light system detects hazards for planetary surface navigation",
+      "by": "A. Nefian (NASA Ames), Laser Focus World",
+      "where": "laserfocusworld.com",
+      "used_for": "The 97% detection figure in the truck problem (see docs/TRUCK_SOURCES.md)",
+      "url": "https://www.laserfocusworld.com/detectors-imaging/article/14175339/structured-light-system-detects-hazards-for-planetary-surface-navigation",
+      "author": "Nefian, A. (NASA Ames), in Laser Focus World",
+      "year": "n.d."
+    },
+    {
+      "title": "The Dark Side of the Crater",
+      "by": "NASA Ames",
+      "where": "nasa.gov",
+      "used_for": "How shadows and dust affect cameras in the truck problem (direction only, no numbers)",
+      "url": "https://www.nasa.gov/centers-and-facilities/ames/the-dark-side-of-the-crater-how-light-looks-different-on-the-moon-and-what-nasa-is-doing-about-it",
+      "author": "NASA Ames Research Center",
+      "year": "n.d."
+    }
   ],
   "made_with": [
-    "Godot Engine (MIT licence).",
-    "Rajdhani font by Indian Type Foundry (SIL Open Font License).",
-    "Sound effects and music are generated in code. No audio files are used."
-  ]
+    {
+      "text": "Godot Engine (MIT licence).",
+      "url": "https://godotengine.org/license/"
+    },
+    {
+      "text": "Rajdhani font by Indian Type Foundry (SIL Open Font License).",
+      "url": "https://fonts.google.com/specimen/Rajdhani"
+    },
+    {
+      "text": "Silkscreen font by Jason Kottke (SIL Open Font License).",
+      "url": "https://fonts.google.com/specimen/Silkscreen"
+    },
+    {
+      "text": "Sound effects and music are generated in code. No audio files are used.",
+      "url": ""
+    }
+  ],
+  "accessed": "14 November 2026"
 }

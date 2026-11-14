@@ -1,6 +1,7 @@
 extends Control
 ## "Resources and sources": where the game's facts come from and how close to real life
-## they are. Opened from the menu. Reads data/sources.json.
+## they are, with a formal citation and a link for each. Opened from the menu. Reads
+## data/sources.json, and the based_on block of every mission.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Data = preload("res://scripts/core/data.gd")
@@ -37,19 +38,60 @@ func _ready() -> void:
 	var cfg: Dictionary = Data.load_dict("res://data/sources.json")
 	body.add_child(UI.label("How close to real life is it?", 18, UI.C_TEXT))
 	body.add_child(UI.bullets(cfg.get("accuracy", []), 15, UI.C_TEXT, 920.0))
+	var accessed: String = str(cfg.get("accessed", ""))
 	body.add_child(UI.label("Where the facts come from", 18, UI.C_TEXT))
 	for item in cfg.get("sources", []):
-		var s: Dictionary = item
-		var card: PanelContainer = UI.panel(UI.C_DISABLED_BORDER, 10.0)
-		body.add_child(card)
-		var c: VBoxContainer = UI.vbox(2)
-		card.add_child(c)
-		var t: Label = UI.label(str(s.get("title", "")), 16, UI.C_ACCENT, true)
-		t.custom_minimum_size = Vector2(900.0, 0.0)
-		c.add_child(t)
-		c.add_child(UI.label("%s  ·  %s" % [str(s.get("by", "")), str(s.get("where", ""))], 13, UI.C_MUTED))
-		var used: Label = UI.label("Used for: " + str(s.get("used_for", "")), 14, UI.C_TEXT, true)
-		used.custom_minimum_size = Vector2(900.0, 0.0)
-		c.add_child(used)
+		var src: Dictionary = item
+		body.add_child(_card(src, "Used for: " + str(src.get("used_for", "")), accessed))
+	body.add_child(UI.label("The real missions behind the 20 levels", 18, UI.C_TEXT))
+	for id in Data.MISSIONS:
+		var level: Dictionary = Data.load_level(str(id))
+		var b: Dictionary = level.get("based_on", {})
+		if b.is_empty():
+			continue
+		var src: Dictionary = {"title": "%s (%s, %d)" % [str(b.get("mission", "")), str(b.get("agency", "")), int(b.get("year", 0))],
+				"cite": str(b.get("source", "")), "url": str(b.get("url", ""))}
+		body.add_child(_card(src, "Level \"%s\": %s" % [str(level.get("name", "")), str(b.get("story", ""))], accessed))
 	body.add_child(UI.label("Made with", 18, UI.C_TEXT))
-	body.add_child(UI.bullets(cfg.get("made_with", []), 14, UI.C_MUTED, 920.0))
+	for item in cfg.get("made_with", []):
+		var m: Dictionary = item if typeof(item) == TYPE_DICTIONARY else {"text": str(item)}
+		var row: HBoxContainer = UI.hbox(10)
+		body.add_child(row)
+		row.add_child(UI.label("•  " + str(m.get("text", "")), 14, UI.C_MUTED))
+		if str(m.get("url", "")) != "":
+			row.add_child(_link(str(m.get("url", ""))))
+
+
+## One source as a card: title, a formal citation, what it is used for, and a link.
+func _card(src: Dictionary, used_for: String, accessed: String) -> Control:
+	var card: PanelContainer = UI.panel(UI.C_DISABLED_BORDER, 10.0)
+	var c: VBoxContainer = UI.vbox(2)
+	card.add_child(c)
+	var t: Label = UI.label(str(src.get("title", "")), 16, UI.C_ACCENT, true)
+	t.custom_minimum_size = Vector2(900.0, 0.0)
+	c.add_child(t)
+	var cite: String = str(src.get("cite", ""))
+	if cite == "":
+		# author (year). Title. Where. Accessed date.
+		cite = "%s (%s). %s. %s." % [str(src.get("author", src.get("by", ""))), str(src.get("year", "n.d.")), str(src.get("title", "")), str(src.get("where", ""))]
+	if accessed != "" and str(src.get("url", "")) != "":
+		cite += " Accessed %s." % accessed
+	var cl: Label = UI.label(cite, 13, UI.C_MUTED, true)
+	cl.custom_minimum_size = Vector2(900.0, 0.0)
+	c.add_child(cl)
+	var used: Label = UI.label(used_for, 14, UI.C_TEXT, true)
+	used.custom_minimum_size = Vector2(900.0, 0.0)
+	c.add_child(used)
+	if str(src.get("url", "")) != "":
+		c.add_child(_link(str(src.get("url", ""))))
+	return card
+
+
+func _link(url: String) -> LinkButton:
+	var l: LinkButton = LinkButton.new()
+	l.text = url
+	l.uri = url
+	l.add_theme_font_size_override("font_size", 13)
+	l.add_theme_color_override("font_color", UI.C_ACCENT)
+	l.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
+	return l

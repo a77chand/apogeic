@@ -1,10 +1,11 @@
 extends Control
-## Create your astronaut: a name, a title, a suit colour and a patch colour.
+## Create your astronaut: a name, a title, a real suit from one era of spaceflight, and a mission patch.
 ## The choices are saved, and show up on the other screens (see player.gd).
 ## Opened from the title screen: the first time you press Play, and from "Customise astronaut".
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
+const Avatar = preload("res://scripts/ui/avatar.gd")
 
 var _name_text: String = ""
 var _title: String = "Commander"
@@ -112,19 +113,24 @@ func _build_choices() -> void:
 		b.custom_minimum_size = Vector2(140.0, 44.0)
 		title_row.add_child(b)
 		_title_buttons[t] = b
-	col.add_child(UI.label("Suit colour", 18))
-	var suit_row: HBoxContainer = UI.hbox(14)
+	col.add_child(UI.label("Suit: real suits from each era", 18))
+	var suit_row: HBoxContainer = UI.hbox(10)
 	col.add_child(suit_row)
 	for i in range(Player.SUITS.size()):
 		var entry: Array = Player.SUITS[i]
 		var b: Button = _swatch(str(entry[0]), _on_suit.bind(i), suit_row)
+		b.custom_minimum_size = Vector2(66.0, 84.0)
+		var mini: Control = Player.figure_for(78.0, i, 0, "")
+		mini.position = Vector2(8.0, 3.0)
+		b.add_child(mini)
 		_suit_buttons.append(b)
-	col.add_child(UI.label("Mission patch colour", 18))
+	col.add_child(UI.label("Mission patch", 18))
 	var patch_row: HBoxContainer = UI.hbox(14)
 	col.add_child(patch_row)
 	for i in range(Player.PATCHES.size()):
 		var entry: Array = Player.PATCHES[i]
 		var b: Button = _swatch(str(entry[0]), _on_patch.bind(i), patch_row)
+		b.draw.connect(_draw_emblem.bind(b, str(entry[2])))
 		_patch_buttons.append(b)
 
 
@@ -147,6 +153,11 @@ func _swatch(colour_name: String, on_press: Callable, row: HBoxContainer) -> But
 	cell.add_child(l)
 	b.set_meta("name_label", l)
 	return b
+
+
+func _draw_emblem(b: Button, kind: String) -> void:
+	var bg: Color = Player.patch_color(_patch_buttons.find(b))
+	Avatar.draw_emblem(b, kind, b.size * 0.5, minf(b.size.x, b.size.y) * 0.36, Color(1, 1, 1, 0.92), bg)
 
 
 func _draw_tick(b: Button) -> void:
@@ -219,20 +230,33 @@ func _style_swatch(b: Button, color: Color, selected: bool) -> void:
 		l.add_theme_color_override("font_color", UI.C_TEXT if selected else UI.C_MUTED)
 
 
+## A suit button: a dark tile with the small figure in it; the chosen one gets a cyan edge.
+func _style_suit(b: Button, selected: bool) -> void:
+	var normal: StyleBoxFlat = UI.box(Color(0.03, 0.07, 0.14), Color(UI.C_CYAN, 1.0) if selected else Color(UI.C_BORDER, 0.5), 8, 3 if selected else 1, 0.0)
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("hover", UI.box(Color(0.06, 0.12, 0.22), UI.C_CYAN, 8, 2, 0.0))
+	b.add_theme_stylebox_override("pressed", normal)
+	b.set_meta("chosen", false)
+	var l: Label = b.get_meta("name_label", null)
+	if l != null:
+		l.add_theme_color_override("font_color", UI.C_TEXT if selected else UI.C_MUTED)
+
+
 func _refresh() -> void:
 	for key in _title_buttons.keys():
 		_style_choice(_title_buttons[key], str(key) == _title)
 	for i in range(_suit_buttons.size()):
-		_style_swatch(_suit_buttons[i], Player.suit_color(i), i == _suit)
+		_style_suit(_suit_buttons[i], i == _suit)
 	for i in range(_patch_buttons.size()):
 		_style_swatch(_patch_buttons[i], Player.patch_color(i), i == _patch)
-	_preview.call("setup", 330.0, Player.suit_color(_suit), Player.patch_color(_patch), _name_text)
+		_patch_buttons[i].set_meta("chosen", false)   # the white ring shows the choice; no tick over the emblem
+	_preview.call("setup", 330.0, _suit, _patch, _name_text)
 	var shown: String = _name_text.strip_edges()
 	if shown == "":
 		shown = "Your name"
 	_rank_label.text = _title.to_upper()
 	_caption.text = shown
-	_colour_note.text = "%s suit  ·  %s patch" % [str((Player.SUITS[_suit] as Array)[0]), str((Player.PATCHES[_patch] as Array)[0])]
+	_colour_note.text = "%s suit  ·  %s patch" % [str((Player.SUITS[_suit] as Array)[3]), str((Player.PATCHES[_patch] as Array)[0])]
 	_done_btn.disabled = _name_text.strip_edges() == ""
 
 

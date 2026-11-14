@@ -9,6 +9,8 @@ const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
 const RocketStack = preload("res://scripts/ui/rocket_stack.gd")
+const Film = preload("res://scripts/ui/film.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const ID: String = "mass"
 
@@ -32,6 +34,7 @@ func _ready() -> void:
 	_build_result()
 	_build_bottom()
 	_refresh()
+	Tutorial.maybe_show(self, "puzzle_mass")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -63,10 +66,10 @@ func _build_intro() -> void:
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
 	intro.custom_minimum_size = Vector2(262.0, 0.0)
 	col.add_child(intro)
-	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
-	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 262.0, UI.C_ORANGE))
+	col.add_child(UI.button("▶  Watch: too heavy", _on_watch, 262.0, false))
 	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
-	col.add_child(UI.bullets(_pz.get("goal", []), 13, UI.C_TEXT, 262.0, UI.C_GREEN))
+	col.add_child(UI.bullets(_pz.get("goal", []), 14, UI.C_TEXT, 262.0, UI.C_GREEN))
+	col.add_child(UI.label("Load parts, then press Launch it to see what happens.", 13, UI.C_MUTED, true))
 
 
 func _build_bin() -> void:
@@ -126,7 +129,7 @@ func _build_bottom() -> void:
 	panel.add_child(_message)
 	_back_btn = UI.button("Back", _on_back, 160.0, false)
 	_place(_back_btn, Vector2(20, 660), Vector2(160, 52))
-	_lock_btn = UI.button("Lock it in", _on_lock, 220.0, true)
+	_lock_btn = UI.button("Launch it", _on_lock, 220.0, true)
 	_place(_lock_btn, Vector2(1040, 660), Vector2(220, 52))
 
 
@@ -183,7 +186,27 @@ func _refresh() -> void:
 	else:
 		_message.text = "  •  ".join(PackedStringArray(reasons))
 		_message.add_theme_color_override("font_color", UI.C_RED)
-	_lock_btn.disabled = not passed or _locked
+	_lock_btn.disabled = selected_ids.is_empty() or _locked
+
+
+func _on_watch() -> void:
+	Film.play(self, "launch_fail", ["Too heavy. A rocket can only push so much mass to orbit speed.", "Overloaded, it climbs too slowly, and the air pressure at max-Q tears it apart."])
+
+
+## What the test launch shows: the first thing that is wrong, as a short film.
+func _failure_film(res: Dictionary) -> Array:
+	var mass: float = float(res.get("mass_kg", 0.0))
+	var limit: float = float(res.get("limit_kg", 1.0))
+	if mass > limit + Sim.EPS:
+		return ["launch_fail", ["%.2f kg is %.2f kg over the %.1f kg slot." % [mass, mass - limit, limit], "The rocket cannot reach orbit speed with the extra mass, and breaks up at max-Q."]]
+	var budget: float = float(res.get("budget_k", 0.0))
+	if budget > 0.0 and float(res.get("cost_k", 0.0)) > budget + Sim.EPS:
+		return ["budget_fail", ["The parts cost more than the %s budget." % UI.money(budget), "Real missions get cancelled when the money runs out before launch."]]
+	var reasons: Array = res.get("reasons", [])
+	var text: String = " ".join(PackedStringArray(reasons))
+	if text.contains("solar") or text.contains("battery") or float(res.get("gen_w", 0.0)) < float(res.get("use_w", 0.0)) - Sim.EPS:
+		return ["power_fail", ["It reached orbit, but the power does not add up.", "In Earth's shadow the battery runs flat and the satellite goes silent."]]
+	return ["data_fail", ["It reached orbit, but the photos cannot get home.", "The camera fills the storage faster than the radio can empty it, so photos are lost."]]
 
 
 func _short_name(part: Dictionary) -> String:
@@ -217,8 +240,18 @@ func _need_name(need: Dictionary) -> String:
 func _on_lock() -> void:
 	if _locked:
 		return
+	var res: Dictionary = Sim.puzzle_mass(_pz, GameState.parts, selected_ids)
 	_locked = true
 	_lock_btn.disabled = true
+	if not bool(res.get("passed", false)):
+		var pick: Array = _failure_film(res)
+		var film: Control = Film.play(self, str(pick[0]), pick[1])
+		await film.finished
+		_locked = false
+		_refresh()
+		return
+	var ok: Control = Film.play(self, "launch_ok", ["It fits, it has power, and the photos get home.", str(_pz.get("lesson", ""))])
+	await ok.finished
 	GameState.mark_puzzle_done(ID)
 	GameState.play_sound("fanfare")
 	_message.text = str(_pz.get("lesson", ""))

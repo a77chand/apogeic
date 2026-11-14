@@ -213,8 +213,11 @@ static func run() -> Array:
 	_same(fails, "p4 default fails", Sim.puzzle_time(p4, "normal", "full", 60)["passed"], false)
 	var p4_ok: Dictionary = Sim.puzzle_time(p4, "normal", "full", 10)
 	_same(fails, "p4 good", p4_ok["passed"], true)
-	_same(fails, "p4 finish", p4_ok["finish_day"], 150)
-	_near(fails, "p4 cost", p4_ok["cost_k"], 360.0)
+	_same(fails, "p4 finish (with the test fix and the licence delay)", p4_ok["finish_day"], 165)
+	_near(fails, "p4 cost", p4_ok["cost_k"], 375.0)
+	_same(fails, "p4 starting the licence later is too late", Sim.puzzle_time(p4, "normal", "full", 15)["passed"], false)
+	_same(fails, "p4 short testing lets the fault through", Sim.puzzle_time(p4, "normal", "short", 0)["fault_escaped"], true)
+	_same(fails, "p4 short testing fails", Sim.puzzle_time(p4, "normal", "short", 0)["passed"], false)
 	_same(fails, "p4 rushed fails", Sim.puzzle_time(p4, "rushed", "full", 0)["passed"], false)
 	# --- richer event choices
 	var vib2: Dictionary = Data.events_for(events, "test_lab", 0)[0]
@@ -269,8 +272,8 @@ static func run() -> Array:
 	_same(fails, "still flying after one week", decay_st["ended"], false)
 	Sim.ops_week(level, ev, decay_st, {})
 	_same(fails, "the orbit decays after three weeks", decay_st["end_reason"], "orbit_decay")
-	# --- the three missions
-	_same(fails, "three missions", Data.MISSIONS.size(), 3)
+	# --- the missions
+	_same(fails, "twenty missions", Data.MISSIONS.size(), 20)
 	var lvl2: Dictionary = Data.load_level("level2")
 	var lvl3: Dictionary = Data.load_level("level3")
 	_same(fails, "mission 2 loads", str(lvl2.get("goal_data_type", "")), "spectra")

@@ -4,40 +4,138 @@
     "briefing": {
       "title": "Briefing",
       "steps": [
-        ["Goal: {goal}"],
-        ["Mass: at most {mass_kg} kg", "Budget: {budget}", "Launch by day {deadline}"],
-        ["Grey choices are locked in this mission", "Click one to see why"]
+        [
+          "Goal: {goal}"
+        ],
+        [
+          "Mass: at most {mass_kg} kg",
+          "Budget: {budget}",
+          "Launch by day {deadline}"
+        ],
+        [
+          "Grey choices are locked in this mission",
+          "Click one to see why"
+        ]
       ]
     },
     "workshop": {
       "title": "Workshop",
       "steps": [
-        ["Click a part in the tray to fit it", "Or drag it onto the satellite", "Yellow slot = required and still empty"],
-        ["Six bars check your design", "Green = fine, yellow = close, red = fails", "Hover a bar or press Why red? for the reason"],
-        ["The clock is running: every day costs money", "Removing a fitted part costs rework time", "Deadline: day {deadline}. Pause stops the clock"],
-        ["Stay under {mass_kg} kg and {budget}", "Press Test it when the bars are green"]
+        [
+          "Click a part in the tray to fit it",
+          "Or drag it onto the satellite",
+          "Yellow slot = required and still empty"
+        ],
+        [
+          "Six bars check your design",
+          "Green = fine, yellow = close, red = fails",
+          "Hover a bar or press Why red? for the reason"
+        ],
+        [
+          "The clock is running: every day costs money",
+          "Removing a fitted part costs rework time",
+          "Deadline: day {deadline}. Pause stops the clock"
+        ],
+        [
+          "Stay under {mass_kg} kg and {budget}",
+          "Press Test it when the bars are green"
+        ]
       ]
     },
     "test_lab": {
       "title": "Test lab",
       "steps": [
-        ["Every requirement is tested", "PASS = fine, FAIL = a problem"],
-        ["Fix it: back to the workshop (costs days)", "Launch anyway: risky, and each failure has a cost in orbit"]
+        [
+          "Every requirement is tested",
+          "PASS = fine, FAIL = a problem"
+        ],
+        [
+          "Fix it: back to the workshop (costs days)",
+          "Launch anyway: risky, and each failure has a cost in orbit"
+        ]
       ]
     },
     "ops": {
       "title": "Operations",
       "steps": [
-        ["The satellite flies for {weeks} weeks", "Goal: {goal_mb} MB delivered to the ground"],
-        ["Safe mode: no data, the battery recovers", "Smaller files: storage fills slower", "Extra pass: costs money, sends more"],
-        ["Events pop up with a timer", "What you built changes how they turn out", "Watch the fuel meter"]
+        [
+          "The satellite flies for {weeks} weeks",
+          "Goal: {goal_mb} MB delivered to the ground"
+        ],
+        [
+          "Safe mode: no data, the battery recovers",
+          "Smaller files: storage fills slower",
+          "Extra pass: costs money, sends more"
+        ],
+        [
+          "Events pop up with a timer",
+          "What you built changes how they turn out",
+          "Watch the fuel meter"
+        ]
       ]
     },
     "report": {
       "title": "Report",
       "steps": [
-        ["Star 1: reach the goal", "Star 2: pass every check", "Star 3: keep {reserve_pct}% of the budget"],
-        ["Why it happened: what went wrong, step by step", "Fix my satellite keeps your parts"]
+        [
+          "Star 1: reach the goal",
+          "Star 2: pass every check",
+          "Star 3: keep {reserve_pct}% of the budget"
+        ],
+        [
+          "Why it happened: what went wrong, step by step",
+          "Fix my satellite keeps your parts"
+        ]
+      ]
+    },
+    "puzzle_mass": {
+      "title": "Puzzle 1: Mass",
+      "steps": [
+        [
+          "A rocket slot holds only 3.6 kg",
+          "Pack a camera, panels, a battery and a radio",
+          "Press Launch it to see what happens"
+        ]
+      ]
+    },
+    "puzzle_power": {
+      "title": "Puzzle 2: Power",
+      "steps": [
+        [
+          "Every orbit: 60 minutes of sunlight, 35 of darkness",
+          "Panels refill the battery in the sun",
+          "The battery keeps you alive in the dark"
+        ]
+      ]
+    },
+    "puzzle_link": {
+      "title": "Puzzle 3: Data link",
+      "steps": [
+        [
+          "The camera makes more than the radio can send",
+          "Switch ideas on and off",
+          "The narrowest pipe sets the pace"
+        ]
+      ]
+    },
+    "puzzle_time": {
+      "title": "Puzzle 4: Budget and time",
+      "steps": [
+        [
+          "Build, test, licence, ship",
+          "Every day costs money",
+          "Press Play the year: real surprises will hit"
+        ]
+      ]
+    },
+    "missions": {
+      "title": "Missions",
+      "steps": [
+        [
+          "20 missions, each based on a real spaceflight",
+          "From Sputnik to Artemis-era satellites",
+          "Click a tile to read its real story"
+        ]
       ]
     }
   }

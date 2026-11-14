@@ -223,7 +223,7 @@
   "blurb": "A power-hungry instrument, a longer night on every orbit, and its own small rocket.",
   "teaches": "Power is the hard part: every watt the radio uses must come from heavier panels.",
   "data_noun": "readings",
-  "level_label": "Level 2  \u00b7  Medium",
+  "level_label": "Level 8  ·  Medium",
   "main_problem": "Power",
   "rocket": {
     "kind": "rocket_launcher",
@@ -231,9 +231,19 @@
     "why": "A small rocket that carries only a few satellites, so it can go to the exact orbit you need. It costs more per seat, and it shakes harder: even a 75% full slot is risky with a known problem."
   },
   "differences": [
+    "Launched on a small Rokot rocket, its TROPOMI instrument maps air pollution such as nitrogen dioxide over the whole planet every day.",
     "The spectrometer uses 8 W, and its heater adds 1 W all the time.",
-    "Night lasts 38 minutes of every orbit (not 35), so the battery works harder.",
-    "Readings are small files: data is easy, power is not.",
-    "Own small rocket: dearer, and less forgiving of a heavy, flawed craft."
-  ]
+    "Night lasts 38 minutes of every orbit (not 35), so the battery works harder."
+  ],
+  "based_on": {
+    "mission": "Sentinel-5 Precursor",
+    "agency": "ESA (Copernicus)",
+    "country": "Europe",
+    "year": 2017,
+    "outcome": "success",
+    "story": "Launched on a small Rokot rocket, its TROPOMI instrument maps air pollution such as nitrogen dioxide over the whole planet every day.",
+    "lesson": "Air instruments need steady power, all day and all night.",
+    "source": "Wikipedia, \"Sentinel-5 Precursor\"",
+    "url": "https://en.wikipedia.org/wiki/Sentinel-5_Precursor"
+  }
 }

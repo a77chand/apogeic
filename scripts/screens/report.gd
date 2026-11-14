@@ -26,7 +26,60 @@ func _ready() -> void:
 	_build_buttons()
 	var grade: String = str(score.get("grade", "failed"))
 	GameState.play_sound("fanfare" if grade == "success" else ("chime" if int(score.get("stars", 0)) > 0 else "fail"))
-	Tutorial.maybe_show(self, "report")
+	if int(score.get("stars", 0)) >= 3:
+		_celebrate()
+	else:
+		Tutorial.maybe_show(self, "report")
+
+
+## A perfect mission: your astronaut jumps and gives a thumbs up, with a few stars around.
+## Click anywhere (or wait) to close it.
+func _celebrate() -> void:
+	var layer: Control = Control.new()
+	layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(layer)
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.modulate = Color(1, 1, 1, 0)
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.55)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(dim)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var fig: Control = Player.figure(320.0)
+	layer.add_child(fig)
+	fig.position = Vector2(470.0, 250.0)
+	fig.call("celebrate")
+	var bubble: PanelContainer = UI.panel(UI.C_GOLD, 14.0)
+	layer.add_child(bubble)
+	bubble.position = Vector2(690.0, 210.0)
+	var col: VBoxContainer = UI.vbox(4)
+	bubble.add_child(col)
+	var who: String = GameState.player_name.strip_edges()
+	col.add_child(UI.label("Three stars!", 30, UI.C_GOLD))
+	col.add_child(UI.label("Perfect mission, %s %s." % [GameState.player_title, who if who != "" else "Cadet"], 16))
+	var b: Dictionary = GameState.level.get("based_on", {})
+	if not b.is_empty():
+		var real: Label = UI.label("The real %s: %s" % [str(b.get("mission", "")), str(b.get("lesson", ""))], 13, UI.C_MUTED, true)
+		real.custom_minimum_size = Vector2(340.0, 0.0)
+		col.add_child(real)
+	col.add_child(UI.label("Click to continue", 12, UI.C_ACCENT))
+	for i in range(14):
+		var spark: Control = _star(true)
+		spark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		spark.scale = Vector2(0.35, 0.35)
+		spark.position = Vector2(640.0, 400.0)
+		layer.add_child(spark)
+		var a: float = TAU * float(i) / 14.0
+		var tw: Tween = spark.create_tween()
+		tw.tween_interval(0.9)
+		tw.tween_property(spark, "position", Vector2(640.0, 400.0) + Vector2(cos(a) * 360.0, sin(a) * 240.0), 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(spark, "modulate:a", 0.0, 1.2).set_delay(0.6)
+	var show: Tween = layer.create_tween()
+	show.tween_interval(0.9)
+	show.tween_property(layer, "modulate:a", 1.0, 0.3)
+	layer.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed:
+			layer.queue_free())
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -67,6 +120,9 @@ func _build_top_bar(grade: String) -> void:
 	var badge: Control = Player.badge(44.0)
 	add_child(badge)
 	badge.position = Vector2(14.0, 14.0)
+	var tag: Control = UI.based_on_tag(GameState.level, 330.0)
+	add_child(tag)
+	tag.position = Vector2(930.0, 18.0)
 
 
 ## A star: the art file if it exists, otherwise a shape drawn with code.

@@ -31,22 +31,29 @@ func _draw() -> void:
 
 
 func _draw_title() -> void:
-	var font: Font = UI.pixel_font()
-	var fs: int = 108
+	var font: Font = UI.pixel_font(false)   # the regular weight: the bold one read too heavy
+	var fs: int = 112
 	var w: float = font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var pos: Vector2 = Vector2(560.0 - w * 0.5, 165)
 	# stepped shadow, a few pixels down and right, like an old arcade cabinet
 	for i in range(3, 0, -1):
 		draw_string(font, pos + Vector2(i * 3, i * 3), TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(C_SHADOW, 0.5 + 0.15 * i))
 	draw_string(font, pos, TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, C_CREAM)
-	# the pixel font draws 0 like O, so add a stepped slash to show it is a zero
+	# the pixel font draws 0 like O, so add a stepped slash corner to corner inside it
 	var x0: float = pos.x + font.get_string_size("AP", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var gw: float = font.get_string_size("0", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-	var asc: float = font.get_ascent(fs)
-	var step: float = fs / 14.0
-	for k in range(4):
-		var px: Vector2 = Vector2(x0 + gw * 0.30 + k * step, pos.y - asc * 0.30 - k * step * 1.4)
-		draw_rect(Rect2(px, Vector2(step, step * 1.4)), C_CREAM)
+	var cap: float = fs * 0.62   # height of a capital in this font (less than the ascent)
+	var px: float = fs / 14.0
+	var steps: int = 6
+	var left: float = x0 + gw * 0.18
+	var right: float = x0 + gw * 0.62
+	var bottom: float = pos.y - cap * 0.12 + px
+	var top: float = pos.y - cap * 0.80 + px
+	for k in range(steps):
+		var u: float = float(k) / float(steps - 1)
+		var p: Vector2 = Vector2(lerpf(left, right, u), lerpf(bottom, top, u) - px)
+		draw_rect(Rect2(p + Vector2(3, 3), Vector2(px, px)), C_SHADOW)
+		draw_rect(Rect2(p, Vector2(px, px)), C_CREAM)
 	var strap: String = "D E S I G N    ·    L A U N C H    ·    L E A R N"
 	var ss: int = 14
 	var sw: float = font.get_string_size(strap, HORIZONTAL_ALIGNMENT_LEFT, -1, ss).x

@@ -77,6 +77,21 @@ static func pixel_button(text: String, on_press: Callable, width: float, height:
 	return b
 
 
+## "Based on mission ___" for a level based on a real spaceflight, as a small gold tag.
+## Returns an empty Control when the level has no based_on block.
+static func based_on_tag(level: Dictionary, width: float = 360.0) -> Control:
+	var b: Dictionary = level.get("based_on", {})
+	if b.is_empty():
+		return Control.new()
+	var tag: PanelContainer = PanelContainer.new()
+	tag.add_theme_stylebox_override("panel", box(Color(C_GOLD, 0.12), Color(C_GOLD, 0.8), 4, 1, 6.0))
+	var l: Label = label("Based on mission %s  ·  %s, %d" % [str(b.get("mission", "")), str(b.get("country", "")), int(b.get("year", 0))], 12, C_GOLD, true)
+	l.custom_minimum_size = Vector2(width - 14.0, 0.0)
+	tag.add_child(l)
+	tag.tooltip_text = "%s\nSource: %s" % [str(b.get("story", "")), str(b.get("source", ""))]
+	return tag
+
+
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:
 	# The menu's text size setting changes body text only: labels that wrap, so they can
 	# reflow. Headings and single-line labels in tight spots (bars, pills) keep their size,

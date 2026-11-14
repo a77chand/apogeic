@@ -6,6 +6,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const DataPipe = preload("res://scripts/ui/data_pipe.gd")
 
@@ -31,6 +32,7 @@ func _ready() -> void:
 	_build_board()
 	_build_bottom()
 	_refresh()
+	Tutorial.maybe_show(self, "puzzle_link")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:

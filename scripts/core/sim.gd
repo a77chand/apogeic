@@ -778,9 +778,26 @@ static func _option_by_id(options: Array, id: String) -> Dictionary:
 static func puzzle_time(pz: Dictionary, build_id: String, test_id: String, licence_start: int) -> Dictionary:
 	var build: Dictionary = _option_by_id(pz.get("build_options", []), build_id)
 	var test: Dictionary = _option_by_id(pz.get("test_options", []), test_id)
+	# the surprises every real project hits: a fault found in testing (only if the testing
+	# is thorough enough to find it) and a licence that takes longer than planned
+	var test_extra: int = 0
+	var licence_extra: int = 0
+	var escaped: String = ""
+	var surprises: Array = []
+	for item in pz.get("surprises", []):
+		var sp: Dictionary = item
+		if str(sp.get("phase", "")) == "Test":
+			if bool(test.get("catches_faults", true)):
+				test_extra += int(sp.get("days", 0))
+				surprises.append(sp)
+			else:
+				escaped = str(sp.get("missed", ""))
+		elif str(sp.get("phase", "")) == "Licence":
+			licence_extra += int(sp.get("days", 0))
+			surprises.append(sp)
 	var build_end: int = int(build.get("days", 0))
-	var test_end: int = build_end + int(test.get("days", 0))
-	var licence_end: int = licence_start + int(pz.get("licence_days", 0))
+	var test_end: int = build_end + int(test.get("days", 0)) + test_extra
+	var licence_end: int = licence_start + int(pz.get("licence_days", 0)) + licence_extra
 	var ship_start: int = maxi(test_end, licence_end)
 	var finish: int = ship_start + int(pz.get("ship_days", 0))
 	var cost: float = float(build.get("cost_k", 0.0)) + float(test.get("cost_k", 0.0)) + float(pz.get("licence_cost_k", 0.0)) \
@@ -798,10 +815,13 @@ static func puzzle_time(pz: Dictionary, build_id: String, test_id: String, licen
 			reasons.append("Over budget. The team is paid every day while it waits for the licence.")
 		else:
 			reasons.append("Over budget. Rushing costs more than it saves here.")
+	if escaped != "":
+		reasons.append(escaped)
 	var bars: Array = [
-		{"label": "Build", "start": 0, "end": build_end},
-		{"label": "Test", "start": build_end, "end": test_end},
-		{"label": "Licence", "start": licence_start, "end": licence_end},
-		{"label": "Ship", "start": ship_start, "end": finish},
+		{"label": "Build", "start": 0, "end": build_end, "extra": 0},
+		{"label": "Test", "start": build_end, "end": test_end, "extra": test_extra},
+		{"label": "Licence", "start": licence_start, "end": licence_end, "extra": licence_extra},
+		{"label": "Ship", "start": ship_start, "end": finish, "extra": 0},
 	]
-	return {"passed": reasons.is_empty(), "reasons": reasons, "finish_day": finish, "cost_k": cost, "cost_limit_k": limit, "bars": bars}
+	return {"passed": reasons.is_empty(), "reasons": reasons, "finish_day": finish, "cost_k": cost, "cost_limit_k": limit, "bars": bars,
+			"surprises": surprises, "fault_escaped": escaped != ""}
