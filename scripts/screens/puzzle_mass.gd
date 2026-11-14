@@ -3,6 +3,7 @@ extends Control
 ## Layout: intro left, toggle cards middle, live result right, reasons / lesson below.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
 
@@ -45,6 +46,9 @@ func _build_top_bar() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	bar.add_child(title)
+	var badge: Control = Player.badge(44.0)
+	add_child(badge)
+	badge.position = Vector2(14.0, 14.0)
 
 
 func _build_intro() -> void:

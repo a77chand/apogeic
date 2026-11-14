@@ -3,6 +3,7 @@ extends Control
 ## Chips do not change the game in Level 1; they show the reasoning.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 const Craft = preload("res://scripts/core/craft.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
@@ -33,6 +34,9 @@ func _build_top_bar() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	bar.add_child(title)
+	var badge: Control = Player.badge(44.0)
+	add_child(badge)
+	badge.position = Vector2(14.0, 14.0)
 
 
 func _build_mission() -> void:
@@ -40,7 +44,7 @@ func _build_mission() -> void:
 	_place(panel, Vector2(20, 88), Vector2(400, 480))
 	var col: VBoxContainer = UI.vbox(10)
 	panel.add_child(col)
-	col.add_child(UI.label("The mission", 20))
+	col.add_child(UI.label(GameState.display_name() + ", your mission", 20))
 	col.add_child(UI.label(str(GameState.level.get("name", "")), 24, UI.C_CYAN))
 	var pic: Control = UI.picture("res://art/modules/cubesat_%s.png" % GameState.craft_id, Vector2(360, 120), "CubeSat " + GameState.craft_id.to_upper())
 	col.add_child(pic)
@@ -202,4 +206,4 @@ func _on_start() -> void:
 
 
 func _on_back() -> void:
-	GameState.go("ladder")
+	GameState.go("missions")

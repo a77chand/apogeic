@@ -3,6 +3,7 @@ extends Control
 ## done = finished, open = can be played, locked = finish the step before first.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 
 var _tip: Label = null
 
@@ -26,7 +27,7 @@ func _build_top_bar() -> void:
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
-	row.add_child(UI.label("Space Mission Designer", 16, UI.C_MUTED))
+	row.add_child(Player.badge(44.0))
 	var spacer: Control = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
@@ -101,8 +102,7 @@ func _on_puzzle(id: String) -> void:
 
 
 func _on_mission() -> void:
-	GameState.reset_mission()
-	GameState.go("briefing")
+	GameState.go("missions")
 
 
 func _on_locked() -> void:

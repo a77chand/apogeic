@@ -4,6 +4,8 @@ extends RefCounted
 
 const PARTS_PATH: String = "res://data/parts.json"
 const LEVEL1_PATH: String = "res://data/level1.json"
+## The missions in the order they unlock. Each is data/<id>.json.
+const MISSIONS: Array = ["level1", "level2", "level3"]
 const EVENTS_PATH: String = "res://data/events.json"
 const PUZZLES_PATH: String = "res://data/puzzles.json"
 
@@ -50,6 +52,13 @@ static func load_level1() -> Dictionary:
 	return load_dict(LEVEL1_PATH)
 
 
+## One mission by id ("level1", "level2" ...). An unknown id gives an empty Dictionary.
+static func load_level(id: String) -> Dictionary:
+	if not MISSIONS.has(id):
+		return {}
+	return load_dict("res://data/%s.json" % id)
+
+
 static func load_puzzles() -> Dictionary:
 	return load_dict(PUZZLES_PATH)
 
@@ -61,11 +70,39 @@ static func load_events() -> Array:
 	return list
 
 
-## Returns the events that fire at a given moment. when is "test_lab" or "ops".
-static func events_for(events: Array, when: String, week: int) -> Array:
-	var out: Array = []
+## "ops:4", "test_lab:0": the key for a moment in the mission.
+static func slot_key(when: String, week: int) -> String:
+	return "%s:%d" % [when, week]
+
+
+## Every moment that has events, mapped to the ids of the events that could fire there.
+static func event_slots(events: Array) -> Dictionary:
+	var out: Dictionary = {}
+	for item in events:
+		var ev: Dictionary = item
+		var key: String = slot_key(str(ev.get("when", "")), int(ev.get("week", 0)))
+		if not out.has(key):
+			out[key] = []
+		var ids: Array = out[key]
+		ids.append(str(ev.get("id", "")))
+	return out
+
+
+## Returns the event that fires at a given moment (an empty list if there is none).
+## when is "test_lab" or "ops". When several events share the moment, picks[key] says which
+## one was chosen for this attempt. Without a pick the first one listed is used, so the
+## self-test always sees the same events.
+static func events_for(events: Array, when: String, week: int, picks: Dictionary = {}) -> Array:
+	var candidates: Array = []
 	for item in events:
 		var ev: Dictionary = item
 		if str(ev.get("when", "")) == when and int(ev.get("week", 0)) == week:
-			out.append(ev)
-	return out
+			candidates.append(ev)
+	if candidates.size() <= 1:
+		return candidates
+	var wanted: String = str(picks.get(slot_key(when, week), ""))
+	for item in candidates:
+		var ev: Dictionary = item
+		if str(ev.get("id", "")) == wanted:
+			return [ev]
+	return [candidates[0]]

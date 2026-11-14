@@ -46,7 +46,7 @@ This spec described the plan. The game has moved on. Everything below is built, 
 | Launch can fail | `Sim.launch_outcome`, `Sim.fail_launch`; `level1.json` `launch_min_readiness_pct` (80) | Readiness must reach 80% or the rocket does not reach orbit. Below that it climbs only as far as the readiness number, the mission ends with `end_reason = "launch_failed"`, there is no operations phase, and the report explains why. No randomness. |
 | Rocket size from mass | `Sim.rocket_for_mass`; `level1.json` `rocket_by_mass` | Small, medium or heavy rocket picture, chosen from the design's mass. |
 | Craft size | `scripts/core/craft.gd`, `data/craft.json` | Player picks 1U, 3U or 6U on the briefing (LEO and rideshare are fixed, by team decision). The size sets the mass limit, bus mass and launch cost. 3U is identical to the original level. |
-| Vibration test has 3 choices | `data/events.json` | Added "Fit the spare mount" ($10k, +25 days) next to Repair ($20k, +10 days) and Fly as it is. Early builders lose nothing to the wait (the licence already holds launch at day 121); late builders do. |
+| More events, more choices (Aadhav) | `data/events.json`, `GameState.roll_events`, `Sim.launch_risks` | Each event moment now has several possible events, one picked at random per attempt (the first listed is the default the self-test uses), and every event has three choices. Unfixed problems are recorded as "flaws" that can make a heavy spacecraft's launch fail. Note: this relaxes the original "nothing random" rule; what an event does still depends only on the choice and the design. |
 | Week history | `Sim.new_ops_state`, `Sim.ops_week` | `ops.history` keeps one record per week (battery, stored, delivered) for the report chart. |
 
 **New screens and pieces:** `truck.gd` (NASA-problem scenario: sensor choice for an autonomous construction truck, with `truck_sim.gd` and `data/truck.json`; mostly illustrative numbers, one NASA-sourced sensor, see `docs/TRUCK_SOURCES.md`), `report.gd`, `ladder.gd`, `briefing.gd`, `tutorial.gd` + `data/tutorial.json` (first-visit tips), `sfx.gd` (sound), `sprites.gd`, `starfield.gd`, `orbit_ring.gd`, `week_chart.gd`.
@@ -390,7 +390,7 @@ Returns a list of `{cause, effect, tip}`, most important first: how the mission 
 
 ### 8.6 Reference outcomes (use these to test by hand)
 
-> **Updated 14 Nov:** These numbers ignore the test-lab vibration event and predate the launch rule. With the launch rule, designs that fail two checks (readiness 67%) now fail at launch instead of flying: "without a battery" and "finished on day 131" both end at launch. With the vibration event, "Repair it" costs $20k, which leaves the second-ground-station design at 9.9% reserve (2 stars); "Fit the spare mount" keeps it at 3 stars when built early (for example by day 41).
+> **Updated 14 Nov:** These numbers ignore the test-lab vibration event and predate the launch rule. With the launch rule, designs that fail two checks (readiness 67%) now fail at launch instead of flying: "without a battery" and "finished on day 131" both end at launch. With the vibration event, "Repair it" costs $20k, which leaves the second-ground-station design at 9.9% reserve (2 stars); "Brace the mount" (+4 days, +0.3 kg) keeps it at 3 stars.
 
 
 Build finished on day 41 unless noted.
@@ -636,7 +636,7 @@ Done when: you can build each of the six winning designs from section 8.6, the b
 
 ### 12.10 `test_lab` (Anusha, Block 2)
 
-> **Updated 14 Nov:** The Fix it button now states the real delay, worked out by the rules ("launch N days later" or "no launch delay yet", because the licence sets the earliest launch day). The vibration card has three choices.
+> **Updated 14 Nov:** The Fix it button now states the real delay, worked out by the rules ("launch N days later" or "no launch delay yet", because the licence sets the earliest launch day). Test-lab events now have three choices each.
 
 
 On entry:
@@ -717,7 +717,6 @@ Shows:
 - Numbers: delivered of goal, lost, money left (`UI.money`), weeks flown of 12.
 - **Why it happened**: the first three entries of `causes` as cards: cause, arrow, effect, then the tip underneath.
 - **What happened on the way**: `GameState.log_lines`.
-- A panel "Compare with a real mission". Until verified data exists it says "Real mission figures will be added from verified NASA data." Do not invent numbers.
 - Buttons: **Retry with changes** (`GameState.retry_mission()`, go `workshop`), **New design** (`reset_mission()`, go `briefing`), **Title**.
 
 Edge case: the report opened with an empty `ops` (for example from the stub flow). Check `GameState.ops.is_empty()` and show "No mission flown yet" with a Title button.
@@ -810,7 +809,7 @@ Do a first web export at the end of Block 2, not at the end of the day. Export p
 
 ## 18. Testing
 
-> **Updated 14 Nov:** Also run tests/truck_tests.gd and tests/craft_tests.gd. The self-test now includes the launch rule and the spare-mount choice.
+> **Updated 14 Nov:** Also run tests/truck_tests.gd and tests/craft_tests.gd. The self-test now includes the launch rule and Aadhav's event changes.
 
 
 **Self-test.** `tests/sim_tests.gd` has about 70 checks on the rules and all four puzzles. Run it from the title screen or the terminal. If you change a number in `data/` on purpose, the matching expected values in the test must change in the same commit.

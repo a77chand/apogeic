@@ -4,6 +4,7 @@ extends Control
 ## Block 2 (not here yet): clock, pause, Why red?, drag polish.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 const Sprites = preload("res://scripts/ui/sprites.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
@@ -82,7 +83,7 @@ func _build_top_bar() -> void:
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
-	row.add_child(UI.label("Space Mission Designer", 16, UI.C_MUTED))
+	row.add_child(Player.badge(44.0))
 	var spacer_a: Control = Control.new()
 	spacer_a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer_a)
