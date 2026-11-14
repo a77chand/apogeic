@@ -679,7 +679,6 @@ Shows:
 - Numbers: delivered of goal, lost, money left (`UI.money`), weeks flown of 12.
 - **Why it happened**: the first three entries of `causes` as cards: cause, arrow, effect, then the tip underneath.
 - **What happened on the way**: `GameState.log_lines`.
-- A panel "Compare with a real mission". Until verified data exists it says "Real mission figures will be added from verified NASA data." Do not invent numbers.
 - Buttons: **Retry with changes** (`GameState.retry_mission()`, go `workshop`), **New design** (`reset_mission()`, go `briefing`), **Title**.
 
 Edge case: the report opened with an empty `ops` (for example from the stub flow). Check `GameState.ops.is_empty()` and show "No mission flown yet" with a Title button.

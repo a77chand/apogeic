@@ -4,6 +4,7 @@ extends Control
 ## On entry it shows the vibration_break event card once, applies the choice, then builds the table.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Data = preload("res://scripts/core/data.gd")
 const EventCard = preload("res://scripts/ui/event_card.gd")
@@ -13,6 +14,7 @@ const Sprites = preload("res://scripts/ui/sprites.gd")
 var _ev: Dictionary = {}
 var _results: Array = []
 var _launch: Dictionary = {}
+var _risks: Array = []
 var _leaving: bool = false
 var _overlay: Control = null
 
@@ -24,6 +26,7 @@ func _ready() -> void:
 	_ev = GameState.evaluate()
 	_results = Sim.check_requirements(GameState.level, _ev)
 	_launch = Sim.can_launch(_ev, _results)
+	_risks = Sim.launch_risks(GameState.level, _results, _ev)
 	_build_top_bar()
 	_build_table()
 	_build_side()
@@ -36,7 +39,7 @@ func _ready() -> void:
 ## This runs before the table is built, because a choice can change the schedule.
 func _prelaunch_events() -> void:
 	var part_ids: Array = GameState.evaluate().get("part_ids", [])
-	var list: Array = Data.events_for(GameState.events, "test_lab", 0)
+	var list: Array = GameState.events_due("test_lab", 0)
 	for item in list:
 		var event: Dictionary = item
 		var id: String = str(event.get("id", ""))
@@ -50,7 +53,10 @@ func _prelaunch_events() -> void:
 		var index: int = await card.chosen
 		if not is_inside_tree():
 			return
+		var late: bool = is_instance_valid(card) and bool(card.get("timed_out"))
 		var line: String = Sim.apply_prelaunch_choice(GameState.sched, part_ids, event, index)
+		if late:
+			line = "Time ran out, so the default was chosen. " + line
 		GameState.add_log(line)
 
 
@@ -78,7 +84,7 @@ func _build_top_bar() -> void:
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
-	row.add_child(UI.label("Space Mission Designer", 16, UI.C_MUTED))
+	row.add_child(Player.badge(44.0))
 	var spacer: Control = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
@@ -185,6 +191,13 @@ func _build_side() -> void:
 	var cards: VBoxContainer = UI.vbox(8)
 	cards.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(cards)
+	for item in _risks:
+		var warn: PanelContainer = UI.panel(UI.C_ORANGE, 10.0)
+		warn.custom_minimum_size = Vector2(270.0, 0.0)
+		var warn_text: Label = UI.label("Launch risk. " + Sim.risk_line(item), 13, UI.C_ORANGE, true)
+		warn_text.custom_minimum_size = Vector2(240.0, 0.0)
+		warn.add_child(warn_text)
+		cards.add_child(warn)
 	var failed: int = 0
 	for item in _results:
 		var r: Dictionary = item
@@ -262,6 +275,8 @@ func _on_launch_anyway() -> void:
 	var need: float = float(GameState.level.get("launch_min_readiness_pct", 80.0))
 	if Sim.readiness_pct(_results) < need - Sim.EPS:
 		col.add_child(UI.label("Only %d%% ready. Below %d%% the rocket will NOT reach orbit, and the mission ends at launch." % [int(round(Sim.readiness_pct(_results))), int(round(need))], 15, UI.C_RED, true))
+	for item in _risks:
+		col.add_child(UI.label("The rocket may fail. " + Sim.risk_line(item), 15, UI.C_RED, true))
 	col.add_child(UI.label("These will happen in orbit:", 14, UI.C_MUTED))
 	for item in _results:
 		var r: Dictionary = item

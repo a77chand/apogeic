@@ -11,6 +11,7 @@ extends RefCounted
 ## Screens place their content between y = 84 and y = 650.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 
 
 ## A 72 px bar across the top. Game name left, title centre, one pill per entry in pills on the right.
@@ -22,10 +23,10 @@ static func top_bar(title: String, pills: Array) -> Control:
 	bar.size = Vector2(1280.0, 72.0)
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
-	var name_label: Label = UI.label("Space Mission Designer", 16, UI.C_MUTED)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	row.add_child(name_label)
+	var left: HBoxContainer = UI.hbox(0)
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_child(Player.badge(44.0))
+	row.add_child(left)
 	var title_label: Label = UI.label(title, 28)
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(title_label)

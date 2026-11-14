@@ -1,20 +1,71 @@
 {
-  "_note": "Events are deterministic: the result depends on the choice and on the design, never on chance. effect kinds: add_days, add_cost_k, mult_send, mult_make, skip_week, skip_send.",
+  "_note": "Each moment (when + week) can have several events; the game picks one at random for each attempt (GameState.roll_events). The first one listed is the default, used by the self-test, so keep choices 0 and 1 of the first events as they are. What an event DOES depends only on the choice and the design. Before launch: add_days, add_cost_k, mult_send, mult_make, extra_mass_kg, extra_power_w, flaw (a known problem left unfixed; it can make the launch fail, see Sim.launch_risks). In orbit: add_cost_k, mult_send, mult_make, skip_week, skip_send, battery_pct, bonus_mb, fuel_pct (change), fuel_drain (extra % per week), decay_in_weeks, boost_send and boost_make (a multiplier for 'weeks' weeks). Optional per choice: protect_part (free if you fitted it), requires_part (only possible if fitted), requires_fuel (only possible with that much fuel left). Optional per event: seconds (time to decide, default 15) and timeout_choice (choice used when time runs out, default the last one).",
   "events": [
-    {"id": "vibration_break", "when": "test_lab", "week": 0, "title": "A part cracked on the shake table", "body": "The vibration test loosened the antenna mount. Launch shakes a spacecraft hard, which is why we test.", "picture": "res://art/events/event_vibration_break.png",
+    {"id": "vibration_break", "when": "test_lab", "week": 0, "timeout_choice": 1, "title": "A part cracked on the shake table", "body": "The vibration test loosened the antenna mount. Launch shakes a spacecraft hard, which is why we test.", "picture": "res://art/events/event_vibration_break.png",
       "choices": [
         {"label": "Repair it", "detail": "Costs 10 days and $20k.", "effects": [{"kind": "add_days", "value": 10}, {"kind": "add_cost_k", "value": 20}], "log": "You repaired the antenna mount after the vibration test."},
-        {"label": "Fly as it is", "detail": "The radio sends 25% less for the whole mission.", "effects": [{"kind": "mult_send", "value": 0.75}], "log": "You flew with a loose antenna mount, so the radio sent 25% less."}
+        {"label": "Fly as it is", "detail": "The radio sends 25% less for the whole mission. Risky if the spacecraft is heavy (over 80% of the mass limit).", "effects": [{"kind": "mult_send", "value": 0.75}, {"kind": "flaw", "value": 1, "label": "the cracked antenna mount"}], "log": "You flew with a loose antenna mount, so the radio sent 25% less."},
+        {"label": "Brace the mount", "detail": "Costs 4 days and adds 0.3 kg. Watch the 4.0 kg limit.", "effects": [{"kind": "add_days", "value": 4}, {"kind": "extra_mass_kg", "value": 0.3}], "log": "You strapped the antenna down with a metal brace. It added 0.3 kg."}
       ]},
-    {"id": "solar_storm", "when": "ops", "week": 4, "title": "Solar storm", "body": "A burst of charged particles from the Sun is about to hit your satellite.", "picture": "res://art/events/event_solar_storm.png",
+    {"id": "thermal_test", "when": "test_lab", "week": 0, "timeout_choice": 1, "title": "A weak solder joint", "body": "The hot-and-cold test made a joint on the camera board crack. In orbit the temperature swings that much every 90 minutes.", "picture": "res://art/events/event_thermal_test.png",
+      "choices": [
+        {"label": "Re-solder it", "detail": "Costs 7 days and $15k.", "effects": [{"kind": "add_days", "value": 7}, {"kind": "add_cost_k", "value": 15}], "log": "You re-soldered the camera board after the thermal test."},
+        {"label": "Fly as it is", "detail": "The camera makes 20% fewer photos for the whole mission. Risky if the spacecraft is heavy (over 80% of the mass limit).", "effects": [{"kind": "mult_make", "value": 0.8}, {"kind": "flaw", "value": 1, "label": "the weak solder joint"}], "log": "You flew with a weak solder joint, so the camera made 20% fewer photos."},
+        {"label": "Add a small heater", "detail": "Costs $10k and uses 3 W more power. Check your spare power.", "effects": [{"kind": "add_cost_k", "value": 10}, {"kind": "extra_power_w", "value": 3.0}], "log": "You added a small heater to keep the camera board warm. It uses 3 W."}
+      ]},
+    {"id": "software_bug", "when": "test_lab", "week": 0, "timeout_choice": 1, "title": "A bug in the flight software", "body": "The computer froze for a few seconds during the test. You cannot send an engineer to fix it once the satellite is in orbit.", "picture": "res://art/events/event_software_bug.png",
+      "choices": [
+        {"label": "Fix it and retest", "detail": "Costs 5 days and $10k.", "effects": [{"kind": "add_days", "value": 5}, {"kind": "add_cost_k", "value": 10}], "log": "You fixed the software bug and ran the test again."},
+        {"label": "Launch with the bug", "detail": "The radio sends 15% less, because the computer keeps restarting it. Risky if the spacecraft is heavy (over 80% of the mass limit).", "effects": [{"kind": "mult_send", "value": 0.85}, {"kind": "flaw", "value": 1, "label": "the software bug"}], "log": "You launched with a software bug, so the radio sent 15% less."},
+        {"label": "Ask a university team", "detail": "Free, but they need 20 days to check the code.", "effects": [{"kind": "add_days", "value": 20}], "log": "A university team checked the code for free. It took 20 days."}
+      ]},
+    {"id": "solar_storm", "when": "ops", "week": 4, "timeout_choice": 1, "title": "Solar storm", "body": "A burst of charged particles from the Sun is about to hit your satellite.", "picture": "res://art/events/event_solar_storm.png",
       "choices": [
         {"label": "Enter safe mode", "detail": "Lose this week of photos. The camera stays safe.", "effects": [{"kind": "skip_week", "value": 1}], "log": "You sat out the solar storm in safe mode and lost one week."},
-        {"label": "Keep imaging", "detail": "Safe only if you added radiation shielding.", "protect_part": "shielding", "effects": [{"kind": "mult_make", "value": 0.5}], "log": "The storm damaged the unshielded camera. It made half as many photos afterwards.", "log_protected": "Your radiation shielding protected the camera through the storm."}
+        {"label": "Keep imaging", "detail": "Safe only if you added radiation shielding.", "protect_part": "shielding", "log_protected": "Your radiation shielding protected the camera through the storm.", "effects": [{"kind": "mult_make", "value": 0.5}], "log": "The storm damaged the unshielded camera. It made half as many photos afterwards."},
+        {"label": "Turn the panels away", "detail": "Keep taking photos and protect the camera, but the battery loses 25%.", "effects": [{"kind": "battery_pct", "value": -25}], "log": "You turned the panels away from the storm. The camera was safe, but the battery lost 25%."}
       ]},
-    {"id": "ground_silent", "when": "ops", "week": 8, "title": "The ground station hears nothing", "body": "A fault at the ground station means it cannot receive this week.", "picture": "res://art/events/event_ground_silent.png",
+    {"id": "debris_alert", "when": "ops", "week": 4, "timeout_choice": 1, "title": "Space junk ahead", "body": "A piece of old rocket is passing close to your satellite. The chance of a hit is small, but a hit would be very bad.", "picture": "res://art/events/event_debris_alert.png",
+      "choices": [
+        {"label": "Enter safe mode", "detail": "Lose this week of photos while the satellite hides.", "effects": [{"kind": "skip_week", "value": 1}], "log": "You went into safe mode while space junk passed, and lost one week."},
+        {"label": "Keep working", "detail": "Safe only if you added shielding. Otherwise the camera is scratched.", "protect_part": "shielding", "log_protected": "Your shielding stopped the fragment. The camera was fine.", "effects": [{"kind": "mult_make", "value": 0.6}], "log": "A fragment scratched the unshielded camera. It made 40% fewer photos afterwards."},
+        {"label": "Photograph it!", "detail": "A rare picture: +30 MB of data. The camera works flat out and the battery loses 15%.", "effects": [{"kind": "bonus_mb", "value": 30}, {"kind": "battery_pct", "value": -15}], "log": "You photographed the space junk as it flew past: 30 MB of rare photos, and the battery lost 15%."}
+      ]},
+    {"id": "radio_interference", "when": "ops", "week": 4, "timeout_choice": 1, "title": "Someone else is on your channel", "body": "Another satellite is using the same radio channel. Your signal is being drowned out.", "picture": "res://art/events/event_radio_interference.png",
+      "choices": [
+        {"label": "Switch channel", "detail": "Costs $15k for a new radio licence. No more problem.", "effects": [{"kind": "add_cost_k", "value": 15}], "log": "You paid $15k to move to a clear radio channel."},
+        {"label": "Put up with it", "detail": "The radio sends 20% less for the rest of the mission.", "effects": [{"kind": "mult_send", "value": 0.8}], "log": "You stayed on the crowded channel, so the radio sent 20% less."},
+        {"label": "Wait for it to pass", "detail": "The other satellite moves on in 3 weeks. Until then the radio sends 40% less.", "effects": [{"kind": "boost_send", "value": 0.6, "weeks": 3}], "log": "You waited for the other satellite to move away. The radio sent 40% less for 3 weeks."}
+      ]},
+    {"id": "ground_silent", "when": "ops", "week": 8, "timeout_choice": 0, "title": "The ground station hears nothing", "body": "A fault at the ground station means it cannot receive this week.", "picture": "res://art/events/event_ground_silent.png",
       "choices": [
         {"label": "Wait a week", "detail": "No data is sent this week. Photos pile up in storage.", "effects": [{"kind": "skip_send", "value": 1}], "log": "You waited out the ground station fault and sent nothing for one week."},
-        {"label": "Rent a backup station", "detail": "Costs $30k. Sending carries on.", "protect_part": "ground2", "effects": [{"kind": "add_cost_k", "value": 30}], "log": "You paid $30k for a backup ground station.", "log_protected": "Your second ground station covered the gap at no extra cost."}
+        {"label": "Rent a backup station", "detail": "Costs $30k. Sending carries on.", "protect_part": "ground2", "log_protected": "Your second ground station covered the gap at no extra cost.", "effects": [{"kind": "add_cost_k", "value": 30}], "log": "You paid $30k for a backup ground station."},
+        {"label": "Catch up later", "detail": "Send nothing now, then send 40% more for 2 weeks. The radio drains 10% of the battery.", "effects": [{"kind": "skip_send", "value": 1}, {"kind": "boost_send", "value": 1.4, "weeks": 2}, {"kind": "battery_pct", "value": -10}], "log": "You saved the photos and blasted them down at 140% over the next two weeks. The battery lost 10%."}
+      ]},
+    {"id": "software_glitch", "when": "ops", "week": 8, "timeout_choice": 1, "title": "The satellite computer crashed", "body": "A cosmic ray flipped a bit in memory and the onboard computer stopped responding.", "picture": "res://art/events/event_software_glitch.png",
+      "choices": [
+        {"label": "Restart it", "detail": "Lose this week of photos while it reboots.", "effects": [{"kind": "skip_week", "value": 1}], "log": "You restarted the crashed computer and lost one week."},
+        {"label": "Leave it running", "detail": "It limps along. The camera makes 30% fewer photos from now on.", "effects": [{"kind": "mult_make", "value": 0.7}], "log": "You left the glitchy computer running, so the camera made 30% fewer photos."},
+        {"label": "Upload a patch", "detail": "Costs $5k and nothing is lost. Needs a fast radio to send the patch.", "requires_part": "radio_sband", "effects": [{"kind": "add_cost_k", "value": 5}], "log": "You uploaded a patch over the S-band link. The computer recovered with no downtime."}
+      ]},
+    {"id": "ground_rain", "when": "ops", "week": 8, "timeout_choice": 0, "title": "Storm over the ground station", "body": "Heavy rain is blocking the signal at your ground station.", "picture": "res://art/events/event_ground_rain.png",
+      "choices": [
+        {"label": "Wait for it to clear", "detail": "No data is sent this week. Photos pile up in storage.", "effects": [{"kind": "skip_send", "value": 1}], "log": "You waited out the storm and sent nothing for one week."},
+        {"label": "Use a dry station abroad", "detail": "Costs $25k. Free if you added a second ground station.", "protect_part": "ground2", "log_protected": "Your second ground station was in the sun, so it took over for free.", "effects": [{"kind": "add_cost_k", "value": 25}], "log": "You paid $25k to use a ground station in another country."},
+        {"label": "Take smaller photos", "detail": "Wait for the storm, but make photos a third smaller for 3 weeks so storage does not overflow.", "effects": [{"kind": "skip_send", "value": 1}, {"kind": "boost_make", "value": 0.67, "weeks": 3}], "log": "You waited out the storm and shrank the photos for 3 weeks so storage did not overflow."}
+      ]},
+    {"id": "drift_off_course", "when": "ops", "week": 4, "timeout_choice": 2, "title": "Drifting off course", "body": "The satellite is slowly turning away from the coastlines it should photograph. Thrusters can fix it, but fuel is limited, and heavy satellites burn more of it just keeping their orbit.", "picture": "res://art/events/event_drift_off_course.png",
+      "choices": [
+        {"label": "Big correction burn", "detail": "Costs 30% of your fuel. The photos stay perfect.", "requires_fuel": 30, "effects": [{"kind": "fuel_pct", "value": -30}], "log": "You burned 30% of the fuel to point the camera back at the coast."},
+        {"label": "Small nudge", "detail": "Costs 12% of your fuel. The camera is a little off: 15% fewer good photos.", "requires_fuel": 12, "effects": [{"kind": "fuel_pct", "value": -12}, {"kind": "mult_make", "value": 0.85}], "log": "You used 12% of the fuel on a small nudge. The camera made 15% fewer good photos."},
+        {"label": "Let it drift", "detail": "Saves all the fuel, but the camera makes 30% fewer good photos from now on.", "effects": [{"kind": "mult_make", "value": 0.7}], "log": "You let the satellite drift to save fuel, so the camera made 30% fewer good photos."}
+      ]},
+    {"id": "orbit_decay", "when": "ops", "week": 8, "timeout_choice": 2, "title": "The orbit is sinking", "body": "Thin air at this height is dragging the satellite down. If nothing is done it will burn up. Fuel is what keeps a satellite in orbit, and some may already be gone.", "picture": "res://art/events/event_orbit_decay.png",
+      "choices": [
+        {"label": "Boost to a higher orbit", "detail": "Costs 40% of your fuel and fixes the problem for good.", "requires_fuel": 40, "effects": [{"kind": "fuel_pct", "value": -40}], "log": "You spent 40% of the fuel to raise the orbit."},
+        {"label": "Tiny burns every week", "detail": "Costs 2% more fuel every week. You keep your orbit as long as the fuel lasts.", "effects": [{"kind": "fuel_drain", "value": 2.0}], "log": "You switched to tiny burns every week, which cost 2% more fuel each week."},
+        {"label": "Ride it down", "detail": "A lower orbit takes sharper photos (25% more), but the satellite burns up in 3 weeks.", "effects": [{"kind": "mult_make", "value": 1.25}, {"kind": "decay_in_weeks", "value": 3}], "log": "You let the orbit sink for sharper photos. The satellite would burn up in 3 weeks."}
       ]}
   ]
 }

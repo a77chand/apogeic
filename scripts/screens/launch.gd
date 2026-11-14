@@ -214,6 +214,11 @@ func _make_flame_fx() -> Node2D:
 
 
 func _failure_text() -> String:
+	var why: String = str(GameState.launch_outcome.get("fail_text", ""))
+	if why != "":
+		if why.begins_with("Failure"):
+			return why
+		return "The launch failed. " + why
 	return "The launch failed. Only %d%% of the checks passed (needs %d%%), so the satellite never reached orbit." % [
 			int(round(float(GameState.launch_outcome.get("readiness_pct", 0.0)))),
 			int(round(float(GameState.launch_outcome.get("needed_pct", 0.0))))]

@@ -15,15 +15,23 @@ var level: Dictionary = {}          # the level for the chosen craft (see set_cr
 var base_level: Dictionary = {}     # level1.json as loaded
 var craft_cfg: Dictionary = {}      # data/craft.json
 var craft_id: String = "3u"
+var mission_id: String = "level1"   # which mission is being played (see Data.MISSIONS)
 var puzzles: Dictionary = {}
 var events: Array = []
 
 # ---- progress that is saved
 var puzzles_done: Dictionary = {}   # puzzle id -> true
 var best_stars: int = 0
+var missions_done: Dictionary = {}  # mission id -> best grade ("partial" or "success"). Failed does not count
+var mission_stars: Dictionary = {}  # mission id -> best stars
 var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
 var tutorial_open: bool = false     # true while a tip box is on screen (clocks wait)
 var muted: bool = false             # sound on/off, saved
+var player_name: String = ""       # the player's astronaut, saved (see scripts/ui/player.gd)
+var player_title: String = "Commander"
+var avatar_suit: int = 0            # index into Player.SUITS
+var avatar_patch: int = 0           # index into Player.PATCHES
+var profile_next: String = "ladder" # where the profile screen goes when it is done (not saved)
 var sfx: Node = null                # set by main.gd (scripts/ui/sfx.gd)
 
 # ---- the current mission attempt (reset by reset_mission)
@@ -35,6 +43,7 @@ var launch_outcome: Dictionary = {} # Sim.launch_outcome() frozen at launch
 var ops: Dictionary = {}            # see Sim.new_ops_state()
 var log_lines: Array = []           # event log lines for the report
 var events_seen: Dictionary = {}    # event id -> true
+var event_picks: Dictionary = {}    # moment key ("ops:4") -> id of the event chosen for this attempt
 
 var router: Node = null             # set by main.gd
 
@@ -79,6 +88,23 @@ func go(screen_id: String) -> void:
 		router.call("go", screen_id)
 
 
+## Picks one event at random for each moment that has several. Called for every new attempt,
+## so each run can meet different events. The effects of an event are never random.
+func roll_events() -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.randomize()
+	event_picks = {}
+	var slots: Dictionary = Data.event_slots(events)
+	for key in slots.keys():
+		var ids: Array = slots[key]
+		event_picks[str(key)] = str(ids[rng.randi_range(0, ids.size() - 1)])
+
+
+## The events that fire at this moment of the current attempt.
+func events_due(when: String, week: int) -> Array:
+	return Data.events_for(events, when, week, event_picks)
+
+
 func reset_mission() -> void:
 	design = Sim.new_design(level)
 	sched = Sim.new_schedule()
@@ -88,6 +114,7 @@ func reset_mission() -> void:
 	ops = {}
 	log_lines = []
 	events_seen = {}
+	roll_events()
 	design_changed.emit()
 
 
@@ -100,6 +127,7 @@ func retry_mission() -> void:
 	ops = {}
 	log_lines = []
 	events_seen = {}
+	roll_events()
 	design_changed.emit()
 
 
@@ -146,10 +174,54 @@ func begin_ops() -> void:
 	launch_eval = evaluate()
 	launch_results = Sim.check_requirements(level, launch_eval)
 	ops = Sim.new_ops_state(level, launch_eval, launch_results)
-	launch_outcome = Sim.launch_outcome(level, launch_results)
+	launch_outcome = Sim.launch_outcome(level, launch_results, launch_eval)
 	launch_eval["launch_min_readiness_pct"] = float(level.get("launch_min_readiness_pct", 0.0))
 	if not bool(launch_outcome.get("reached_orbit", true)):
-		Sim.fail_launch(ops)
+		Sim.fail_launch(ops, str(launch_outcome.get("fail_text", "")))
+
+
+# ---- missions
+
+## Switches to another mission and starts a fresh attempt at it.
+func set_mission(id: String) -> void:
+	var loaded: Dictionary = Data.load_level(id)
+	if loaded.is_empty():
+		return
+	mission_id = id
+	base_level = loaded
+	level = Craft.apply(base_level, craft_cfg, craft_id)
+	reset_mission()
+
+
+func mission_ids() -> Array:
+	return Data.MISSIONS
+
+
+func mission_info(id: String) -> Dictionary:
+	return Data.load_level(id)
+
+
+func is_mission_done(id: String) -> bool:
+	return missions_done.has(id)
+
+
+## A mission is open when it is the first one, or the one before it was finished
+## (reached the goal or got close: a failed attempt does not unlock the next one).
+func is_mission_open(id: String) -> bool:
+	var index: int = Data.MISSIONS.find(id)
+	if index <= 0:
+		return index == 0
+	return is_mission_done(str(Data.MISSIONS[index - 1]))
+
+
+## Called when the mission ends. grade is "success", "partial" or "failed".
+func record_mission_result(grade: String, stars: int) -> void:
+	if grade != "failed":
+		if grade == "success" or not missions_done.has(mission_id):
+			missions_done[mission_id] = grade
+	if stars > int(mission_stars.get(mission_id, 0)):
+		mission_stars[mission_id] = stars
+	save_game()
 
 
 # ---- puzzle ladder
@@ -201,15 +273,22 @@ func save_game() -> void:
 	if file == null:
 		push_warning("Could not write the save file.")
 		return
-	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted}))
+	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
+			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch}))
 	file.close()
 
 
 func load_save() -> void:
 	puzzles_done = {}
 	best_stars = 0
+	missions_done = {}
+	mission_stars = {}
 	tutorial_seen = {}
 	muted = false
+	player_name = ""
+	player_title = "Commander"
+	avatar_suit = 0
+	avatar_patch = 0
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
 	var data: Dictionary = Data.load_dict(SAVE_PATH)
@@ -218,6 +297,16 @@ func load_save() -> void:
 		puzzles_done = done
 	best_stars = int(data.get("best_stars", 0))
 	muted = bool(data.get("muted", false))
+	var done_missions: Variant = data.get("missions_done", {})
+	if typeof(done_missions) == TYPE_DICTIONARY:
+		missions_done = done_missions
+	var star_record: Variant = data.get("mission_stars", {})
+	if typeof(star_record) == TYPE_DICTIONARY:
+		mission_stars = star_record
+	player_name = str(data.get("player_name", "")).left(14)
+	player_title = str(data.get("player_title", "Commander"))
+	avatar_suit = int(data.get("avatar_suit", 0))
+	avatar_patch = int(data.get("avatar_patch", 0))
 	var seen: Variant = data.get("tutorial_seen", {})
 	if typeof(seen) == TYPE_DICTIONARY:
 		tutorial_seen = seen
@@ -226,5 +315,29 @@ func load_save() -> void:
 func reset_progress() -> void:
 	puzzles_done = {}
 	best_stars = 0
+	missions_done = {}
+	mission_stars = {}
 	tutorial_seen = {}
+	save_game()
+
+
+# ---- the player's astronaut
+
+func has_profile() -> bool:
+	return player_name.strip_edges() != ""
+
+
+## "Commander Sam". Falls back to "Cadet" before a name has been chosen.
+func display_name() -> String:
+	var n: String = player_name.strip_edges()
+	if n == "":
+		return "Cadet"
+	return (player_title + " " + n).strip_edges()
+
+
+func set_profile(name_text: String, title: String, suit: int, patch: int) -> void:
+	player_name = name_text.strip_edges().left(14)
+	player_title = title
+	avatar_suit = suit
+	avatar_patch = patch
 	save_game()

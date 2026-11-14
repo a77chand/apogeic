@@ -10,11 +10,13 @@ const Sfx = preload("res://scripts/ui/sfx.gd")
 ## screen id -> script path. A missing script shows the stub screen instead of crashing.
 const SCREENS: Dictionary = {
 	"title": "res://scripts/screens/title.gd",
+	"profile": "res://scripts/screens/profile.gd",
 	"ladder": "res://scripts/screens/ladder.gd",
 	"puzzle_mass": "res://scripts/screens/puzzle_mass.gd",
 	"puzzle_power": "res://scripts/screens/puzzle_power.gd",
 	"puzzle_link": "res://scripts/screens/puzzle_link.gd",
 	"puzzle_time": "res://scripts/screens/puzzle_time.gd",
+	"missions": "res://scripts/screens/missions.gd",
 	"briefing": "res://scripts/screens/briefing.gd",
 	"workshop": "res://scripts/screens/workshop.gd",
 	"test_lab": "res://scripts/screens/test_lab.gd",
