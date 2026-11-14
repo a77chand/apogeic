@@ -17,6 +17,32 @@ var _readiness_label: Label = null
 var _tip: Label = null
 var _day_pill: Label = null
 var _money_pill: Label = null
+var _tray: ScrollContainer = null
+var _pause_btn: Button = null
+var _paused: bool = false
+var _popup: Control = null          # the open "Why red?" popup, if any
+var _acc: float = 0.0               # seconds collected towards the next day
+const MAX_DAY: int = 250
+
+
+## The clock. A day passes every seconds_per_day. Stops while paused or while a popup is open.
+func _process(delta: float) -> void:
+	if _paused or (_popup != null and is_instance_valid(_popup)):
+		return
+	var schedule: Dictionary = GameState.level.get("schedule", {})
+	var per_day: float = maxf(0.1, float(schedule.get("seconds_per_day", 2.0)))
+	_acc += delta
+	var moved: bool = false
+	while _acc >= per_day:
+		_acc -= per_day
+		var day: int = int(GameState.sched.get("day", 1))
+		if day >= MAX_DAY:
+			_acc = 0.0
+			break
+		GameState.sched["day"] = day + 1
+		moved = true
+	if moved:
+		_refresh()
 
 
 func _ready() -> void:
@@ -139,6 +165,7 @@ func _build_right_panel() -> void:
 
 func _build_tray() -> void:
 	var scroll: ScrollContainer = ScrollContainer.new()
+	_tray = scroll
 	_place(scroll, Vector2(20, 520), Vector2(1030, 110))
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	var row: HBoxContainer = UI.hbox(8)
@@ -151,8 +178,14 @@ func _build_tray() -> void:
 		card.connect("clicked", _on_fit_any)
 		row.add_child(card)
 		_cards[str(part.get("id", ""))] = card
+	var why_btn: Button = UI.button("Why red?", _on_why_red, 190.0, false)
+	why_btn.custom_minimum_size = Vector2(190.0, 36.0)
+	_place(why_btn, Vector2(1070, 518), Vector2(190, 36))
+	_pause_btn = UI.button("Pause", _on_pause, 190.0, false)
+	_pause_btn.custom_minimum_size = Vector2(190.0, 36.0)
+	_place(_pause_btn, Vector2(1070, 560), Vector2(190, 36))
 	var test_btn: Button = UI.button("Test it", _on_test, 190.0, true)
-	_place(test_btn, Vector2(1070, 550), Vector2(190, 52))
+	_place(test_btn, Vector2(1070, 604), Vector2(190, 50))
 
 
 func _build_tip_bar() -> void:
@@ -212,6 +245,59 @@ func _on_remove(slot_id: String) -> void:
 
 func _on_test() -> void:
 	GameState.go("test_lab")
+
+
+func _on_pause() -> void:
+	_paused = not _paused
+	if _paused:
+		_pause_btn.text = "Resume"
+		_tray.modulate = Color(1, 1, 1, 0.45)
+		_set_tip("Paused. The day counter and the budget are frozen.")
+	else:
+		_pause_btn.text = "Pause"
+		_tray.modulate = Color(1, 1, 1, 1)
+		_set_tip("Running.")
+
+
+## A popup that lists the reason and tip of every failing check.
+func _on_why_red() -> void:
+	if _popup != null and is_instance_valid(_popup):
+		return
+	var ev: Dictionary = GameState.evaluate()
+	var results: Array = Sim.check_requirements(GameState.level, ev)
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.6)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_popup = overlay
+	var centre: CenterContainer = CenterContainer.new()
+	overlay.add_child(centre)
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel: PanelContainer = UI.panel(UI.C_ORANGE, 20.0)
+	panel.custom_minimum_size = Vector2(640.0, 0.0)
+	centre.add_child(panel)
+	var col: VBoxContainer = UI.vbox(10)
+	panel.add_child(col)
+	col.add_child(UI.label("Why red?", 24))
+	var any_fail: bool = false
+	for item in results:
+		var r: Dictionary = item
+		if bool(r.get("passed", false)):
+			continue
+		any_fail = true
+		col.add_child(UI.label(str(r.get("text", "")), 16, UI.C_YELLOW, true))
+		col.add_child(UI.label(str(r.get("reason", "")), 14, UI.C_TEXT, true))
+		col.add_child(UI.label("Tip: " + str(r.get("tip", "")), 14, UI.C_CYAN, true))
+	if not any_fail:
+		col.add_child(UI.label("Nothing is red. Every check passes.", 16, UI.C_GREEN, true))
+	col.add_child(UI.button("Close", _on_close_popup, 160.0, true))
+
+
+func _on_close_popup() -> void:
+	if _popup != null and is_instance_valid(_popup):
+		_popup.queue_free()
+	_popup = null
 
 
 func _on_bar_hover(key: String) -> void:
