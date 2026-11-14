@@ -7,6 +7,9 @@ For Anusha, Aadhav and Bhairavi. Written so that each of you can hand a section 
 
 ## 0. Read this first
 
+> **Updated 14 Nov:** The starter has now been run inside Godot 4.7.2 and the self-test passes there. The "NOT checked" row below is out of date. See 0.1.
+
+
 **What exists already.** A starter project comes with this document (`space-mission-designer-starter.zip`). It contains the data files, the full rules engine, the game state, the screen router, a UI helper, a title screen, a stub screen and a test suite. About 1,400 lines.
 
 **What has been checked, and what has not.**
@@ -27,6 +30,32 @@ So nobody can promise "no bugs" yet. The first job on Saturday (Block 0) is to o
 1. Rules live only in `scripts/core/sim.gd`. Screens never do game maths. They call Sim and show the answer.
 2. One screen is one script file with one owner. Nobody edits another person's screen file.
 3. Screens build their nodes in code, in `_ready()`. There is one `.tscn` in the whole project and nobody edits it. This avoids scene merge conflicts, and it means an AI assistant can write a complete working screen as plain text.
+
+---
+
+## 0.1 What changed since this spec was written (14 Nov)
+
+This spec described the plan. The game has moved on. Everything below is built, tested and on `main`. Where an older section is now out of date, it has an "Updated 14 Nov" note pointing here.
+
+**Status.** All 13 screens are real (no stubs left): title, ladder, the four puzzles, briefing, workshop, test lab, launch, operations, report, and the truck scenario. The project has been run inside Godot 4.7.2. The self-test and three more test files pass (see section 18).
+
+**New rules (all in the sim, all data-driven):**
+
+| Rule | Where | What it does |
+|---|---|---|
+| Launch can fail | `Sim.launch_outcome`, `Sim.fail_launch`; `level1.json` `launch_min_readiness_pct` (80) | Readiness must reach 80% or the rocket does not reach orbit. Below that it climbs only as far as the readiness number, the mission ends with `end_reason = "launch_failed"`, there is no operations phase, and the report explains why. No randomness. |
+| Rocket size from mass | `Sim.rocket_for_mass`; `level1.json` `rocket_by_mass` | Small, medium or heavy rocket picture, chosen from the design's mass. |
+| Craft size | `scripts/core/craft.gd`, `data/craft.json` | Player picks 1U, 3U or 6U on the briefing (LEO and rideshare are fixed, by team decision). The size sets the mass limit, bus mass and launch cost. 3U is identical to the original level. |
+| More events, more choices (Aadhav) | `data/events.json`, `GameState.roll_events`, `Sim.launch_risks` | Each event moment now has several possible events, one picked at random per attempt (the first listed is the default the self-test uses), and every event has three choices. Unfixed problems are recorded as "flaws" that can make a heavy spacecraft's launch fail. Note: this relaxes the original "nothing random" rule; what an event does still depends only on the choice and the design. |
+| Week history | `Sim.new_ops_state`, `Sim.ops_week` | `ops.history` keeps one record per week (battery, stored, delivered) for the report chart. |
+
+**New screens and pieces:** `truck.gd` (NASA-problem scenario: sensor choice for an autonomous construction truck, with `truck_sim.gd` and `data/truck.json`; mostly illustrative numbers, one NASA-sourced sensor, see `docs/TRUCK_SOURCES.md`), `report.gd`, `ladder.gd`, `briefing.gd`, `tutorial.gd` + `data/tutorial.json` (first-visit tips), `sfx.gd` (sound), `sprites.gd`, `starfield.gd`, `orbit_ring.gd`, `week_chart.gd`.
+
+**Look and feel.** Mission-control style in `ui.gd`: Rajdhani display font (OFL, in `art/fonts/`), slim angled buttons with a cyan edge, glassy panels with corner ticks, see-through top and tip bars, outlined text, a vignette. Missing art is drawn in code (Earth, satellite, rockets, launch pad, part icons, starfield with planets and shooting stars); any PNG with the tracker name replaces the drawing automatically. The orbit view has depth (the satellite passes behind the Earth), the workshop satellite builds itself as parts are fitted, and the launch has a flame, smoke and a camera pull-back.
+
+**Sound.** Generated in code, no audio files: click, select, fit, countdown beeps and lift-off tone, rumble, ping, alert, chime, failure tone, and a short fanfare for puzzles and full success. Sound on/off on the title, saved.
+
+**Web export.** Done and tested to build: see `docs/WEB_EXPORT.md` and `docs/export_presets.web.cfg` (adds `*.json`, threads off). Hosted on GitHub Pages.
 
 ---
 
@@ -361,6 +390,9 @@ Returns a list of `{cause, effect, tip}`, most important first: how the mission 
 
 ### 8.6 Reference outcomes (use these to test by hand)
 
+> **Updated 14 Nov:** These numbers ignore the test-lab vibration event and predate the launch rule. With the launch rule, designs that fail two checks (readiness 67%) now fail at launch instead of flying: "without a battery" and "finished on day 131" both end at launch. With the vibration event, "Repair it" costs $20k, which leaves the second-ground-station design at 9.9% reserve (2 stars); "Brace the mount" (+4 days, +0.3 kg) keeps it at 3 stars.
+
+
 Build finished on day 41 unless noted.
 
 | Design | Result |
@@ -604,6 +636,9 @@ Done when: you can build each of the six winning designs from section 8.6, the b
 
 ### 12.10 `test_lab` (Anusha, Block 2)
 
+> **Updated 14 Nov:** The Fix it button now states the real delay, worked out by the rules ("launch N days later" or "no launch delay yet", because the licence sets the earliest launch day). Test-lab events now have three choices each.
+
+
 On entry:
 
 1. If `vibration_break` is not in `GameState.events_seen`: mark it seen, show the event card, then `var line: String = Sim.apply_prelaunch_choice(GameState.sched, ev["part_ids"], event, index)` and `GameState.add_log(line)`. Get the event with `Data.events_for(GameState.events, "test_lab", 0)`. Until the event card exists (Block 3), skip this step.
@@ -623,6 +658,9 @@ Buttons:
 Done when: the reference design fails R2 only, the heavy design cannot launch, and going back adds 10 days to the launch day.
 
 ### 12.11 `launch` (Anusha, Block 2)
+
+> **Updated 14 Nov:** The scene now plays the sim's launch outcome: success reaches orbit; failure climbs only as far as readiness allows and goes to the report. Countdown beeps, flame and smoke particles, camera pull-back.
+
 
 About 10 seconds, no input needed, with a **Skip** button.
 
@@ -724,6 +762,9 @@ Two things for Amudha and the animators:
 
 ## 14. Sound
 
+> **Updated 14 Nov:** Done, generated in code (scripts/ui/sfx.gd). No audio files, so nothing to license.
+
+
 Optional, last. If there is time: one click sound for buttons, one rumble for launch, one chime for a star. Use `AudioStreamPlayer` nodes that are children of the screen. Credit every sound in the credits file with its licence. A browser will not play sound until the player has clicked once, so do not rely on sound at start-up.
 
 ---
@@ -735,6 +776,9 @@ Optional, last. If there is time: one click sound for buttons, one rumble for la
 ---
 
 ## 16. Export (Anusha, Block 5)
+
+> **Updated 14 Nov:** Done. Preset in docs/export_presets.web.cfg, steps in docs/WEB_EXPORT.md, hosted on GitHub Pages.
+
 
 Do a first web export at the end of Block 2, not at the end of the day. Export problems found early are small.
 
@@ -764,6 +808,9 @@ Do a first web export at the end of Block 2, not at the end of the day. Export p
 ---
 
 ## 18. Testing
+
+> **Updated 14 Nov:** Also run tests/truck_tests.gd and tests/craft_tests.gd. The self-test now includes the launch rule and Aadhav's event changes.
+
 
 **Self-test.** `tests/sim_tests.gd` has about 70 checks on the rules and all four puzzles. Run it from the title screen or the terminal. If you change a number in `data/` on purpose, the matching expected values in the test must change in the same commit.
 
@@ -923,6 +970,9 @@ When the AI's code shows an error in Godot, paste the exact error line and the f
 ---
 
 ## 24. Open items
+
+> **Updated 14 Nov:** Still open: verify the craft table and the truck figures against primary sources before presenting them; art from Tanvi and Aditi.
+
 
 | Item | Who |
 |---|---|

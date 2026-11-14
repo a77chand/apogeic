@@ -71,6 +71,19 @@ func _any_failed() -> bool:
 	return not Sim.all_passed(_results)
 
 
+## What a retest really costs right now. A failed test adds retest days to the work, but
+## launch can never be earlier than the licence allows, so early on it may cost nothing.
+func _fix_it_text() -> String:
+	var now: int = int(_ev.get("launch_day", 0))
+	var sched: Dictionary = GameState.sched.duplicate()
+	sched["retests"] = int(sched.get("retests", 0)) + 1
+	var later: int = int(Sim.evaluate_design(GameState.level, GameState.parts, GameState.design, sched).get("launch_day", 0))
+	var delay: int = later - now
+	if delay <= 0:
+		return "Fix it (no launch delay yet)"
+	return "Fix it (launch %d days later)" % delay
+
+
 func _retest_days() -> int:
 	var schedule: Dictionary = GameState.level.get("schedule", {})
 	return int(schedule.get("retest_days", 10))
@@ -223,7 +236,7 @@ func _build_side() -> void:
 func _build_buttons() -> void:
 	var back_text: String = "Back to workshop"
 	if _any_failed():
-		back_text = "Fix it (costs %d days)" % _retest_days()
+		back_text = _fix_it_text()
 	_place(UI.button(back_text, _on_back, 260.0, false), Vector2(20, 600), Vector2(260, 52))
 	if not _any_failed():
 		_place(UI.button("Launch", _on_launch, 220.0, true), Vector2(1040, 600), Vector2(220, 52))

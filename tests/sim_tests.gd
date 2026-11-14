@@ -59,7 +59,7 @@ static func run() -> Array:
 	var events: Array = Data.load_events()
 	_same(fails, "parts loaded", parts.size(), 11)
 	_same(fails, "requirements loaded", (level.get("requirements", []) as Array).size(), 6)
-	_same(fails, "events loaded", events.size(), 3)
+	_same(fails, "events loaded", events.size(), 11)
 	if not fails.is_empty():
 		return fails
 
