@@ -6,6 +6,8 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Chrome = preload("res://scripts/ui/chrome.gd")
 const LineChart = preload("res://scripts/ui/line_chart.gd")
+const Film = preload("res://scripts/ui/film.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const ID: String = "power"
 
@@ -39,6 +41,7 @@ func _ready() -> void:
 	_build_result()
 	_build_bottom()
 	_refresh()
+	Tutorial.maybe_show(self, "puzzle_power")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -57,10 +60,10 @@ func _build_intro() -> void:
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
 	intro.custom_minimum_size = Vector2(248.0, 0.0)
 	col.add_child(intro)
-	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
-	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 250.0, UI.C_ORANGE))
+	col.add_child(UI.button("▶  Watch: a dead battery", _on_watch, 250.0, false))
+	col.add_child(UI.bullets(["Needs 12 W, day and night", "Dark for 35 of every 95 minutes"], 14, UI.C_TEXT, 250.0, UI.C_ORANGE))
 	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
-	col.add_child(UI.bullets(_pz.get("goal", []), 13, UI.C_TEXT, 250.0, UI.C_GREEN))
+	col.add_child(UI.bullets(_pz.get("goal", []), 14, UI.C_TEXT, 250.0, UI.C_GREEN))
 
 
 func _make_slider(min_v: float, max_v: float, step: float, start: float) -> HSlider:
@@ -122,7 +125,7 @@ func _build_bottom() -> void:
 	panel.add_child(_message)
 	_back_btn = UI.button("Back", _on_back, 160.0, false)
 	_place(_back_btn, Vector2(20, 598), Vector2(160, 52))
-	_lock_btn = UI.button("Lock it in", _on_lock, 220.0, true)
+	_lock_btn = UI.button("Fly one orbit", _on_lock, 220.0, true)
 	_place(_lock_btn, Vector2(1040, 598), Vector2(220, 52))
 
 
@@ -168,19 +171,36 @@ func _refresh() -> void:
 	if passed:
 		_message.text = str(_pz.get("lesson", ""))
 		_message.add_theme_color_override("font_color", UI.C_GREEN)
-		Chrome.set_tip(_tip, "It works. Press Lock it in.")
+		Chrome.set_tip(_tip, "Looks good. Press Fly one orbit to try it.")
 	else:
 		_message.text = "\n".join(PackedStringArray(reasons))
 		_message.add_theme_color_override("font_color", UI.C_RED)
 		Chrome.set_tip(_tip, "Drag the sliders. The line shows the battery charge through one orbit.")
-	_lock_btn.disabled = not passed or _locked
+	_lock_btn.disabled = _locked
+
+
+func _on_watch() -> void:
+	Film.play(self, "power_fail", ["Every orbit, the Earth hides the Sun for 35 minutes.", "If the battery is too small, it runs flat in the dark and the satellite goes silent."])
 
 
 func _on_lock() -> void:
 	if _locked:
 		return
+	var res: Dictionary = Sim.puzzle_power(_pz, _panel_slider.value, _battery_slider.value)
 	_locked = true
 	_lock_btn.disabled = true
+	if not bool(res.get("passed", false)):
+		var lines: Array = ["The battery fell to %d%% in the dark." % int(round(float(res.get("min_pct", 0.0))))]
+		if float(res.get("mass_kg", 0.0)) > float(_pz.get("mass_limit_kg", 1.0)) + Sim.EPS:
+			lines = ["The panels and battery are too heavy for the satellite (%.2f kg)." % float(res.get("mass_kg", 0.0)), "The rocket would refuse it. Here is what a too-small battery looks like instead."]
+		lines.append("Bigger panels refill the battery faster in sunlight; a bigger battery lasts longer in the dark.")
+		var film: Control = Film.play(self, "power_fail", lines)
+		await film.finished
+		_locked = false
+		_refresh()
+		return
+	var ok: Control = Film.play(self, "power_ok", ["The battery dips in the dark, then the panels fill it again.", str(_pz.get("lesson", ""))])
+	await ok.finished
 	GameState.mark_puzzle_done(ID)
 	GameState.play_sound("fanfare")
 	_message.text = str(_pz.get("lesson", ""))

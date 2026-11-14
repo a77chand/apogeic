@@ -223,7 +223,7 @@
   "blurb": "Huge photo files, a flood that will not wait, and a low orbit that eats fuel.",
   "teaches": "Data and time: the radio must keep up, and every day of building counts.",
   "data_noun": "photos",
-  "level_label": "Level 3  \u00b7  Hard",
+  "level_label": "Level 14  ·  Hard",
   "main_problem": "Data and time",
   "rocket": {
     "kind": "rocket_cargo",
@@ -231,9 +231,19 @@
     "why": "Your satellite rides up in a cargo capsule with food and supplies, then astronauts push it out of the space station. The ride is cheap and gentle, but the cargo ship leaves on its date, and the station's low orbit drags on the satellite, so it burns fuel fast."
   },
   "differences": [
+    "Dozens of 3U CubeSats rode a cargo ship to the space station and were pushed out from there. Their photos are used to watch floods and disasters.",
     "Photos must arrive fast: 55 MB a week, the most of any mission.",
-    "The cargo ship leaves on day 120, and the build clock runs faster.",
-    "A low 400 km orbit: air drag burns fuel quickly. A heavy craft may run dry.",
-    "Mistakes cost more: each rework is 4 days and $10k."
-  ]
+    "The cargo ship leaves on day 120, and the build clock runs faster."
+  ],
+  "based_on": {
+    "mission": "Flock-1 Doves",
+    "agency": "Planet Labs",
+    "country": "USA",
+    "year": 2014,
+    "outcome": "success",
+    "story": "Dozens of 3U CubeSats rode a cargo ship to the space station and were pushed out from there. Their photos are used to watch floods and disasters.",
+    "lesson": "When a disaster strikes, fast photos matter more than perfect ones.",
+    "source": "Wikipedia, \"Planet Labs\"",
+    "url": "https://en.wikipedia.org/wiki/Planet_Labs"
+  }
 }

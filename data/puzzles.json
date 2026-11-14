@@ -213,10 +213,10 @@
   },
   "time": {
 	"title": "Puzzle 4: Budget and time",
-	"intro": "Plan the year so the satellite is ready for its rocket without running out of money.",
-	"lesson": "Paperwork takes months. Start it early, because waiting costs money every day.",
+	"intro": "Plan the year so the satellite is ready for its rocket without running out of money. Then play the year: real projects always hit surprises.",
+	"lesson": "Start the paperwork early, leave room for surprises, and never skip testing: a fault found on the ground costs days, a fault found in orbit costs the mission.",
 	"launch_day": 180,
-	"budget_k": 400.0,
+	"budget_k": 420.0,
 	"reserve_pct": 10.0,
 	"staff_cost_k_per_day": 1.0,
 	"licence_days": 120,
@@ -246,16 +246,31 @@
 		"id": "full",
 		"label": "Full testing",
 		"days": 30,
-		"cost_k": 40.0
+		"cost_k": 40.0,
+		"catches_faults": true
 	  },
 	  {
 		"id": "short",
 		"label": "Short testing",
 		"days": 15,
-		"cost_k": 25.0
+		"cost_k": 25.0,
+		"catches_faults": false
 	  }
 	],
-	"why_hard": [
+	"surprises": [
+{
+"phase": "Test",
+"days": 10,
+"text": "Testing found a loose cable on the radio. Fixing it took 10 extra days.",
+"missed": "Short testing missed a loose cable. In orbit the launch shaking had worked it free and the radio went silent. Real missions such as Vanguard TV-3 and Hitomi were lost to faults that got through."
+},
+{
+"phase": "Licence",
+"days": 15,
+"text": "The licence office asked for more details about your camera. The licence took 15 days longer."
+}
+],
+"why_hard": [
 	  "Build, then test, then ship: each waits for the one before.",
 	  "The licence runs alongside, but takes 120 days.",
 	  "The team is paid every day until shipping.",
@@ -263,7 +278,7 @@
 	],
 	"goal": [
 	  "Ready before launch day 180",
-      "Keep 10% of the $400k budget spare"
+      "Keep 10% of the $420k budget spare"
 	]
   }
 }

@@ -2,6 +2,8 @@ extends Control
 ## A short first-visit tip box. Call  Tutorial.maybe_show(self, "workshop")  at the
 ## end of a screen's _ready(). It shows once per screen, then remembers (GameState).
 ## While it is open GameState.tutorial_open is true, so game clocks can wait.
+## Each tip types itself out, line by line (about five seconds for a whole intro);
+## pressing Next while it types shows the rest at once.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Data = preload("res://scripts/core/data.gd")
@@ -15,6 +17,8 @@ var _index: int = 0
 var _step_label: Label = null
 var _body: VBoxContainer = null
 var _next: Button = null
+var _typing: Tween = null
+var _typed: Array = []
 
 
 ## Shows the tips for screen_id on host, unless they were already seen.
@@ -108,9 +112,38 @@ func _show_step() -> void:
 		lines.append(fill(str(step)))
 	_body.add_child(UI.bullets(lines, 17, UI.C_TEXT, 556.0))
 	_next.text = "Got it" if _index == _steps.size() - 1 else "Next"
+	_type_out()
+
+
+## Types every line of the current tip, one after another.
+func _type_out() -> void:
+	_typed = []
+	for node in _body.find_children("*", "Label", true, false):
+		var l: Label = node
+		if l.text.length() > 2:
+			l.visible_ratio = 0.0
+			_typed.append(l)
+	if _typing != null:
+		_typing.kill()
+	_typing = create_tween()
+	for item in _typed:
+		var l: Label = item
+		_typing.tween_property(l, "visible_ratio", 1.0, clampf(float(l.text.length()) / 40.0, 0.3, 2.0))
+		_typing.tween_callback(GameState.play_sound.bind("select"))
+
+
+func _skip_typing() -> bool:
+	if _typing != null and _typing.is_running():
+		_typing.kill()
+		for item in _typed:
+			(item as Label).visible_ratio = 1.0
+		return true
+	return false
 
 
 func _on_next() -> void:
+	if _skip_typing():
+		return
 	if _index >= _steps.size() - 1:
 		_finish()
 		return

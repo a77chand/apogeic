@@ -4,6 +4,7 @@ extends RefCounted
 ##
 ##   bar_row.add_child(Player.badge(44.0))      # small figure plus name and title
 ##   add_child(Player.figure(300.0))            # the figure alone
+## Suits are real suit styles from different decades and countries; patches are emblems.
 ## The choices themselves are saved in GameState (player_name, player_title, avatar_suit, avatar_patch).
 
 const UI = preload("res://scripts/ui/ui.gd")
@@ -11,25 +12,8 @@ const Avatar = preload("res://scripts/ui/avatar.gd")
 
 const TITLES: Array = ["Commander", "Engineer", "Pilot", "Scientist", "Cadet"]
 
-const SUITS: Array = [
-	["White", Color(0.95, 0.96, 0.99)],
-	["Orange", Color(0.98, 0.62, 0.24)],
-	["Sky blue", Color(0.45, 0.75, 0.98)],
-	["Mint", Color(0.50, 0.88, 0.66)],
-	["Rose", Color(0.97, 0.55, 0.68)],
-	["Violet", Color(0.70, 0.58, 0.96)],
-	["Gold", Color(0.97, 0.82, 0.38)],
-	["Slate", Color(0.62, 0.68, 0.78)],
-]
-
-const PATCHES: Array = [
-	["Cyan", Color(0.25, 0.82, 0.88)],
-	["Red", Color(0.90, 0.28, 0.30)],
-	["Green", Color(0.25, 0.73, 0.31)],
-	["Yellow", Color(0.95, 0.79, 0.30)],
-	["Purple", Color(0.62, 0.35, 0.85)],
-	["Blue", Color(0.31, 0.53, 0.84)],
-]
+const SUITS: Array = Avatar.SUITS        # [name, fabric colour, details, caption]
+const PATCHES: Array = Avatar.PATCHES    # [name, background colour, emblem]
 
 
 static func suit_color(index: int) -> Color:
@@ -45,7 +29,7 @@ static func patch_color(index: int) -> Color:
 ## An astronaut with explicit choices (the profile screen uses this for its live preview).
 static func figure_for(height: float, suit_index: int, patch_index: int, name_text: String) -> Control:
 	var fig: Control = Avatar.new()
-	fig.call("setup", height, suit_color(suit_index), patch_color(patch_index), name_text)
+	fig.call("setup", height, suit_index, patch_index, name_text)
 	return fig
 
 

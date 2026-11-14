@@ -222,7 +222,7 @@
       "why": "Costs more than the whole budget."
     }
   ],
-  "level_label": "Level 1  \u00b7  Easy",
+  "level_label": "Level 1  ·  Easy",
   "main_problem": "Balance",
   "rocket": {
     "kind": "rocket_rideshare",
@@ -230,8 +230,19 @@
     "why": "Dozens of small satellites share one big rocket, so a seat is cheap. You go where the big rocket goes, and your slot has a hard mass limit."
   },
   "differences": [
+    "The first satellite built to photograph Earth's land. Its scanner sent back hundreds of thousands of pictures of farms, forests and coastlines.",
     "A camera mission: photos are big files.",
-    "Plenty of time (launch by day 180) and money.",
-    "Learn how mass, power, data, money and time pull against each other."
-  ]
+    "Plenty of time (launch by day 180) and money."
+  ],
+  "based_on": {
+    "mission": "Landsat 1",
+    "agency": "NASA",
+    "country": "USA",
+    "year": 1972,
+    "outcome": "success",
+    "story": "The first satellite built to photograph Earth's land. Its scanner sent back hundreds of thousands of pictures of farms, forests and coastlines.",
+    "lesson": "A camera mission lives or dies by how much data it can get down.",
+    "source": "NASA Landsat Science, \"Landsat 1\"",
+    "url": "https://landsat.gsfc.nasa.gov/satellites/landsat-1/"
+  }
 }

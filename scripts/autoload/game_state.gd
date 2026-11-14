@@ -186,9 +186,15 @@ func roll_events() -> void:
 	rng.randomize()
 	event_picks = {}
 	var slots: Dictionary = Data.event_slots(events)
+	# a mission based on a real story leans towards the events from that story
+	var bias: Array = level.get("event_bias", [])
 	for key in slots.keys():
 		var ids: Array = slots[key]
-		event_picks[str(key)] = str(ids[rng.randi_range(0, ids.size() - 1)])
+		var liked: Array = ids.filter(func(x: Variant) -> bool: return bias.has(str(x)))
+		if not liked.is_empty() and rng.randf() < 0.8:
+			event_picks[str(key)] = str(liked[rng.randi_range(0, liked.size() - 1)])
+		else:
+			event_picks[str(key)] = str(ids[rng.randi_range(0, ids.size() - 1)])
 
 
 ## The events that fire at this moment of the current attempt.
