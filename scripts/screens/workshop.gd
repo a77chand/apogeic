@@ -258,6 +258,9 @@ func _on_row_dropped(part_id: String, slot_id: String) -> void:
 
 
 func _fit(slot_id: String, part_id: String) -> void:
+	if _is_fitted(part_id):
+		_set_tip("That part is already fitted.")
+		return
 	if GameState.set_slot(slot_id, part_id):
 		var part: Dictionary = GameState.parts[part_id]
 		_set_tip("Fitted: %s." % str(part.get("name", part_id)))
