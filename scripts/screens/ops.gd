@@ -6,6 +6,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Data = preload("res://scripts/core/data.gd")
 const EventCard = preload("res://scripts/ui/event_card.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const CENTRE: Vector2 = Vector2(640.0, 372.0)
 const RADIUS: float = 250.0
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_build()
 	_refresh()
 	_say("Week 0: the satellite is in orbit.")
+	Tutorial.maybe_show(self, "ops")
 
 
 func _ops_cfg() -> Dictionary:
@@ -189,7 +191,7 @@ func _draw() -> void:
 func _process(delta: float) -> void:
 	if _pulse != null and _marker != null:
 		_pulse.position = _marker.position + Vector2(32.0, 32.0)
-	if _paused or _ending or _event_open:
+	if _paused or _ending or _event_open or GameState.tutorial_open:
 		return
 	var week_seconds: float = maxf(0.5, float(_ops_cfg().get("seconds_per_week", 5.0)))
 	_angle += delta * _speed * TAU / week_seconds

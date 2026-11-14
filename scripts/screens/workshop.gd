@@ -7,6 +7,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
 const DropZone = preload("res://scripts/ui/drop_zone.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 # bar id -> {"req": requirement id, "bar": ProgressBar, "text": Label, "status": Label}
 var _bars: Dictionary = {}
@@ -28,7 +29,7 @@ const MAX_DAY: int = 250
 
 ## The clock. A day passes every seconds_per_day. Stops while paused or while a popup is open.
 func _process(delta: float) -> void:
-	if _paused or (_popup != null and is_instance_valid(_popup)):
+	if _paused or GameState.tutorial_open or (_popup != null and is_instance_valid(_popup)):
 		return
 	var schedule: Dictionary = GameState.level.get("schedule", {})
 	var per_day: float = maxf(0.1, float(schedule.get("seconds_per_day", 2.0)))
@@ -56,6 +57,7 @@ func _ready() -> void:
 	GameState.design_changed.connect(_refresh)
 	_set_tip("Click a part below to fit it, or drag it onto the satellite.")
 	_refresh()
+	Tutorial.maybe_show(self, "workshop")
 
 
 # ---------------------------------------------------------------- layout

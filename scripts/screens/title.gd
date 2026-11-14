@@ -30,6 +30,7 @@ func _ready() -> void:
 	tools.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(tools)
 	tools.add_child(UI.button("Run self-test", _on_self_test, 180.0))
+	tools.add_child(UI.button("Show tips again", _on_tips, 180.0))
 	tools.add_child(UI.button("Reset progress", _on_reset, 180.0))
 	_test_label = UI.label("", 13, UI.C_MUTED, true)
 	_test_label.custom_minimum_size = Vector2(760, 0)  # a wrapping label needs a width
@@ -48,6 +49,11 @@ func _on_mission() -> void:
 
 func _on_truck() -> void:
 	GameState.go("truck")
+
+
+func _on_tips() -> void:
+	GameState.reset_tutorial()
+	_test_label.text = "Tips will show again on each screen."
 
 
 func _on_reset() -> void:

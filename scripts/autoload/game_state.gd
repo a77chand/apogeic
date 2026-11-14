@@ -17,6 +17,8 @@ var events: Array = []
 # ---- progress that is saved
 var puzzles_done: Dictionary = {}   # puzzle id -> true
 var best_stars: int = 0
+var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
+var tutorial_open: bool = false     # true while a tip box is on screen (clocks wait)
 
 # ---- the current mission attempt (reset by reset_mission)
 var design: Dictionary = {}         # slot id -> part id or ""
@@ -137,6 +139,17 @@ func mark_puzzle_done(id: String) -> void:
 	save_game()
 
 
+func mark_tutorial_seen(id: String) -> void:
+	tutorial_seen[id] = true
+	save_game()
+
+
+## Makes every tip show again (title screen button).
+func reset_tutorial() -> void:
+	tutorial_seen = {}
+	save_game()
+
+
 func record_stars(stars: int) -> void:
 	if stars > best_stars:
 		best_stars = stars
@@ -150,13 +163,14 @@ func save_game() -> void:
 	if file == null:
 		push_warning("Could not write the save file.")
 		return
-	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars}))
+	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen}))
 	file.close()
 
 
 func load_save() -> void:
 	puzzles_done = {}
 	best_stars = 0
+	tutorial_seen = {}
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
 	var data: Dictionary = Data.load_dict(SAVE_PATH)
@@ -164,9 +178,13 @@ func load_save() -> void:
 	if typeof(done) == TYPE_DICTIONARY:
 		puzzles_done = done
 	best_stars = int(data.get("best_stars", 0))
+	var seen: Variant = data.get("tutorial_seen", {})
+	if typeof(seen) == TYPE_DICTIONARY:
+		tutorial_seen = seen
 
 
 func reset_progress() -> void:
 	puzzles_done = {}
 	best_stars = 0
+	tutorial_seen = {}
 	save_game()
