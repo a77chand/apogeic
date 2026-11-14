@@ -23,6 +23,8 @@ var puzzles_done: Dictionary = {}   # puzzle id -> true
 var best_stars: int = 0
 var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
 var tutorial_open: bool = false     # true while a tip box is on screen (clocks wait)
+var muted: bool = false             # sound on/off, saved
+var sfx: Node = null                # set by main.gd (scripts/ui/sfx.gd)
 
 # ---- the current mission attempt (reset by reset_mission)
 var design: Dictionary = {}         # slot id -> part id or ""
@@ -47,6 +49,19 @@ func _ready() -> void:
 	events = Data.load_events()
 	load_save()
 	reset_mission()
+
+
+## Plays a sound effect by name ("click", "fit", "ping", "alert", "chime", "fail", "rumble").
+## Does nothing when muted or before the sound node exists (for example in headless tests).
+func play_sound(id: String) -> void:
+	if muted or sfx == null:
+		return
+	sfx.call("play", id)
+
+
+func set_muted(value: bool) -> void:
+	muted = value
+	save_game()
 
 
 ## Chooses the craft size (1u, 3u or 6u) and starts a fresh design for it.
@@ -186,7 +201,7 @@ func save_game() -> void:
 	if file == null:
 		push_warning("Could not write the save file.")
 		return
-	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen}))
+	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted}))
 	file.close()
 
 
@@ -194,6 +209,7 @@ func load_save() -> void:
 	puzzles_done = {}
 	best_stars = 0
 	tutorial_seen = {}
+	muted = false
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
 	var data: Dictionary = Data.load_dict(SAVE_PATH)
@@ -201,6 +217,7 @@ func load_save() -> void:
 	if typeof(done) == TYPE_DICTIONARY:
 		puzzles_done = done
 	best_stars = int(data.get("best_stars", 0))
+	muted = bool(data.get("muted", false))
 	var seen: Variant = data.get("tutorial_seen", {})
 	if typeof(seen) == TYPE_DICTIONARY:
 		tutorial_seen = seen

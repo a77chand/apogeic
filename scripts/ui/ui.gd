@@ -61,7 +61,18 @@ static func button(text: String, on_press: Callable, min_width: float = 220.0, p
 	b.add_theme_color_override("font_disabled_color", C_MUTED)
 	if on_press.is_valid():
 		b.pressed.connect(on_press)
+	b.pressed.connect(_click_sound)
 	return b
+
+
+## Static code cannot use the GameState autoload by name, so find it through the tree.
+static func _click_sound() -> void:
+	var tree: SceneTree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var state: Node = tree.root.get_node_or_null("GameState")
+	if state != null:
+		state.call("play_sound", "click")
 
 
 static func panel(border: Color = C_BORDER, margin: float = 16.0) -> PanelContainer:

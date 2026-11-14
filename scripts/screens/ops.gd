@@ -153,6 +153,7 @@ func _play_sparks() -> void:
 
 ## Signal pulse at the marker for about a second after data is sent.
 func _show_pulse() -> void:
+	GameState.play_sound("ping")
 	if _pulse == null:
 		return
 	_pulse.visible = true
@@ -213,6 +214,7 @@ func _run_week() -> void:
 			continue
 		GameState.events_seen[id] = true
 		_event_open = true
+		GameState.play_sound("alert")
 		var card: Control = EventCard.new()
 		card.call("setup", event)
 		add_child(card)

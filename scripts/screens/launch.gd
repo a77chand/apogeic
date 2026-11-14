@@ -90,6 +90,7 @@ func _run_sequence() -> void:
 		var rise: float = maxf(0.8, 4.0 * _climb / 100.0)
 		_tween.tween_property(_rocket, "position:y", peak, rise)
 		_tween.tween_callback(_flame_off)
+		_tween.tween_callback(_play.bind("fail"))
 		_tween.tween_callback(_say.bind(_failure_text()))
 		_tween.tween_property(_rocket, "position:y", START_Y + 120.0, 2.5)
 		_tween.parallel().tween_property(_rocket, "modulate:a", 0.25, 2.5)
@@ -107,7 +108,12 @@ func _count_to(text: String) -> void:
 		_count.text = text
 
 
+func _play(id: String) -> void:
+	GameState.play_sound(id)
+
+
 func _flame_on() -> void:
+	GameState.play_sound("rumble")
 	var flame: Node = _rocket.get_node_or_null("Flame")
 	if flame != null:
 		var sprite: AnimatedSprite2D = flame
@@ -129,6 +135,7 @@ func _failure_text() -> String:
 
 
 func _open_cubesat() -> void:
+	GameState.play_sound("chime")
 	_rocket.visible = false
 	_say("Satellite released")
 	var frames: SpriteFrames = UI.frames("res://art/animations/cubesat_open", "cubesat_open", 4, 4.0, false)

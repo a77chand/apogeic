@@ -269,6 +269,7 @@ func _fit(slot_id: String, part_id: String) -> void:
 	if GameState.set_slot(slot_id, part_id):
 		var part: Dictionary = GameState.parts[part_id]
 		_set_tip("Fitted: %s." % str(part.get("name", part_id)))
+		GameState.play_sound("fit")
 	else:
 		_set_tip("That part is already fitted.")
 
