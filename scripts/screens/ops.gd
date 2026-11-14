@@ -1,11 +1,11 @@
 extends Control
 ## Orbit operations: one week every few seconds. The player manages the satellite.
-## Block 2 version: the loop and the actions.
-## TODO Block 3: events (see spec 12.12 step 2) before running a week.
-## TODO Block 4: visual polish (signal pulse, warning light, sparks).
+## Loop, actions, event cards, and optional animations (pulse, warning light, sparks).
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const Data = preload("res://scripts/core/data.gd")
+const EventCard = preload("res://scripts/ui/event_card.gd")
 
 const CENTRE: Vector2 = Vector2(640.0, 372.0)
 const RADIUS: float = 250.0
@@ -29,6 +29,10 @@ var _safe_on: bool = false
 var _lowres_on: bool = false
 var _pass_queued: bool = false
 var _ending: bool = false
+var _event_open: bool = false
+var _pulse: AnimatedSprite2D = null
+var _warning: AnimatedSprite2D = null
+var _brownout: bool = false
 
 
 func _ready() -> void:
@@ -114,6 +118,51 @@ func _build() -> void:
 	_place(_log_label, Vector2(300, 664), Vector2(680, 40))
 	_log_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
+	# optional animations: each one is skipped if its frames are missing
+	_pulse = _make_sprite("signal_pulse", 6, 12.0, true)
+	if _pulse != null:
+		_pulse.visible = false
+	_warning = _make_sprite("warning_light_blink", 2, 2.0, true)
+	if _warning != null:
+		_warning.position = Vector2(290.0, 150.0)
+		_warning.visible = false
+
+
+## Builds an animation from art/animations/<base>/<base>_01.png onward. Null if missing.
+func _make_sprite(base: String, count: int, fps: float, loop: bool) -> AnimatedSprite2D:
+	var frames: SpriteFrames = UI.frames("res://art/animations/" + base, base, count, fps, loop)
+	if frames == null:
+		return null
+	var sprite: AnimatedSprite2D = AnimatedSprite2D.new()
+	sprite.sprite_frames = frames
+	add_child(sprite)
+	sprite.play(base)
+	return sprite
+
+
+## Sparks at the marker, once, when the storm damages the camera.
+func _play_sparks() -> void:
+	var sparks: AnimatedSprite2D = _make_sprite("sparks_burst", 6, 12.0, false)
+	if sparks == null:
+		return
+	sparks.position = _marker.position + Vector2(32.0, 32.0)
+	sparks.animation_finished.connect(sparks.queue_free)
+
+
+## Signal pulse at the marker for about a second after data is sent.
+func _show_pulse() -> void:
+	if _pulse == null:
+		return
+	_pulse.visible = true
+	var t: Tween = create_tween()
+	t.tween_interval(1.0)
+	t.tween_callback(_hide_pulse)
+
+
+func _hide_pulse() -> void:
+	if _pulse != null:
+		_pulse.visible = false
+
 
 func _toggle(text: String, handler: Callable) -> Button:
 	var b: Button = UI.button(text, Callable(), 220.0, false)
@@ -138,7 +187,9 @@ func _draw() -> void:
 # ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
-	if _paused or _ending:
+	if _pulse != null and _marker != null:
+		_pulse.position = _marker.position + Vector2(32.0, 32.0)
+	if _paused or _ending or _event_open:
 		return
 	var week_seconds: float = maxf(0.5, float(_ops_cfg().get("seconds_per_week", 5.0)))
 	_angle += delta * _speed * TAU / week_seconds
@@ -150,11 +201,37 @@ func _process(delta: float) -> void:
 
 
 func _run_week() -> void:
-	# TODO Block 3: for each event in Data.events_for(GameState.events, "ops", week + 1)
-	# not yet seen: mark seen, pause, show the card, apply the choice, resume.
+	# Events first: each one is shown once, the clock waits while the card is open.
+	var next_week: int = int(GameState.ops.get("week", 0)) + 1
+	var list: Array = Data.events_for(GameState.events, "ops", next_week)
+	for item in list:
+		var event: Dictionary = item
+		var id: String = str(event.get("id", ""))
+		if GameState.events_seen.has(id):
+			continue
+		GameState.events_seen[id] = true
+		_event_open = true
+		var card: Control = EventCard.new()
+		card.call("setup", event)
+		add_child(card)
+		card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var index: int = await card.chosen
+		if not is_inside_tree():
+			return
+		var make_before: float = float(GameState.ops.get("make_mult", 1.0))
+		var part_ids: Array = GameState.launch_eval.get("part_ids", [])
+		var line: String = Sim.apply_ops_choice(GameState.ops, part_ids, event, index)
+		GameState.add_log(line)
+		if float(GameState.ops.get("make_mult", 1.0)) < make_before - 0.0001:
+			_play_sparks()
+		_event_open = false
+		_refresh()
 	var act: Dictionary = {"safe_mode": _safe_on, "lowres": _lowres_on, "extra_pass": _pass_queued}
 	var summary: Dictionary = Sim.ops_week(GameState.level, GameState.launch_eval, GameState.ops, act)
 	_pass_queued = false
+	_brownout = bool(summary.get("brownout", false))
+	if float(summary.get("sent", 0.0)) > 0.0:
+		_show_pulse()
 	_refresh()
 	_say("Week %d: made %d MB, sent %d MB, lost %d MB" % [
 			int(summary.get("week", 0)), int(round(float(summary.get("made", 0.0)))),
@@ -195,6 +272,8 @@ func _refresh() -> void:
 	_stored_label.text = "Stored data: %d of %d MB" % [int(round(float(st.get("stored_mb", 0.0)))), int(cfg.get("storage_mb", 80))]
 	_delivered_label.text = "Delivered: %d of %d MB" % [int(round(float(st.get("delivered_mb", 0.0)))), int(cfg.get("goal_mb", 480))]
 	_money_label.text = "Money: %s" % UI.money(float(st.get("money_k", 0.0)))
+	if _warning != null:
+		_warning.visible = battery < 30.0 or _brownout
 	_refresh_pass_button()
 
 
