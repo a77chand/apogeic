@@ -103,7 +103,7 @@ func _open() -> void:
 	_style_sizes()
 
 	col.add_child(_section("Game"))
-	col.add_child(_menu_button("Home", _on_home, true))
+	col.add_child(_menu_button("Exit to home", _on_home, true))
 	if GameState.in_mission():
 		col.add_child(_menu_button("Quit this mission", _on_quit_mission, false))
 	col.add_child(_menu_button("How to play", _on_guide, false))

@@ -321,8 +321,8 @@ func _run_week() -> void:
 		var part_ids: Array = GameState.launch_eval.get("part_ids", [])
 		var late: bool = is_instance_valid(card) and bool(card.get("timed_out"))
 		var line: String = Sim.apply_ops_choice(GameState.ops, part_ids, event, index)
-		if late:
-			line = "Time ran out, so the default was chosen. " + line
+		var paid: float = float(card.get("advice_paid_k")) if is_instance_valid(card) else 0.0
+		line = Sim.apply_late_and_advice(GameState.ops, "ops", late, paid) + line
 		GameState.add_log(line)
 		if float(GameState.ops.get("make_mult", 1.0)) < make_before - 0.0001:
 			_play_sparks()
