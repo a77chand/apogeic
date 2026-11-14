@@ -69,7 +69,7 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 
 func _build() -> void:
 	var bar: PanelContainer = PanelContainer.new()
-	bar.add_theme_stylebox_override("panel", UI.box(UI.C_DEEP, UI.C_BORDER, 0, 2, 12.0))
+	bar.add_theme_stylebox_override("panel", UI.bar_style(true))
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)

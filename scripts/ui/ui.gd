@@ -150,7 +150,7 @@ static func look_locked(b: Button) -> void:
 ## cyan tick marks in the corners like a HUD frame (main panels only).
 static func panel(border: Color = C_BORDER, margin: float = 16.0) -> PanelContainer:
 	var p: PanelContainer = PanelContainer.new()
-	var sb: StyleBoxFlat = box(Color(0.05, 0.10, 0.19, 0.95), Color(border, 0.55), 12, 1, margin)
+	var sb: StyleBoxFlat = box(Color(0.04, 0.09, 0.18, 0.86), Color(border, 0.55), 12, 1, margin)   # glassy: stars show faintly
 	sb.corner_detail = 1
 	sb.shadow_color = Color(0, 0, 0, 0.5)
 	sb.shadow_size = 14
@@ -167,6 +167,7 @@ static func _brackets(p: Control) -> void:
 	var arm: float = minf(16.0, minf(s.x, s.y) * 0.15)
 	var inset: float = 5.0
 	var c: Color = Color(C_ACCENT, 0.75)
+	p.draw_line(Vector2(arm + 10.0, 1.5), Vector2(s.x - arm - 10.0, 1.5), Color(C_ACCENT, 0.18), 1.0)   # glass highlight
 	for corner in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
 		var x: float = inset if corner.x == 0 else s.x - inset
 		var y: float = inset if corner.y == 0 else s.y - inset
@@ -174,6 +175,20 @@ static func _brackets(p: Control) -> void:
 		var dy: float = arm if corner.y == 0 else -arm
 		p.draw_line(Vector2(x, y), Vector2(x + dx, y), c, 2.0)
 		p.draw_line(Vector2(x, y), Vector2(x, y + dy), c, 2.0)
+
+
+## The strip along the top (top = true) or bottom of a screen: dark and see-through, so the
+## stars show behind it, with a glowing cyan line on the edge that faces the screen.
+static func bar_style(top: bool = true) -> StyleBoxFlat:
+	var sb: StyleBoxFlat = StyleBoxFlat.new()
+	sb.bg_color = Color(0.02, 0.05, 0.12, 0.72)
+	sb.border_color = Color(C_ACCENT, 0.65)
+	sb.border_width_bottom = 2 if top else 0
+	sb.border_width_top = 0 if top else 2
+	sb.shadow_color = Color(C_ACCENT, 0.12)
+	sb.shadow_size = 10
+	sb.set_content_margin_all(12.0)
+	return sb
 
 
 ## A dark vignette over the background, so the edges fall into shadow and the middle glows.
