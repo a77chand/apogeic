@@ -90,61 +90,61 @@ func _swoosh(c: Vector2, rx: float, ry: float, tilt: float, front: bool) -> void
 		draw_line(p0, p1, Color(col, alpha), 3.0)
 
 
-## A pixel planet: each square is coloured by light direction and a fixed noise pattern
-## that slides sideways, so the surface turns slowly.
+## A big pixel planet rising from the bottom-left corner, like the reference art: pale
+## lavender, lit from the upper left, with round craters (dark floors, light rims) that
+## drift sideways as it turns, and a glowing rim of atmosphere along its top edge. Only
+## the part on screen is drawn, and it always reaches the bottom and left edges.
 func _draw_planet() -> void:
 	var c: Vector2 = planet_centre
 	var r: float = planet_radius
-	var light: Vector2 = Vector2(-0.7, -0.6).normalized()
-	var shades: Array = [Color(0.16, 0.10, 0.27), Color(0.27, 0.18, 0.42), Color(0.42, 0.31, 0.60), Color(0.58, 0.47, 0.74), Color(0.72, 0.63, 0.84)]
-	var n: int = int(r / PX) + 1
-	var spin: float = _t * 1.2
-	for gy in range(-n, n + 1):
-		for gx in range(-n, n + 1):
-			var d: Vector2 = Vector2(gx, gy) * PX
+	var light: Vector2 = Vector2(-0.55, -0.83).normalized()
+	var shades: Array = [Color(0.18, 0.11, 0.32), Color(0.30, 0.20, 0.48), Color(0.44, 0.32, 0.64), Color(0.58, 0.46, 0.78), Color(0.70, 0.60, 0.88), Color(0.80, 0.73, 0.94)]
+	var spin: float = _t * 0.9
+	var top_row: int = int(floor((maxf(0.0, c.y - r) - c.y) / PX))
+	var bottom_row: int = int(ceil((size.y - c.y) / PX))
+	for gy in range(top_row, bottom_row + 1):
+		var dy: float = float(gy) * PX
+		if absf(dy) > r:
+			continue
+		var half: float = sqrt(r * r - dy * dy)
+		var gx0: int = int(floor(maxf(-half, -c.x) / PX))
+		var gx1: int = int(ceil(minf(half, size.x - c.x) / PX))
+		for gx in range(gx0, gx1 + 1):
+			var d: Vector2 = Vector2(float(gx) * PX, dy)
 			if d.length() > r:
 				continue
-			var p: Vector2 = c + d
-			if p.y > size.y or p.y + PX < 0.0:
-				continue
 			var nz: Vector2 = d / r
-			var z: float = sqrt(max(0.0, 1.0 - nz.length_squared()))
-			var lit: float = clamp(nz.dot(light) * 0.9 + z * 0.35, -1.0, 1.0)
-			# surface pattern: round craters (dark floor, lit rim) that move with the spin
+			var z: float = sqrt(maxf(0.0, 1.0 - nz.length_squared()))
+			var lit: float = clampf(nz.dot(light) * 0.85 + z * 0.45, -1.0, 1.0)
+			var level: float = (lit + 0.9) * 2.6
+			# craters on a drifting grid of cells, each cell with its own size and place
 			var u: float = float(gx) + spin
-			var level: float = (lit + 1.0) * 2.2
-			var cu: float = fposmod(u, 9.0) - 4.5
-			var cv: float = fposmod(float(gy) + floor(u / 9.0) * 3.0, 8.0) - 4.0
-			var cr: float = 2.2 + float(abs(hash(Vector2i(int(floor(u / 9.0)), int(floor((float(gy) + floor(u / 9.0) * 3.0) / 8.0))))) % 3)
-			var cd: float = Vector2(cu, cv).length()
-			if cd < cr - 0.6:
-				level -= 1.1
-			elif cd < cr + 0.4:
-				level += 0.5
+			var cell: Vector2i = Vector2i(int(floor(u / 11.0)), int(floor(float(gy) / 9.0)))
+			var hsh: int = absi(hash(cell))
+			var cc: Vector2 = Vector2(float(cell.x) * 11.0 + 3.0 + float(hsh % 5), float(cell.y) * 9.0 + 2.0 + float((hsh / 7) % 5))
+			var cr: float = 1.6 + float((hsh / 49) % 4) * 0.8
+			var cd: float = Vector2(u, float(gy)).distance_to(cc)
+			if (hsh / 343) % 3 != 0:
+				if cd < cr - 0.5:
+					level -= 1.2
+				elif cd < cr + 0.5:
+					level += 0.7
 			var idx: int = clampi(int(level), 0, shades.size() - 1)
-			draw_rect(Rect2(p, Vector2(PX, PX)), shades[idx])
-	# a soft glowing rim on the lit side
-	for i in range(4):
-		draw_arc(c, r + 3.0 + float(i) * 3.0, PI * 1.02, PI * 1.62, 48, Color(0.78, 0.70, 1.0, 0.45 - 0.1 * float(i)), 3.0)
-	# the orbit and a satellite on it
-	var tilt: float = -0.22
-	var rx: float = r * 1.45
-	var ry: float = r * 0.32
-	var steps: int = 90
-	for i in range(steps):
-		if i % 2 == 1:
-			continue
-		var a: float = TAU * float(i) / float(steps)
-		var q: Vector2 = c + Vector2(cos(a) * rx, sin(a) * ry).rotated(tilt)
-		var front: bool = sin(a) > 0.0
-		if not front and q.distance_to(c) < r:
-			continue
-		draw_rect(Rect2(q.snapped(Vector2(4, 4)), Vector2(4, 4)), Color(UI.C_ACCENT, 0.8 if front else 0.3))
-	var sa: float = _t * 0.35 + PI
-	var sp: Vector2 = c + Vector2(cos(sa) * rx, sin(sa) * ry).rotated(tilt)
+			draw_rect(Rect2(c + d, Vector2(PX, PX)), shades[idx])
+	# the glowing rim of atmosphere along the top
+	for i in range(6):
+		var a: float = 0.55 - 0.09 * float(i)
+		draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 2.0 + float(i) * 3.5, PI * 1.0, PI * 1.85, 96, Color(0.82, 0.78, 1.0, maxf(0.05, a)), 3.0)
+	draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 1.0, PI * 1.08, PI * 1.62, 96, Color(0.95, 0.95, 1.0, 0.9), 2.0)
+	# a small satellite crossing above the horizon, hidden while it is behind the planet
+	var oc: Vector2 = c + Vector2(0.0, -r * 0.92)
+	var rx: float = r * 0.85
+	var ry: float = r * 0.12
+	var sa: float = _t * 0.3
+	var sp: Vector2 = oc + Vector2(cos(sa) * rx, sin(sa) * ry)
 	if sin(sa) < 0.0 and sp.distance_to(c) < r:
 		return
 	sp = sp.snapped(Vector2(4, 4))
-	draw_rect(Rect2(sp - Vector2(6, 6), Vector2(12, 12)), C_CREAM)
-	draw_rect(Rect2(sp - Vector2(22, 3), Vector2(12, 6)), Color(0.30, 0.55, 0.95))
-	draw_rect(Rect2(sp + Vector2(10, -3), Vector2(12, 6)), Color(0.30, 0.55, 0.95))
+	draw_rect(Rect2(sp - Vector2(5, 5), Vector2(10, 10)), C_CREAM)
+	draw_rect(Rect2(sp - Vector2(19, 3), Vector2(11, 6)), Color(0.30, 0.55, 0.95))
+	draw_rect(Rect2(sp + Vector2(8, -3), Vector2(11, 6)), Color(0.30, 0.55, 0.95))

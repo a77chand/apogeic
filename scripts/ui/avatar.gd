@@ -173,12 +173,12 @@ func _details(kind: String) -> void:
 			_box(76, 134, 94, 142, blue)
 			_box(160, 134, 178, 142, blue)
 			_box(110, 84, 113, 158, blue)
-			_box(92, 222, 162, 240, Color(blue, 0.85))
+			_boots(Color(0.20, 0.32, 0.62), Color(0.55, 0.70, 0.95))
 		"aces":
 			# orange launch and entry suit, white shoulder patches, black boots
 			_box(84, 88, 98, 100, Color(0.97, 0.97, 0.97))
 			_box(156, 88, 170, 100, Color(0.97, 0.97, 0.97))
-			_box(92, 222, 162, 242, Color(0.08, 0.08, 0.10))
+			_boots(Color(0.12, 0.12, 0.14), Color(0.97, 0.97, 0.97))
 		"emu":
 			# white spacewalk suit, red stripes round the legs
 			_box(98, 176, 124, 181, red)
@@ -195,7 +195,23 @@ func _details(kind: String) -> void:
 			_box(84, 98, 170, 102, orange)
 			_box(98, 184, 124, 188, Color(0.30, 0.62, 0.92))
 			_box(132, 184, 158, 188, Color(0.30, 0.62, 0.92))
-			_box(92, 222, 162, 240, Color(0.15, 0.15, 0.17))
+			_boots(Color(0.22, 0.22, 0.25), Color(0.96, 0.52, 0.16))
+
+
+## Two separate boots over the picture's feet, each with a band of trim at the ankle and
+## a darker sole, so they read as part of the suit (not a bar across both legs).
+func _boots(fill: Color, trim: Color) -> void:
+	for x in [[94.0, 125.0], [131.0, 162.0]]:
+		var top: Vector2 = _t(float(x[0]), 214)
+		var bottom: Vector2 = _t(float(x[1]), 242)
+		var r: Rect2 = Rect2(top, bottom - top)
+		var rr: float = r.size.x * 0.22
+		draw_rect(Rect2(r.position + Vector2(0, rr), r.size - Vector2(0, rr)), fill)
+		draw_rect(Rect2(r.position + Vector2(rr, 0), Vector2(r.size.x - rr * 2.0, rr)), fill)
+		draw_circle(r.position + Vector2(rr, rr), rr, fill)
+		draw_circle(r.position + Vector2(r.size.x - rr, rr), rr, fill)
+		draw_rect(Rect2(r.position + Vector2(0, r.size.y * 0.18), Vector2(r.size.x, r.size.y * 0.14)), trim)
+		draw_rect(Rect2(r.position + Vector2(0, r.size.y * 0.82), Vector2(r.size.x, r.size.y * 0.18)), fill.darkened(0.35))
 
 
 ## A round patch with the chosen emblem and the player's initial.
@@ -205,8 +221,3 @@ func _draw_patch(centre: Vector2, radius: float) -> void:
 	draw_circle(centre, radius + maxf(1.0, radius * 0.12), Color(0.02, 0.05, 0.12))
 	draw_circle(centre, radius, bg)
 	draw_emblem(self, str(entry[2]), centre, radius * 0.8, Color(1, 1, 1, 0.92), bg)
-	if _initial != "" and _height >= 200.0:
-		var font: Font = ThemeDB.fallback_font
-		var font_size: int = maxi(8, int(_height * 0.07))
-		var text_size: Vector2 = font.get_string_size(_initial, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
-		draw_string(font, _t(128, 250) + Vector2(-text_size.x * 0.5, 0.0), _initial, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(1, 1, 1, 0.9))

@@ -63,6 +63,7 @@ static func fill(text: String) -> String:
 
 
 func _ready() -> void:
+	z_index = 100   # always above the screen, including raised cards
 	GameState.tutorial_open = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	var dim: ColorRect = ColorRect.new()

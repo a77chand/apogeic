@@ -40,6 +40,7 @@ static func play(host: Node, film_kind: String, caption: Array) -> Control:
 
 
 func _ready() -> void:
+	z_index = 100   # always above the screen, including raised cards
 	_c = Control.new()
 	_c.clip_contents = true
 	_c.mouse_filter = Control.MOUSE_FILTER_IGNORE

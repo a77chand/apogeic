@@ -14,7 +14,7 @@ const Player = preload("res://scripts/ui/player.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const CARD_SIZE: Vector2 = Vector2(440, 462)
-const CARD_Y: float = 132.0
+const CARD_Y: float = 108.0
 const GAP: float = 470.0
 const C_LOCKED_TEXT: Color = Color(0.56, 0.60, 0.70)
 
@@ -50,6 +50,8 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 	node.size = sz
 
 
+## The header: the player's badge, the title, and on the right the stars, lives (pixel
+## hearts, with the time to the next one) and star dust, in the pixel font.
 func _build_top_bar() -> void:
 	var bar: PanelContainer = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", UI.bar_style(true))
@@ -57,32 +59,37 @@ func _build_top_bar() -> void:
 	var title: Label = UI.label("Missions", 28)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	bar.add_child(title)
+	_place(title, Vector2(540, 0), Vector2(200, 72))
 	var badge: Control = Player.badge(44.0)
 	add_child(badge)
 	badge.position = Vector2(40.0, 14.0)
 
 
-## Total stars, lives (with the time to the next one) and star dust.
+func _pixel_label(text: String, color: Color) -> Label:
+	var l: Label = UI.label(text, 14, color)
+	l.add_theme_font_override("font", UI.pixel_font(false))
+	l.add_theme_font_size_override("font_size", 13)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	return l
+
+
 func _build_stats() -> void:
-	var row: HBoxContainer = UI.hbox(26)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	_place(row, Vector2(40, 82), Vector2(1200, 40))
-	var stars: HBoxContainer = UI.hbox(6)
-	row.add_child(stars)
-	stars.add_child(UI.star_icon(true, 22.0))
-	stars.add_child(UI.label("%d / %d stars" % [GameState.total_stars(), GameState.mission_ids().size() * 3], 16, UI.C_GOLD))
-	var lives: HBoxContainer = UI.hbox(4)
-	row.add_child(lives)
+	var row: HBoxContainer = UI.hbox(10)
+	row.alignment = BoxContainer.ALIGNMENT_END
+	_place(row, Vector2(760, 16), Vector2(504, 40))
+	row.add_child(UI.star_icon(true, 18.0))
+	row.add_child(_pixel_label("%d/%d" % [GameState.total_stars(), GameState.mission_ids().size() * 3], UI.C_GOLD))
+	var hearts: HBoxContainer = UI.hbox(2)
+	row.add_child(hearts)
 	for i in range(GameState.MAX_LIVES):
-		lives.add_child(UI.heart_icon(i < GameState.lives, 20.0))
-	_lives_label = UI.label("", 14, UI.C_MUTED)
-	lives.add_child(_lives_label)
-	_dust_label = UI.label("", 16, Color(0.78, 0.70, 1.0))
+		hearts.add_child(UI.heart_icon(i < GameState.lives, 18.0))
+	_lives_label = _pixel_label("", UI.C_MUTED)
+	row.add_child(_lives_label)
+	row.add_child(UI.sparkle_icon(22.0))
+	_dust_label = _pixel_label("", Color(0.80, 0.72, 1.0))
 	row.add_child(_dust_label)
-	_buy_btn = UI.button("Buy a life (%d star dust)" % GameState.LIFE_COST_STARDUST, _on_buy, 240.0, false)
-	_buy_btn.custom_minimum_size = Vector2(240.0, 34.0)
-	_buy_btn.add_theme_font_size_override("font_size", 13)
+	_buy_btn = UI.pixel_button("+1 life", _on_buy, 84.0, 30.0, 11, UI.C_RED)
+	_buy_btn.tooltip_text = "Buy a life for %d star dust" % GameState.LIFE_COST_STARDUST
 	row.add_child(_buy_btn)
 	_refresh_stats()
 
@@ -90,10 +97,11 @@ func _build_stats() -> void:
 func _refresh_stats() -> void:
 	var wait: int = GameState.seconds_to_next_life()
 	if GameState.lives >= GameState.MAX_LIVES:
-		_lives_label.text = "Lives full"
+		_lives_label.text = "FULL"
 	else:
-		_lives_label.text = "Next life in %d:%02d" % [wait / 60, wait % 60]
-	_dust_label.text = "✦ %d star dust" % GameState.stardust
+		_lives_label.text = "%d:%02d" % [wait / 60, wait % 60]
+	_lives_label.tooltip_text = "A life comes back every 30 minutes"
+	_dust_label.text = "%d" % GameState.stardust
 	_buy_btn.disabled = GameState.lives >= GameState.MAX_LIVES or GameState.stardust < GameState.LIFE_COST_STARDUST
 
 
@@ -219,7 +227,6 @@ func _layout(animate: bool) -> void:
 		var tint: Color = Color(shade, shade, shade * 1.05, alpha)
 		card.size = CARD_SIZE   # containers can stretch it; keep every card the same size
 		card.visible = absi(off) <= 2
-		card.z_index = 1 if off == 0 else 0
 		card.mouse_filter = Control.MOUSE_FILTER_STOP if off == 0 else Control.MOUSE_FILTER_IGNORE
 		for child in card.find_children("*", "Button", true, false):
 			(child as Button).disabled = off != 0 or bool(card.get_meta("locked", false))
@@ -232,6 +239,12 @@ func _layout(animate: bool) -> void:
 			card.position = target
 			card.scale = Vector2(sc, sc)
 			card.modulate = tint
+	# the middle card draws over its neighbours: move it to the end of the cards (not above
+	# overlays such as tips or the list, which are added after the cards)
+	var top: int = 0
+	for c in _cards:
+		top = maxi(top, (c as Control).get_index())
+	move_child(_cards[_index], top)
 	if _tip != null:
 		_tip.text = "Mission %d of %d. Use the arrows, the arrow keys or the mouse wheel to slide." % [mini(_index + 1, GameState.mission_ids().size()), GameState.mission_ids().size()]
 
