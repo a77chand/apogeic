@@ -6,6 +6,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const SimTests = preload("res://tests/sim_tests.gd")
 
 var _test_label: Label = null
+var _sound_button: Button = null
 
 
 func _ready() -> void:
@@ -30,6 +31,9 @@ func _ready() -> void:
 	tools.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(tools)
 	tools.add_child(UI.button("Run self-test", _on_self_test, 180.0))
+	_sound_button = UI.button("", _on_sound, 180.0)
+	_sound_button.text = _sound_text()
+	tools.add_child(_sound_button)
 	tools.add_child(UI.button("Show tips again", _on_tips, 180.0))
 	tools.add_child(UI.button("Reset progress", _on_reset, 180.0))
 	_test_label = UI.label("", 13, UI.C_MUTED, true)
@@ -49,6 +53,15 @@ func _on_mission() -> void:
 
 func _on_truck() -> void:
 	GameState.go("truck")
+
+
+func _sound_text() -> String:
+	return "Sound: off" if GameState.muted else "Sound: on"
+
+
+func _on_sound() -> void:
+	GameState.set_muted(not GameState.muted)
+	_sound_button.text = _sound_text()
 
 
 func _on_tips() -> void:

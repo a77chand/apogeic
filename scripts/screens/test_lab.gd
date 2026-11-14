@@ -27,6 +27,7 @@ func _ready() -> void:
 	_build_table()
 	_build_side()
 	_build_buttons()
+	GameState.play_sound("fail" if _any_failed() else "chime")
 	Tutorial.maybe_show(self, "test_lab")
 
 

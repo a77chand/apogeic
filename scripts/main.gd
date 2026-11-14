@@ -5,6 +5,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Stub = preload("res://scripts/screens/stub.gd")
+const Sfx = preload("res://scripts/ui/sfx.gd")
 
 ## screen id -> script path. A missing script shows the stub screen instead of crashing.
 const SCREENS: Dictionary = {
@@ -47,6 +48,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _ready() -> void:
 	GameState.router = self
+	var sfx: Node = Sfx.new()
+	add_child(sfx)
+	GameState.sfx = sfx
 	add_child(UI.background())
 	# Screens are laid out for 1280 x 720. They sit centred in this holder, and the
 	# space background behind it fills any extra window area.

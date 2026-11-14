@@ -22,6 +22,7 @@ func _ready() -> void:
 	_build_log()
 	_build_compare()
 	_build_buttons()
+	GameState.play_sound("chime" if int(score.get("stars", 0)) > 0 else "fail")
 	Tutorial.maybe_show(self, "report")
 
 
