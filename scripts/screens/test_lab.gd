@@ -1,11 +1,12 @@
 extends Control
 ## Test lab: checks the design from the workshop against every requirement.
 ## Block 1 version: table, readiness meter, failure cards and buttons.
-## TODO Block 3: on entry, show the vibration_break event card (see spec 12.10 step 1)
-## and apply Sim.apply_prelaunch_choice. Until the event card exists this step is skipped.
+## On entry it shows the vibration_break event card once, applies the choice, then builds the table.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const Data = preload("res://scripts/core/data.gd")
+const EventCard = preload("res://scripts/ui/event_card.gd")
 
 var _ev: Dictionary = {}
 var _results: Array = []
@@ -15,6 +16,9 @@ var _overlay: Control = null
 
 
 func _ready() -> void:
+	await _prelaunch_events()
+	if not is_inside_tree():
+		return
 	_ev = GameState.evaluate()
 	_results = Sim.check_requirements(GameState.level, _ev)
 	_launch = Sim.can_launch(_ev, _results)
@@ -22,6 +26,28 @@ func _ready() -> void:
 	_build_table()
 	_build_side()
 	_build_buttons()
+
+
+## Shows each test-lab event that has not been seen yet, then applies the choice.
+## This runs before the table is built, because a choice can change the schedule.
+func _prelaunch_events() -> void:
+	var part_ids: Array = GameState.evaluate().get("part_ids", [])
+	var list: Array = Data.events_for(GameState.events, "test_lab", 0)
+	for item in list:
+		var event: Dictionary = item
+		var id: String = str(event.get("id", ""))
+		if GameState.events_seen.has(id):
+			continue
+		GameState.events_seen[id] = true
+		var card: Control = EventCard.new()
+		card.call("setup", event)
+		add_child(card)
+		card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var index: int = await card.chosen
+		if not is_inside_tree():
+			return
+		var line: String = Sim.apply_prelaunch_choice(GameState.sched, part_ids, event, index)
+		GameState.add_log(line)
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
