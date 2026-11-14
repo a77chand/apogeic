@@ -1,14 +1,6 @@
-[gd_scene format=3]
+[gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/ui/main.gd" id="1_main"]
-[ext_resource type="PackedScene" path="res://scenes/ui/top_bar.tscn" id="2_top"]
-[ext_resource type="PackedScene" path="res://scenes/ui/meter_panel.tscn" id="3_meters"]
-[ext_resource type="PackedScene" path="res://scenes/ui/base_view.tscn" id="4_base"]
-[ext_resource type="PackedScene" path="res://scenes/ui/build_menu.tscn" id="5_build"]
-[ext_resource type="PackedScene" path="res://scenes/ui/alerts_panel.tscn" id="6_alerts"]
-[ext_resource type="PackedScene" path="res://scenes/ui/report_panel.tscn" id="7_report"]
-[ext_resource type="PackedScene" path="res://scenes/ui/end_screen.tscn" id="8_end"]
-[ext_resource type="PackedScene" path="res://scenes/ui/tutorial_panel.tscn" id="9_tutorial"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -17,94 +9,4 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_main")
-
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.09, 0.1, 0.13, 1)
-
-[node name="BackgroundArt" type="TextureRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-expand_mode = 1
-stretch_mode = 6
-
-[node name="Margin" type="MarginContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 12
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 12
-
-[node name="Layout" type="VBoxContainer" parent="Margin"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="TopBar" parent="Margin/Layout" instance=ExtResource("2_top")]
-layout_mode = 2
-
-[node name="Body" type="HBoxContainer" parent="Margin/Layout"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 10
-
-[node name="LeftColumn" type="VBoxContainer" parent="Margin/Layout/Body"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="MeterPanel" parent="Margin/Layout/Body/LeftColumn" instance=ExtResource("3_meters")]
-layout_mode = 2
-
-[node name="AlertsPanel" parent="Margin/Layout/Body/LeftColumn" instance=ExtResource("6_alerts")]
-layout_mode = 2
-
-[node name="CenterColumn" type="VBoxContainer" parent="Margin/Layout/Body"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 10
-
-[node name="BaseView" parent="Margin/Layout/Body/CenterColumn" instance=ExtResource("4_base")]
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="TutorialPanel" parent="Margin/Layout/Body/CenterColumn" instance=ExtResource("9_tutorial")]
-visible = false
-layout_mode = 2
-
-[node name="BuildMenu" parent="Margin/Layout/Body" instance=ExtResource("5_build")]
-layout_mode = 2
-
-[node name="ReportPanel" parent="." instance=ExtResource("7_report")]
-visible = false
-layout_mode = 1
-
-[node name="EndScreen" parent="." instance=ExtResource("8_end")]
-visible = false
-layout_mode = 1
-
-[node name="ErrorLabel" type="Label" parent="."]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_color = Color(1, 0.4, 0.4, 1)
-horizontal_alignment = 1
-vertical_alignment = 1
-autowrap_mode = 3
+script = ExtResource("1")

@@ -1,50 +1,20 @@
 {
-  "_comment": "Event definitions. How OFTEN each happens is set per scenario in scenarios.json. All numbers are placeholders, NOT real NASA data.",
-  "events": {
-    "solar_particle_event": {
-      "name": "Solar particle event",
-      "warning_text": "The Sun just flared! A solar particle event arrives next {day}. Build a storm shelter.",
-      "start_text": "A solar particle event is hitting the base. High radiation today.",
-      "warning_sols": {"value": 1, "source": "placeholder"},
-      "duration_min": {"value": 1, "source": "placeholder"},
-      "duration_max": {"value": 1, "source": "placeholder"},
-      "effects": {
-        "storm_dose": {"value": 30, "source": "placeholder", "note": "Extra radiation per sol, before the storm shelter cuts it."}
-      }
-    },
-    "dust_storm": {
-      "name": "Dust storm",
-      "warning_text": "Weather satellites see a dust storm coming. It arrives next {day} and will dim the solar panels.",
-      "start_text": "A dust storm blocks most sunlight. Solar panels make much less power.",
-      "warning_sols": {"value": 1, "source": "placeholder"},
-      "duration_min": {"value": 3, "source": "placeholder"},
-      "duration_max": {"value": 5, "source": "placeholder"},
-      "effects": {
-        "solar_multiplier": {"value": 0.35, "source": "placeholder"}
-      }
-    },
-    "lunar_night": {
-      "name": "Lunar night",
-      "warning_text": "The Sun sets tomorrow. Lunar night means NO solar power. Charge your batteries!",
-      "start_text": "Lunar night. Solar panels make no power. The base runs on batteries.",
-      "warning_sols": {"value": 1, "source": "placeholder"},
-      "duration_min": {"value": 3, "source": "placeholder", "note": "Shortened for the game. A real lunar night lasts about two Earth weeks."},
-      "duration_max": {"value": 3, "source": "placeholder"},
-      "effects": {
-        "solar_multiplier": {"value": 0.0, "source": "placeholder"}
-      }
-    },
-    "equipment_failure": {
-      "name": "Equipment failure",
-      "warning_text": "",
-      "start_text": "Something broke! One module is offline while the crew repairs it.",
-      "warning_sols": {"value": 0, "source": "placeholder", "note": "Breakdowns come without warning."},
-      "duration_min": {"value": 2, "source": "placeholder"},
-      "duration_max": {"value": 2, "source": "placeholder"},
-      "effects": {
-        "disable_units": {"value": 1, "source": "placeholder"}
-      },
-      "targets": ["solar_panel", "electrolyzer", "ice_miner", "greenhouse"]
-    }
-  }
+  "_note": "Events are deterministic: the result depends on the choice and on the design, never on chance. effect kinds: add_days, add_cost_k, mult_send, mult_make, skip_week, skip_send.",
+  "events": [
+    {"id": "vibration_break", "when": "test_lab", "week": 0, "title": "A part cracked on the shake table", "body": "The vibration test loosened the antenna mount. Launch shakes a spacecraft hard, which is why we test.", "picture": "res://art/events/event_vibration_break.png",
+      "choices": [
+        {"label": "Repair it", "detail": "Costs 10 days and $20k.", "effects": [{"kind": "add_days", "value": 10}, {"kind": "add_cost_k", "value": 20}], "log": "You repaired the antenna mount after the vibration test."},
+        {"label": "Fly as it is", "detail": "The radio sends 25% less for the whole mission.", "effects": [{"kind": "mult_send", "value": 0.75}], "log": "You flew with a loose antenna mount, so the radio sent 25% less."}
+      ]},
+    {"id": "solar_storm", "when": "ops", "week": 4, "title": "Solar storm", "body": "A burst of charged particles from the Sun is about to hit your satellite.", "picture": "res://art/events/event_solar_storm.png",
+      "choices": [
+        {"label": "Enter safe mode", "detail": "Lose this week of photos. The camera stays safe.", "effects": [{"kind": "skip_week", "value": 1}], "log": "You sat out the solar storm in safe mode and lost one week."},
+        {"label": "Keep imaging", "detail": "Safe only if you added radiation shielding.", "protect_part": "shielding", "effects": [{"kind": "mult_make", "value": 0.5}], "log": "The storm damaged the unshielded camera. It made half as many photos afterwards.", "log_protected": "Your radiation shielding protected the camera through the storm."}
+      ]},
+    {"id": "ground_silent", "when": "ops", "week": 8, "title": "The ground station hears nothing", "body": "A fault at the ground station means it cannot receive this week.", "picture": "res://art/events/event_ground_silent.png",
+      "choices": [
+        {"label": "Wait a week", "detail": "No data is sent this week. Photos pile up in storage.", "effects": [{"kind": "skip_send", "value": 1}], "log": "You waited out the ground station fault and sent nothing for one week."},
+        {"label": "Rent a backup station", "detail": "Costs $30k. Sending carries on.", "protect_part": "ground2", "effects": [{"kind": "add_cost_k", "value": 30}], "log": "You paid $30k for a backup ground station.", "log_protected": "Your second ground station covered the gap at no extra cost."}
+      ]}
+  ]
 }
