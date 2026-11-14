@@ -22,6 +22,10 @@ func _ready() -> void:
 	v.add_child(row)
 	row.add_child(UI.button("Play", _on_play, 220.0, true))
 	row.add_child(UI.button("Skip to the mission", _on_mission))
+	var truck_row: HBoxContainer = UI.hbox(16)
+	truck_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(truck_row)
+	truck_row.add_child(UI.button("NASA problem: can the truck see?", _on_truck, 420.0, true))
 	var tools: HBoxContainer = UI.hbox(16)
 	tools.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(tools)
@@ -40,6 +44,10 @@ func _on_play() -> void:
 func _on_mission() -> void:
 	GameState.reset_mission()
 	GameState.go("briefing")
+
+
+func _on_truck() -> void:
+	GameState.go("truck")
 
 
 func _on_reset() -> void:
