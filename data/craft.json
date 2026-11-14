@@ -4,28 +4,119 @@
   "launch": "Rideshare",
   "craft": [
     {
-      "id": "1u", "name": "1U CubeSat",
-      "dimension_cm": {"value": [10, 10, 10], "source": "CubeSat standard, nominal size. Verify."},
-      "max_mass_kg": {"value": 2.0, "note": "1.33 kg in older rules", "source": "team table, verify"},
-      "peak_power_w": {"min": 1.0, "max": 2.5, "source": "team table, verify"},
-      "launch_cost_k": {"min": 40.0, "max": 90.0, "source": "team table, verify"},
-      "downlink_kbps": {"min": 9.6, "max": 256.0, "source": "team table, verify"}
+      "id": "1u",
+      "name": "1U CubeSat",
+      "dimension_cm": {
+        "value": [
+          10,
+          10,
+          10
+        ],
+        "source": "CubeSat standard, nominal size. Verify."
+      },
+      "max_mass_kg": {
+        "value": 2.0,
+        "note": "1.33 kg in older rules",
+        "source": "team table, verify"
+      },
+      "peak_power_w": {
+        "min": 1.0,
+        "max": 2.5,
+        "source": "team table, verify"
+      },
+      "launch_cost_k": {
+        "min": 40.0,
+        "max": 90.0,
+        "source": "team table, verify"
+      },
+      "downlink_kbps": {
+        "min": 9.6,
+        "max": 256.0,
+        "source": "team table, verify"
+      },
+      "game": {
+        "mass_limit_kg": 1.33,
+        "launch_cost_k": 65.0,
+        "source": "placeholder, inside the table range"
+      }
     },
     {
-      "id": "3u", "name": "3U CubeSat",
-      "dimension_cm": {"value": [10, 10, 30], "source": "CubeSat standard, nominal size. Verify."},
-      "max_mass_kg": {"value": 6.0, "note": "4 kg in older rules", "source": "team table, verify"},
-      "peak_power_w": {"min": 7.0, "max": 56.0, "typical": 30.0, "source": "team table, verify"},
-      "launch_cost_k": {"min": 100.0, "max": 270.0, "source": "team table, verify"},
-      "downlink_kbps": {"min": 9.6, "max": 12500.0, "source": "team table, verify"}
+      "id": "3u",
+      "name": "3U CubeSat",
+      "dimension_cm": {
+        "value": [
+          10,
+          10,
+          30
+        ],
+        "source": "CubeSat standard, nominal size. Verify."
+      },
+      "max_mass_kg": {
+        "value": 6.0,
+        "note": "4 kg in older rules",
+        "source": "team table, verify"
+      },
+      "peak_power_w": {
+        "min": 7.0,
+        "max": 56.0,
+        "typical": 30.0,
+        "source": "team table, verify"
+      },
+      "launch_cost_k": {
+        "min": 100.0,
+        "max": 270.0,
+        "source": "team table, verify"
+      },
+      "downlink_kbps": {
+        "min": 9.6,
+        "max": 12500.0,
+        "source": "team table, verify"
+      },
+      "game": {
+        "mass_limit_kg": 4.0,
+        "launch_cost_k": 120.0,
+        "source": "placeholder, inside the table range"
+      }
     },
     {
-      "id": "6u", "name": "6U CubeSat",
-      "dimension_cm": {"value": [10, 20, 30], "source": "CubeSat standard, nominal size. Verify."},
-      "max_mass_kg": {"value": 12.0, "note": "8 kg in older rules", "source": "team table, verify"},
-      "peak_power_w": {"min": 42.0, "max": 112.0, "typical": 100.0, "source": "team table, verify"},
-      "launch_cost_k": {"min": 250.0, "max": 540.0, "source": "team table, verify"},
-      "downlink_kbps": {"min": 500.0, "max": 10000.0, "source": "team table, verify"}
+      "id": "6u",
+      "name": "6U CubeSat",
+      "dimension_cm": {
+        "value": [
+          10,
+          20,
+          30
+        ],
+        "source": "CubeSat standard, nominal size. Verify."
+      },
+      "max_mass_kg": {
+        "value": 12.0,
+        "note": "8 kg in older rules",
+        "source": "team table, verify"
+      },
+      "peak_power_w": {
+        "min": 42.0,
+        "max": 112.0,
+        "typical": 100.0,
+        "source": "team table, verify"
+      },
+      "launch_cost_k": {
+        "min": 250.0,
+        "max": 540.0,
+        "source": "team table, verify"
+      },
+      "downlink_kbps": {
+        "min": 500.0,
+        "max": 10000.0,
+        "source": "team table, verify"
+      },
+      "game": {
+        "mass_limit_kg": 8.0,
+        "launch_cost_k": 395.0,
+        "source": "placeholder, inside the table range"
+      }
     }
-  ]
+  ],
+  "_game_note": "The 'game' block is what the mission actually uses. 3U stays exactly as the balanced baseline (4 kg and $120k, inside the table's ranges). mass_limit_kg uses the table's older-rule figures (1.33 / 4 / 8). launch_cost_k is inside each size's range (3U kept at the baseline). The bus mass scales with the mass limit (placeholder rule); the bus cost is not changed. Dimension, power range and downlink are shown on the briefing for information only: wiring downlink needs ground-contact minutes per day, which is not verified yet.",
+  "default": "3u"
 }

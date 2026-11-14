@@ -3,6 +3,7 @@ extends Control
 ## Chips do not change the game in Level 1; they show the reasoning.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Craft = preload("res://scripts/core/craft.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 var _tip: Label = null
@@ -41,7 +42,7 @@ func _build_mission() -> void:
 	panel.add_child(col)
 	col.add_child(UI.label("The mission", 20))
 	col.add_child(UI.label(str(GameState.level.get("name", "")), 24, UI.C_CYAN))
-	var pic: Control = UI.picture("res://art/modules/cubesat_3u.png", Vector2(360, 120), "CubeSat")
+	var pic: Control = UI.picture("res://art/modules/cubesat_%s.png" % GameState.craft_id, Vector2(360, 120), "CubeSat " + GameState.craft_id.to_upper())
 	col.add_child(pic)
 	var goal: Label = UI.label(str(GameState.level.get("goal_text", "")), 15, UI.C_TEXT, true)
 	goal.custom_minimum_size = Vector2(360.0, 0.0)
@@ -57,7 +58,7 @@ func _build_mission() -> void:
 func _build_concept() -> void:
 	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
 	_place(panel, Vector2(436, 88), Vector2(420, 480))
-	var col: VBoxContainer = UI.vbox(8)
+	var col: VBoxContainer = UI.vbox(5)
 	panel.add_child(col)
 	col.add_child(UI.label("Your concept", 20))
 	var chips: Array = GameState.level.get("concept_chips", [])
@@ -69,6 +70,9 @@ func _build_concept() -> void:
 			groups.append(group)
 	for group_name in groups:
 		col.add_child(UI.label(str(group_name), 14, UI.C_MUTED))
+		if str(group_name) == "Spacecraft":
+			col.add_child(_craft_row())  # the one choice you can change
+			continue
 		var row: HFlowContainer = HFlowContainer.new()
 		row.add_theme_constant_override("h_separation", 8)
 		row.add_theme_constant_override("v_separation", 8)
@@ -79,6 +83,72 @@ func _build_concept() -> void:
 			if str(chip.get("group", "")) != str(group_name):
 				continue
 			row.add_child(_chip(chip))
+	_build_facts(col)
+
+
+## 1U / 3U / 6U buttons. The chosen one is highlighted; pressing another reloads this screen.
+func _craft_row() -> Control:
+	var row: HBoxContainer = UI.hbox(8)
+	for id in Craft.ids(GameState.craft_cfg):
+		var b: Button = UI.button(str(id).to_upper(), _on_craft.bind(str(id)), 10.0, false)
+		b.custom_minimum_size = Vector2(70.0, 40.0)
+		if str(id) == GameState.craft_id:
+			b.add_theme_stylebox_override("normal", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 3, 8.0))
+			b.add_theme_stylebox_override("hover", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 3, 8.0))
+		row.add_child(b)
+	return row
+
+
+func _build_facts(col: VBoxContainer) -> void:
+	var craft: Dictionary = Craft.by_id(GameState.craft_cfg, GameState.craft_id)
+	if craft.is_empty():
+		return
+	col.add_child(UI.label("About the %s" % str(craft.get("name", "")), 14, UI.C_MUTED))
+	var dim: Array = craft.get("dimension_cm", {}).get("value", [])
+	var dim_words: String = " x ".join(PackedStringArray(dim.map(func(v): return str(int(v)))))
+	var power: Dictionary = craft.get("peak_power_w", {})
+	var cost: Dictionary = craft.get("launch_cost_k", {})
+	var down: Dictionary = craft.get("downlink_kbps", {})
+	var game: Dictionary = craft.get("game", {})
+	var lines: Array = [
+		"Size: %s cm" % dim_words,
+		"Mass limit here: %s kg" % _num(float(game.get("mass_limit_kg", 0.0))),
+		"Peak power: %s W" % _range(power, 1.0, ""),
+		"Launch cost: %s (this game uses %s)" % [UI.money(float(cost.get("min", 0.0))) + " to " + UI.money(float(cost.get("max", 0.0))), UI.money(float(game.get("launch_cost_k", 0.0)))],
+		"Data downlink: %s" % (_rate(float(down.get("min", 0.0))) + " to " + _rate(float(down.get("max", 0.0)))),
+	]
+	for line in lines:
+		var l: Label = UI.label(str(line), 13, UI.C_TEXT, true)
+		l.custom_minimum_size = Vector2(380.0, 0.0)
+		col.add_child(l)
+	var note: Label = UI.label("Mass and launch cost change the mission; the rest is for information. Figures still need checking.", 11, UI.C_MUTED, true)
+	note.custom_minimum_size = Vector2(380.0, 0.0)
+	col.add_child(note)
+
+
+func _num(x: float) -> String:
+	if absf(x - roundf(x)) < 0.005:
+		return str(int(roundf(x)))
+	return "%.2f" % x
+
+
+func _range(d: Dictionary, _scale: float, _unit: String) -> String:
+	var text: String = "%s to %s" % [_num(float(d.get("min", 0.0))), _num(float(d.get("max", 0.0)))]
+	if d.has("typical"):
+		text += " (typically %s)" % _num(float(d["typical"]))
+	return text
+
+
+func _rate(kbps: float) -> String:
+	if kbps >= 1000.0:
+		return "%s Mbps" % _num(kbps / 1000.0)
+	return "%s kbps" % _num(kbps)
+
+
+func _on_craft(id: String) -> void:
+	if id != GameState.craft_id:
+		GameState.set_craft(id)
+		GameState.go("briefing")  # rebuild this screen for the new size
 
 
 func _chip(chip: Dictionary) -> Button:
