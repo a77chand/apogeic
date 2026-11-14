@@ -26,15 +26,16 @@ func _ready() -> void:
 	_build_buttons()
 	var grade: String = str(score.get("grade", "failed"))
 	GameState.play_sound("fanfare" if grade == "success" else ("chime" if int(score.get("stars", 0)) > 0 else "fail"))
-	if int(score.get("stars", 0)) >= 3:
-		_celebrate()
+	if int(score.get("stars", 0)) >= 1:
+		_celebrate(int(score.get("stars", 0)))
 	else:
 		Tutorial.maybe_show(self, "report")
 
 
-## A perfect mission: your astronaut jumps and gives a thumbs up, with a few stars around.
-## Click anywhere (or wait) to close it.
-func _celebrate() -> void:
+## The end of a mission with stars: your astronaut jumps with a speech bubble. Three stars
+## gets the big jump and "Well done!", fewer stars a smaller hop and a gentler word.
+## Star dust earned or a life lost is shown too. Click anywhere (or wait) to close it.
+func _celebrate(stars: int) -> void:
 	var layer: Control = Control.new()
 	layer.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(layer)
@@ -47,33 +48,51 @@ func _celebrate() -> void:
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var fig: Control = Player.figure(320.0)
 	layer.add_child(fig)
-	fig.position = Vector2(470.0, 250.0)
-	fig.call("celebrate")
-	var bubble: PanelContainer = UI.panel(UI.C_GOLD, 14.0)
+	fig.position = Vector2(440.0, 250.0)
+	fig.call("celebrate", 0.08 if stars >= 3 else 0.035)
+	var bubble: PanelContainer = PanelContainer.new()
+	var sb: StyleBoxFlat = UI.box(Color(0.98, 0.97, 0.92), UI.C_GOLD if stars >= 3 else UI.C_CYAN, 18, 3, 16.0)
+	bubble.add_theme_stylebox_override("panel", sb)
 	layer.add_child(bubble)
-	bubble.position = Vector2(690.0, 210.0)
-	var col: VBoxContainer = UI.vbox(4)
+	bubble.position = Vector2(680.0, 200.0)
+	var col: VBoxContainer = UI.vbox(6)
 	bubble.add_child(col)
-	var who: String = GameState.player_name.strip_edges()
-	col.add_child(UI.label("Three stars!", 30, UI.C_GOLD))
-	col.add_child(UI.label("Perfect mission, %s %s." % [GameState.player_title, who if who != "" else "Cadet"], 16))
-	var b: Dictionary = GameState.level.get("based_on", {})
-	if not b.is_empty():
-		var real: Label = UI.label("The real %s: %s" % [str(b.get("mission", "")), str(b.get("lesson", ""))], 13, UI.C_MUTED, true)
-		real.custom_minimum_size = Vector2(340.0, 0.0)
-		col.add_child(real)
-	col.add_child(UI.label("Click to continue", 12, UI.C_ACCENT))
-	for i in range(14):
-		var spark: Control = _star(true)
-		spark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		spark.scale = Vector2(0.35, 0.35)
-		spark.position = Vector2(640.0, 400.0)
-		layer.add_child(spark)
-		var a: float = TAU * float(i) / 14.0
-		var tw: Tween = spark.create_tween()
-		tw.tween_interval(0.9)
-		tw.tween_property(spark, "position", Vector2(640.0, 400.0) + Vector2(cos(a) * 360.0, sin(a) * 240.0), 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw.parallel().tween_property(spark, "modulate:a", 0.0, 1.2).set_delay(0.6)
+	var head: String = ["", "Good start!", "Nice work!", "Well done!"][clampi(stars, 0, 3)]
+	var line: String = ["", "One star. The report shows what to fix for the next one.", "Two stars. One more is within reach.", "A perfect mission."][clampi(stars, 0, 3)]
+	var dark: Color = Color(0.06, 0.08, 0.14)
+	var h: Label = UI.label(head, 30, dark)
+	h.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	col.add_child(h)
+	var l: Label = UI.label(line, 16, dark, true)
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	l.custom_minimum_size = Vector2(320.0, 0.0)
+	col.add_child(l)
+	col.add_child(UI.star_row(stars, 30.0))
+	if GameState.last_reward.has("stardust"):
+		var dust: Label = UI.label("+%d star dust" % int(GameState.last_reward["stardust"]), 16, Color(0.45, 0.30, 0.85))
+		dust.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+		col.add_child(dust)
+	var more: Label = UI.label("Click to continue", 12, Color(0.25, 0.45, 0.6))
+	more.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	col.add_child(more)
+	# the bubble's tail, pointing at the astronaut
+	var tail: Control = Control.new()
+	tail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(tail)
+	tail.draw.connect(func() -> void:
+		tail.draw_colored_polygon(PackedVector2Array([Vector2(684, 300), Vector2(684, 340), Vector2(640, 350)]), Color(0.98, 0.97, 0.92)))
+	if stars >= 3:
+		for i in range(14):
+			var spark: Control = _star(true)
+			spark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			spark.scale = Vector2(0.35, 0.35)
+			spark.position = Vector2(600.0, 400.0)
+			layer.add_child(spark)
+			var a: float = TAU * float(i) / 14.0
+			var tw: Tween = spark.create_tween()
+			tw.tween_interval(0.9)
+			tw.tween_property(spark, "position", Vector2(600.0, 400.0) + Vector2(cos(a) * 360.0, sin(a) * 240.0), 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tw.parallel().tween_property(spark, "modulate:a", 0.0, 1.2).set_delay(0.6)
 	var show: Tween = layer.create_tween()
 	show.tween_interval(0.9)
 	show.tween_property(layer, "modulate:a", 1.0, 0.3)
@@ -191,6 +210,8 @@ func _build_stars(score: Dictionary) -> void:
 	count.tween_method(func(v: float): delivered_label.text = "Delivered: %d of %d MB" % [int(round(v)), goal], 0.0, delivered, 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	col.add_child(UI.label("Lost: %d MB   Money left: %s" % [int(round(float(ops.get("lost_mb", 0.0)))), UI.money(float(ops.get("money_k", 0.0)))], 14))
 	col.add_child(UI.label("Weeks flown: %d of %d" % [int(ops.get("week", 0)), int(cfg.get("weeks", 12))], 14))
+	if GameState.last_reward.has("life_lost"):
+		col.add_child(UI.label("No stars: -1 life (%d of %d left)" % [GameState.lives, GameState.MAX_LIVES], 14, UI.C_RED))
 
 
 func _build_causes(causes: Array) -> void:
@@ -316,11 +337,25 @@ func _build_buttons() -> void:
 	var fresh: Button = UI.button("Start with empty satellite", _on_new, 300.0, false)
 	fresh.tooltip_text = "Clears every part. Your old parts can be brought back from the workshop."
 	_place(fresh, Vector2(296, 660), Vector2(300, 52))
-	_place(UI.button("Choose mission", _on_missions, 220.0, false), Vector2(612, 660), Vector2(220, 52))
-	_place(UI.button("Title", _on_title, 160.0, false), Vector2(1100, 660), Vector2(160, 52))
+	_place(UI.button("All missions", _on_missions, 200.0, false), Vector2(612, 660), Vector2(200, 52))
+	var next: Button = UI.button("Go to next mission", _on_next, 260.0, GameState.is_mission_done(GameState.mission_id))
+	_place(next, Vector2(828, 660), Vector2(260, 52))
+	_place(UI.button("Title", _on_title, 156.0, false), Vector2(1104, 660), Vector2(156, 52))
+
+
+## The next mission in order (the same one again if this one still has no stars).
+func _on_next() -> void:
+	if not GameState.can_start_mission():
+		GameState.go("missions")
+		return
+	GameState.set_mission(GameState.next_mission_id())
+	GameState.go("briefing")
 
 
 func _on_retry() -> void:
+	if not GameState.can_start_mission():
+		GameState.go("missions")
+		return
 	GameState.retry_mission()
 	GameState.go("workshop")
 
@@ -330,6 +365,9 @@ func _on_missions() -> void:
 
 
 func _on_new() -> void:
+	if not GameState.can_start_mission():
+		GameState.go("missions")
+		return
 	GameState.remember_design()   # so the workshop can offer "Bring back my last parts"
 	GameState.reset_mission()
 	GameState.go("briefing")

@@ -1,6 +1,7 @@
 extends Control
 ## The menu: a small tab on the left edge of every screen. Clicking it opens a panel with
 ## sound and music volume, text size, tips, sources, reset progress, home and quit.
+## Two small tabs under it go home and quit at any time.
 ## While the panel is open the game is paused (clocks, timers and animations wait).
 ## main.gd adds one of these on top of the screens.
 
@@ -40,6 +41,38 @@ func _ready() -> void:
 	_tab.pressed.connect(_open)
 	_tab.draw.connect(_draw_tab_icon)
 	add_child(_tab)
+	# two small tabs under it: home, and quit (a power symbol)
+	_side_tab(Vector2(0, TAB_RECT.end.y + 8.0), "Exit to home", _on_home, "home")
+	_side_tab(Vector2(0, TAB_RECT.end.y + 60.0), "Quit game", _on_exit, "power")
+
+
+func _side_tab(pos: Vector2, tip: String, on_press: Callable, icon: String) -> void:
+	var b: Button = Button.new()
+	b.focus_mode = Control.FOCUS_NONE
+	b.tooltip_text = tip
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var accent: Color = UI.C_RED if icon == "power" else UI.C_ACCENT
+	var sb: StyleBoxFlat = UI.box(Color(0.03, 0.07, 0.15, 0.92), Color(accent, 0.8), 8, 1, 0.0)
+	sb.border_width_left = 0
+	sb.corner_radius_top_left = 0
+	sb.corner_radius_bottom_left = 0
+	var hover: StyleBoxFlat = sb.duplicate()
+	hover.bg_color = Color(0.08, 0.17, 0.30, 0.98)
+	b.add_theme_stylebox_override("normal", sb)
+	b.add_theme_stylebox_override("hover", hover)
+	b.add_theme_stylebox_override("pressed", hover)
+	b.position = pos
+	b.size = Vector2(26, 44)
+	b.pressed.connect(on_press)
+	b.draw.connect(func() -> void:
+		var m: Vector2 = Vector2(12, 22)
+		if icon == "home":
+			b.draw_colored_polygon(PackedVector2Array([m + Vector2(-7, -1), m + Vector2(0, -8), m + Vector2(7, -1)]), accent)
+			b.draw_rect(Rect2(m + Vector2(-5, -1), Vector2(10, 8)), accent)
+		else:
+			b.draw_arc(m + Vector2(0, 1), 7.0, -PI * 0.3, PI * 1.3, 16, accent, 2.0)
+			b.draw_line(m + Vector2(0, -8), m + Vector2(0, 0), accent, 2.0))
+	add_child(b)
 
 
 ## Three short lines (a "hamburger") and a dot, drawn in code.
@@ -103,18 +136,23 @@ func _open() -> void:
 	_style_sizes()
 
 	col.add_child(_section("Game"))
-	col.add_child(_menu_button("Exit to home", _on_home, true))
 	if GameState.in_mission():
 		col.add_child(_menu_button("Quit this mission", _on_quit_mission, false))
 	col.add_child(_menu_button("How to play", _on_guide, false))
 	col.add_child(_menu_button("Resources and sources", _on_sources, false))
 	col.add_child(_menu_button("Show tips again", _on_tips, false))
 	col.add_child(_menu_button("Reset progress", _on_reset, false))
-	if not OS.has_feature("web"):
-		col.add_child(_menu_button("Exit to desktop", _on_exit, false))
 	_note = UI.label("", 13, UI.C_YELLOW, true)
 	_note.custom_minimum_size = Vector2(340.0, 0.0)
 	col.add_child(_note)
+	# leaving: two different buttons, so going home is never mixed up with quitting
+	var fill: Control = Control.new()
+	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(fill)
+	var leave: HBoxContainer = UI.hbox(10)
+	col.add_child(leave)
+	leave.add_child(_leave_button("Exit to home", _on_home, UI.C_CYAN))
+	leave.add_child(_leave_button("Quit game", _on_exit, UI.C_RED))
 
 
 func _section(text: String) -> Label:
@@ -128,6 +166,16 @@ func _menu_button(text: String, on_press: Callable, primary: bool) -> Button:
 	b.custom_minimum_size = Vector2(340.0, 36.0)
 	b.add_theme_font_size_override("font_size", 16)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	return b
+
+
+func _leave_button(text: String, on_press: Callable, accent: Color) -> Button:
+	var b: Button = UI.button(text, on_press, 165.0, false)
+	b.custom_minimum_size = Vector2(165.0, 42.0)
+	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_color_override("font_color", accent)
+	b.add_theme_stylebox_override("normal", UI.box(Color(accent, 0.12), accent, 8, 2, 8.0))
+	b.add_theme_stylebox_override("hover", UI.box(Color(accent, 0.28), accent, 8, 2, 8.0))
 	return b
 
 
@@ -220,9 +268,13 @@ func _on_size(value: String) -> void:
 		_note.text = "Text size changes from the next screen, so this one keeps your work."
 
 
+func _host() -> Control:
+	return _layer if is_open() else self
+
+
 func _on_home() -> void:
 	if GameState.in_mission():
-		Confirm.ask(_layer, "Quit the game?", "You are in the middle of a mission. If you go home now, you will lose your progress on this attempt.", "Yes, go home", _go.bind("title"))
+		Confirm.ask(_host(), "Quit the game?", "You are in the middle of a mission. If you go home now, you will lose your progress on this attempt.", "Yes, go home", _go.bind("title"))
 		return
 	_go("title")
 
@@ -262,8 +314,36 @@ func _do_reset() -> void:
 
 
 func _on_exit() -> void:
-	Confirm.ask(_layer, "Exit the game?", "Your finished puzzles and missions are saved. A mission in progress is not.", "Yes, exit", _do_exit)
+	Confirm.ask(_host(), "Quit the game?", "Your finished puzzles, missions and stars are saved. A mission in progress is not.", "Yes, quit", _do_exit)
 
 
+## On the desktop the game closes. A browser tab cannot be closed by the page, so the web
+## build shows a goodbye screen instead.
 func _do_exit() -> void:
-	get_tree().quit()
+	_close()
+	if not OS.has_feature("web"):
+		get_tree().quit()
+		return
+	var bye: Control = Control.new()
+	bye.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(bye)
+	bye.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dark: ColorRect = ColorRect.new()
+	dark.color = Color(0.01, 0.01, 0.03)
+	bye.add_child(dark)
+	dark.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var col: VBoxContainer = UI.vbox(18)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	bye.add_child(col)
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var t: Label = UI.label("Thanks for playing", 30, UI.C_TEXT)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(t)
+	var n: Label = UI.label("Your progress is saved. You can close this tab now.", 16, UI.C_MUTED)
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(n)
+	var back: Button = UI.button("Back to the game", func() -> void:
+		bye.queue_free()
+		GameState.go("title"), 240.0, true)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(back)

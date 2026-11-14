@@ -8,7 +8,7 @@ extends Control
 ## for suits that really were that colour (silver Mercury, orange launch suits, the dark
 ## Artemis suit), and each era adds its own details (stripes, cuffs, bands) on top.
 ##
-## celebrate() makes the figure jump and give a thumbs up (used for a 3-star mission).
+## celebrate() makes the figure jump (used when a mission ends with stars).
 
 ## Real suits from different decades and countries: [name, fabric colour, details, caption].
 const SUITS: Array = [
@@ -95,8 +95,12 @@ func setup(height: float, suit_index: int, patch_index: int, initial: String) ->
 	queue_redraw()
 
 
-## Jump and thumbs up, over and over, until the figure is freed.
-func celebrate() -> void:
+## Jump, over and over, until the figure is freed. height = how high, as a share of the figure.
+var _jump: float = 0.08
+
+
+func celebrate(height: float = 0.08) -> void:
+	_jump = height
 	_cheer_t = 0.0
 
 
@@ -122,7 +126,7 @@ func _draw() -> void:
 	var h: float = _height
 	var jump: float = 0.0
 	if _cheer_t >= 0.0:
-		jump = -absf(sin(_cheer_t * 5.0)) * h * 0.08
+		jump = -absf(sin(_cheer_t * 5.0)) * h * _jump
 	draw_set_transform(Vector2(0.0, jump))
 	var era: Array = SUITS[clampi(_suit, 0, SUITS.size() - 1)]
 	var fabric: Color = era[1]
@@ -139,8 +143,6 @@ func _draw() -> void:
 		draw_rect(Rect2(h * 0.28, h * 0.8, h * 0.12, h * 0.2), fabric.darkened(0.3))
 	# the patch sits on the chest, like a real mission patch
 	_draw_patch(_t(150, 108) if _tex != null else Vector2(h * 0.32, h * 0.45), maxf(3.0, h * 0.06))
-	if _cheer_t >= 0.0:
-		_draw_thumb()
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -208,25 +210,3 @@ func _draw_patch(centre: Vector2, radius: float) -> void:
 		var font_size: int = maxi(8, int(_height * 0.07))
 		var text_size: Vector2 = font.get_string_size(_initial, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
 		draw_string(font, _t(128, 250) + Vector2(-text_size.x * 0.5, 0.0), _initial, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(1, 1, 1, 0.9))
-
-
-## A raised arm with the thumb up, from the right shoulder, waving a little.
-func _draw_thumb() -> void:
-	var era: Array = SUITS[clampi(_suit, 0, SUITS.size() - 1)]
-	var sleeve: Color = Color(era[1]).lerp(Color(0.93, 0.94, 0.96), 0.25)
-	var edge: Color = Color(0.30, 0.32, 0.38)
-	var wave: float = sin(_cheer_t * 7.0) * 0.18
-	var shoulder: Vector2 = _t(168, 96)
-	var arm_len: float = _height * 0.26
-	var hand: Vector2 = shoulder + Vector2(0, -arm_len).rotated(0.45 + wave)
-	var thick: float = _height * 0.075
-	draw_line(shoulder, hand, edge, thick + 2.0)
-	draw_line(shoulder, hand, sleeve, thick)
-	draw_circle(shoulder, thick * 0.5, sleeve)
-	# the glove: a fist with the thumb pointing up
-	var fist: float = thick * 0.75
-	draw_circle(hand, fist + 1.0, edge)
-	draw_circle(hand, fist, Color(0.92, 0.92, 0.94))
-	var thumb: Rect2 = Rect2(hand + Vector2(-fist * 0.28, -fist * 1.9), Vector2(fist * 0.56, fist * 1.2))
-	draw_rect(thumb.grow(1.0), edge)
-	draw_rect(thumb, Color(0.92, 0.92, 0.94))

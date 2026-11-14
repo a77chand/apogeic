@@ -22,6 +22,7 @@ const C_TEXT_EDGE: Color = Color(0.01, 0.03, 0.08, 0.85)  # thin outline around 
 const FONT_PATH: String = "res://art/fonts/Rajdhani-Bold.ttf"
 const PIXEL_FONT: String = "res://art/fonts/Silkscreen-Regular.ttf"
 const PIXEL_FONT_BOLD: String = "res://art/fonts/Silkscreen-Bold.ttf"
+const TITLE_SIZE: int = 26     # labels this size or bigger are titles, in the pixel font
 const HEADING_SIZE: int = 18   # labels this size or bigger use the display font, in capitals
 const C_BORDER: Color = Color(0.310, 0.525, 0.839)  # 4F86D6
 const C_HOVER: Color = Color(0.169, 0.365, 0.659)  # 2B5DA8
@@ -92,10 +93,98 @@ static func based_on_tag(level: Dictionary, width: float = 360.0) -> Control:
 	return tag
 
 
+## A star drawn in code: gold when earned, a dim outline when not.
+static func star_icon(lit: bool, size: float = 22.0) -> Control:
+	var c: Control = Control.new()
+	c.custom_minimum_size = Vector2(size, size)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func() -> void:
+		var pts: PackedVector2Array = PackedVector2Array()
+		var m: Vector2 = Vector2(size, size) * 0.5
+		for i in range(10):
+			var r: float = size * (0.5 if i % 2 == 0 else 0.21)
+			var a: float = -PI * 0.5 + PI * float(i) / 5.0
+			pts.append(m + Vector2(cos(a), sin(a)) * r)
+		if lit:
+			c.draw_colored_polygon(pts, C_GOLD)
+		else:
+			pts.append(pts[0])
+			c.draw_polyline(pts, Color(C_MUTED, 0.45), 1.5, true))
+	return c
+
+
+static func star_row(count: int, size: float = 24.0) -> HBoxContainer:
+	var row: HBoxContainer = hbox(4)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for i in range(3):
+		row.add_child(star_icon(i < count, size))
+	return row
+
+
+## A heart for the lives display: red when full, a dim outline when used.
+static func heart_icon(full: bool, size: float = 20.0) -> Control:
+	var c: Control = Control.new()
+	c.custom_minimum_size = Vector2(size, size)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func() -> void:
+		var pts: PackedVector2Array = PackedVector2Array()
+		for i in range(40):
+			var t: float = TAU * float(i) / 40.0
+			var x: float = 16.0 * pow(sin(t), 3)
+			var y: float = -(13.0 * cos(t) - 5.0 * cos(2.0 * t) - 2.0 * cos(3.0 * t) - cos(4.0 * t))
+			pts.append(Vector2(size * 0.5, size * 0.46) + Vector2(x, y) * size / 36.0)
+		if full:
+			c.draw_colored_polygon(pts, C_RED)
+		else:
+			pts.append(pts[0])
+			c.draw_polyline(pts, Color(C_MUTED, 0.5), 1.5, true))
+	return c
+
+
+## A short message in the bottom-right corner that fades out after a few seconds.
+## Used for feedback after a choice: how good it was and why.
+static func toast(host: Node, title: String, text: String, color: Color, seconds: float = 6.0) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	var sb: StyleBoxFlat = box(Color(0.02, 0.05, 0.11, 0.95), color, 8, 2, 12.0)
+	sb.border_width_left = 6
+	panel.add_theme_stylebox_override("panel", sb)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.z_index = 50
+	var col: VBoxContainer = vbox(4)
+	panel.add_child(col)
+	col.add_child(label(title, 18, color))
+	var l: Label = label(text, 14, C_TEXT, true)
+	l.custom_minimum_size = Vector2(380.0, 0.0)
+	col.add_child(l)
+	host.add_child(panel)
+	panel.position = Vector2(1270.0, 470.0)
+	panel.size = Vector2(410.0, 0.0)
+	var tw: Tween = panel.create_tween()
+	tw.tween_property(panel, "position:x", 850.0, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(seconds)
+	tw.tween_property(panel, "modulate:a", 0.0, 0.8)
+	tw.tween_callback(panel.queue_free)
+
+
+## The feedback toast for an event choice (see Sim.choice_rating).
+static func choice_toast(host: Node, rating: Dictionary, late: bool) -> void:
+	var r: String = str(rating.get("rating", "fair"))
+	var why: String = str(rating.get("why", ""))
+	if late:
+		toast(host, "Time ran out", "The default was picked for you. " + why, C_RED)
+	elif r == "best":
+		toast(host, "Optimal choice. Well done!", why, C_GREEN)
+	elif r == "fair":
+		toast(host, "Fair choice", why, C_YELLOW)
+	else:
+		toast(host, "Costly choice", why, C_RED)
+
+
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:
 	# The menu's text size setting changes body text only: labels that wrap, so they can
 	# reflow. Headings and single-line labels in tight spots (bars, pills) keep their size,
 	# and small print on part cards is never made bigger, so cards do not overflow.
+	var asked: int = size   # the font style follows the size asked for, not the scaled size
 	if wrap and size < HEADING_SIZE:
 		var scale: float = _font_scale()
 		if size > 13 or scale < 1.0:
@@ -110,7 +199,12 @@ static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: boo
 	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
 	l.add_theme_constant_override("shadow_offset_x", 0)
 	l.add_theme_constant_override("shadow_offset_y", 2)
-	if size >= HEADING_SIZE:
+	if asked >= TITLE_SIZE:
+		# screen titles and big headings: the same pixel font as the game's title, everywhere
+		l.add_theme_font_override("font", pixel_font(false))
+		l.add_theme_font_size_override("font_size", size - 4)   # the pixel font runs wide
+		l.uppercase = true
+	elif asked >= HEADING_SIZE:
 		l.add_theme_font_override("font", display_font())
 		l.add_theme_font_size_override("font_size", size + 4)   # the display font runs small
 		l.uppercase = true

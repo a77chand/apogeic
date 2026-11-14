@@ -133,8 +133,16 @@
       "steps": [
         [
           "20 missions, each based on a real spaceflight",
-          "From Sputnik to Artemis-era satellites",
-          "Click a tile to read its real story"
+          "One star opens the next mission"
+        ],
+        [
+          "Every 7 missions is a stage",
+          "17 of its 21 stars opens the next stage"
+        ],
+        [
+          "A mission with no stars costs a life",
+          "Lives come back every 30 minutes",
+          "3 stars = 500 star dust; 1500 buys a life"
         ]
       ]
     }

@@ -269,6 +269,17 @@ static func apply_prelaunch_choice(sched: Dictionary, part_ids: Array, event: Di
 	return str(choice.get("log", ""))
 
 
+## How good a choice was, for the feedback after an event: {"rating": "best"|"fair"|"poor",
+## "why": one line}. A choice can rate differently when a part is fitted (rating_with_part).
+static func choice_rating(event: Dictionary, index: int, part_ids: Array) -> Dictionary:
+	var choice: Dictionary = _choice(event, index)
+	var out: Dictionary = {"rating": str(choice.get("rating", "fair")), "why": str(choice.get("why", ""))}
+	var alt: Dictionary = choice.get("rating_with_part", {})
+	if not alt.is_empty() and part_ids.has(str(alt.get("part", ""))):
+		out = {"rating": str(alt.get("rating", "fair")), "why": str(alt.get("why", ""))}
+	return out
+
+
 ## The extra cost of letting an event's timer run out (on top of the default choice).
 ## Before launch the schedule slips; in orbit the satellite goes to safe mode for the week.
 ## Advice bought on the event card is charged here too. Returns the log line.
