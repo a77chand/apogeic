@@ -22,6 +22,7 @@ var _pause_btn: Button = null
 var _paused: bool = false
 var _popup: Control = null          # the open "Why red?" popup, if any
 var _acc: float = 0.0               # seconds collected towards the next day
+var _base_tip: String = ""
 const MAX_DAY: int = 250
 
 
@@ -84,6 +85,9 @@ func _build_top_bar() -> void:
 	row.add_child(spacer_b)
 	_day_pill = UI.label("", 16, UI.C_CYAN)
 	_money_pill = UI.label("", 16, UI.C_GREEN)
+	var help_btn: Button = UI.button("Help", _on_help, 80.0, false)
+	help_btn.custom_minimum_size = Vector2(80.0, 40.0)
+	row.add_child(help_btn)
 	row.add_child(_pill(_day_pill))
 	row.add_child(_pill(_money_pill))
 
@@ -151,6 +155,7 @@ func _build_right_panel() -> void:
 		var bar: ProgressBar = UI.meter(290.0)
 		bar.mouse_filter = Control.MOUSE_FILTER_STOP
 		bar.mouse_entered.connect(_on_bar_hover.bind(key))
+		bar.mouse_exited.connect(_rest_tip)
 		col.add_child(bar)
 		var text: Label = UI.label("", 13, UI.C_TEXT, true)
 		text.custom_minimum_size = Vector2(290.0, 0.0)
@@ -176,6 +181,8 @@ func _build_tray() -> void:
 		var card: PanelContainer = PartCard.new()
 		card.call("setup", part)
 		card.connect("clicked", _on_fit_any)
+		card.connect("hovered", _on_card_hover)
+		card.connect("unhovered", _rest_tip)
 		row.add_child(card)
 		_cards[str(part.get("id", ""))] = card
 	var why_btn: Button = UI.button("Why red?", _on_why_red, 190.0, false)
@@ -202,9 +209,29 @@ func _build_tip_bar() -> void:
 
 # ---------------------------------------------------------------- behaviour
 
+## A message that stays until the next action.
 func _set_tip(text: String) -> void:
+	_base_tip = text
 	if _tip != null:
 		_tip.text = text
+
+
+## A hover message. It goes back to the last stay-put message when the mouse leaves.
+func _hover_tip(text: String) -> void:
+	if _tip != null:
+		_tip.text = text
+
+
+func _rest_tip() -> void:
+	if _tip != null:
+		_tip.text = _base_tip
+
+
+func _on_card_hover(part_id: String) -> void:
+	if not GameState.parts.has(part_id):
+		return
+	var part: Dictionary = GameState.parts[part_id]
+	_hover_tip("%s: %s Click to fit it." % [str(part.get("name", part_id)), str(part.get("blurb", ""))])
 
 
 ## Click or drop: find the slot for the part's category, then fit it.
@@ -294,6 +321,38 @@ func _on_why_red() -> void:
 	col.add_child(UI.button("Close", _on_close_popup, 160.0, true))
 
 
+## How to play the workshop, in plain words.
+func _on_help() -> void:
+	if _popup != null and is_instance_valid(_popup):
+		return
+	var overlay: ColorRect = ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.6)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_popup = overlay
+	var centre: CenterContainer = CenterContainer.new()
+	overlay.add_child(centre)
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel: PanelContainer = UI.panel(UI.C_CYAN, 20.0)
+	panel.custom_minimum_size = Vector2(640.0, 0.0)
+	centre.add_child(panel)
+	var col: VBoxContainer = UI.vbox(10)
+	panel.add_child(col)
+	col.add_child(UI.label("How the workshop works", 24))
+	var lines: Array = [
+		"1. Click a part in the tray (or drag it onto the satellite) to fit it.",
+		"2. Click X on a slot to take a part out. Required slots show yellow when empty.",
+		"3. Watch the six bars. Red means a check fails. Hover a bar to see why.",
+		"4. Time is money: every day of building costs staff pay and pushes launch later.",
+		"5. Pause stops the clock. Why red? lists every problem with a tip.",
+		"6. Press Test it when you are ready. A failed test costs 10 days.",
+	]
+	for line in lines:
+		col.add_child(UI.label(str(line), 15, UI.C_TEXT, true))
+	col.add_child(UI.button("Close", _on_close_popup, 160.0, true))
+
+
 func _on_close_popup() -> void:
 	if _popup != null and is_instance_valid(_popup):
 		_popup.queue_free()
@@ -308,9 +367,9 @@ func _on_bar_hover(key: String) -> void:
 	if r.is_empty():
 		return
 	if bool(r.get("passed", false)):
-		_set_tip(str(r.get("text", "")))
+		_hover_tip(str(r.get("text", "")))
 	else:
-		_set_tip("%s %s" % [str(r.get("reason", "")), str(r.get("tip", ""))])
+		_hover_tip("%s %s" % [str(r.get("reason", "")), str(r.get("tip", ""))])
 
 
 func _status_of(r: Dictionary) -> String:
