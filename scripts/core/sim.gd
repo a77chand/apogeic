@@ -345,6 +345,7 @@ static func new_ops_state(level: Dictionary, ev: Dictionary, results: Array) -> 
 		"slipped": slipped,
 		"alive": true,
 		"ended": false,
+		"history": [],          # one record per week flown, for the report chart
 		"end_reason": "",       # complete, no_battery, battery_empty, out_of_money
 	}
 
@@ -433,6 +434,10 @@ static func ops_week(level: Dictionary, ev: Dictionary, st: Dictionary, act: Dic
 		st["ended"] = true
 		st["end_reason"] = "complete"
 	st["battery_pct"] = battery
+	var record: Array = st.get("history", [])
+	record.append({"week": int(st.get("week", 0)), "battery_pct": battery, "stored_mb": float(st.get("stored_mb", 0.0)),
+			"delivered_mb": float(st.get("delivered_mb", 0.0))})
+	st["history"] = record
 	return summary
 
 

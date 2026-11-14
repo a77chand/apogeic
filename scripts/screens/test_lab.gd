@@ -8,6 +8,7 @@ const Sim = preload("res://scripts/core/sim.gd")
 const Data = preload("res://scripts/core/data.gd")
 const EventCard = preload("res://scripts/ui/event_card.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
+const Sprites = preload("res://scripts/ui/sprites.gd")
 
 var _ev: Dictionary = {}
 var _results: Array = []
@@ -118,6 +119,23 @@ func _build_table() -> void:
 		grid.add_child(UI.label(_fmt(float(r.get("value", 0.0)), unit), 15, color))
 		grid.add_child(UI.label(_fmt(float(r.get("target", 0.0)), unit), 15, UI.C_MUTED))
 		grid.add_child(_status_cell(passed, color))
+	_add_satellite(col)
+
+
+## Your satellite, as built, under the table (the table alone leaves the panel half empty).
+func _add_satellite(col: VBoxContainer) -> void:
+	var fitted: Array = []
+	for slot_id in GameState.design.keys():
+		var pid: String = str(GameState.design[slot_id])
+		if pid != "":
+			fitted.append(pid)
+	var caption: Label = UI.label("Your satellite, as built", 14, UI.C_MUTED)
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(caption)
+	var sat: Control = Sprites.live_satellite(Vector2(500, 166))
+	sat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(sat)
+	sat.call("set_parts", fitted)
 
 
 func _status_cell(passed: bool, color: Color) -> Control:
