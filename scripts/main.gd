@@ -1,12 +1,10 @@
+
 extends Control
 ## The only scene that is ever loaded. It swaps one screen in and out.
-## A screen is a script that extends Control and builds its own nodes in _ready().
-## To add a screen: write the script, then add one line to SCREENS.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Stub = preload("res://scripts/screens/stub.gd")
 
-## screen id -> script path. A missing script shows the stub screen instead of crashing.
 const SCREENS: Dictionary = {
 	"title": "res://scripts/screens/title.gd",
 	"ladder": "res://scripts/screens/ladder.gd",
@@ -22,9 +20,20 @@ const SCREENS: Dictionary = {
 	"report": "res://scripts/screens/report.gd",
 }
 
-## The order the stub screens walk through, so the whole game is clickable from day one.
-const FLOW: Array = ["title", "ladder", "puzzle_mass", "puzzle_power", "puzzle_link", "puzzle_time",
-		"briefing", "workshop", "test_lab", "launch", "ops", "report"]
+const FLOW: Array = [
+	"title",
+	"ladder",
+	"puzzle_mass",
+	"puzzle_power",
+	"puzzle_link",
+	"puzzle_time",
+	"briefing",
+	"workshop",
+	"test_lab",
+	"launch",
+	"ops",
+	"report"
+]
 
 var _current: Control = null
 var _current_id: String = ""
@@ -33,7 +42,9 @@ var _current_id: String = ""
 func _ready() -> void:
 	GameState.router = self
 	add_child(UI.background())
-	go("title")
+
+	# TEMPORARY: Open the Time Puzzle directly for testing.
+	go("puzzle_time")
 
 
 func go(screen_id: String) -> void:
@@ -46,8 +57,10 @@ func current_id() -> String:
 
 func next_in_flow(screen_id: String) -> String:
 	var index: int = FLOW.find(screen_id)
+
 	if index < 0 or index + 1 >= FLOW.size():
 		return "title"
+
 	return str(FLOW[index + 1])
 
 
@@ -56,19 +69,26 @@ func _swap(screen_id: String) -> void:
 		remove_child(_current)
 		_current.queue_free()
 		_current = null
+
 	var path: String = str(SCREENS.get(screen_id, ""))
 	var screen: Control = null
+
 	if path != "" and ResourceLoader.exists(path):
 		var script: GDScript = load(path)
+
 		if script != null:
 			var made: Variant = script.new()
+
 			if made is Control:
 				screen = made
+
 	if screen == null:
 		var stub: Control = Stub.new()
 		stub.set("screen_id", screen_id)
 		screen = stub
+
 	_current = screen
 	_current_id = screen_id
+
 	add_child(screen)
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
