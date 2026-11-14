@@ -7,6 +7,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Data = preload("res://scripts/core/data.gd")
 const EventCard = preload("res://scripts/ui/event_card.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 var _ev: Dictionary = {}
 var _results: Array = []
@@ -26,6 +27,7 @@ func _ready() -> void:
 	_build_table()
 	_build_side()
 	_build_buttons()
+	Tutorial.maybe_show(self, "test_lab")
 
 
 ## Shows each test-lab event that has not been seen yet, then applies the choice.

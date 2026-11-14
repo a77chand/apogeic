@@ -4,6 +4,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const STAR_ON: Color = Color(0.95, 0.78, 0.26)
 const STAR_OFF: Color = Color(0.35, 0.4, 0.5)
@@ -21,6 +22,7 @@ func _ready() -> void:
 	_build_log()
 	_build_compare()
 	_build_buttons()
+	Tutorial.maybe_show(self, "report")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:

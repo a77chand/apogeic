@@ -3,6 +3,7 @@ extends Control
 ## Chips do not change the game in Level 1; they show the reasoning.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 var _tip: Label = null
 
@@ -13,6 +14,7 @@ func _ready() -> void:
 	_build_concept()
 	_build_requirements()
 	_build_bottom()
+	Tutorial.maybe_show(self, "briefing")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
