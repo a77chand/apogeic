@@ -3,6 +3,9 @@ extends RefCounted
 ## Use it through a preload:  const UI = preload("res://scripts/ui/ui.gd")
 ## Everything here builds plain Godot Control nodes in code.
 
+const Sprites = preload("res://scripts/ui/sprites.gd")
+const Starfield = preload("res://scripts/ui/starfield.gd")
+
 const C_BG: Color = Color(0.043, 0.114, 0.227)  # 0B1D3A
 const C_PANEL: Color = Color(0.122, 0.227, 0.373)  # 1F3A5F
 const C_DEEP: Color = Color(0.078, 0.157, 0.290)  # 14284A
@@ -77,7 +80,9 @@ static func _click_sound() -> void:
 
 static func panel(border: Color = C_BORDER, margin: float = 16.0) -> PanelContainer:
 	var p: PanelContainer = PanelContainer.new()
-	p.add_theme_stylebox_override("panel", box(C_PANEL, border, 20, 2, margin))
+	var fill: Color = C_PANEL
+	fill.a = 0.92   # a little see-through, so the stars show faintly behind panels
+	p.add_theme_stylebox_override("panel", box(fill, border, 20, 2, margin))
 	return p
 
 
@@ -103,11 +108,9 @@ static func background(path: String = "res://art/backgrounds/bg_space.png") -> C
 		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		t.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		return t
-	var c: ColorRect = ColorRect.new()
-	c.color = C_BG
-	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	return c
+	var stars: Control = Starfield.new()   # no art yet: draw a starry sky in code
+	stars.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return stars
 
 
 ## A meter bar. Call set_meter() to update it.
@@ -144,6 +147,9 @@ static func picture(path: String, size: Vector2, fallback_text: String = "") -> 
 		t.custom_minimum_size = size
 		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		return t
+	var key: String = path.get_file().get_basename()
+	if Sprites.KINDS.has(key):
+		return Sprites.make(key, size)   # a drawing stands in until the artist's PNG arrives
 	var holder: PanelContainer = PanelContainer.new()
 	holder.custom_minimum_size = size
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE

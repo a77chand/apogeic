@@ -34,6 +34,7 @@ var _event_open: bool = false
 var _pulse: AnimatedSprite2D = null
 var _warning: AnimatedSprite2D = null
 var _brownout: bool = false
+var _pulse_left: float = 0.0   # 1 right after data is sent, fades to 0 (drawn rings and link)
 
 
 func _ready() -> void:
@@ -154,6 +155,7 @@ func _play_sparks() -> void:
 ## Signal pulse at the marker for about a second after data is sent.
 func _show_pulse() -> void:
 	GameState.play_sound("ping")
+	_pulse_left = 1.0
 	if _pulse == null:
 		return
 	_pulse.visible = true
@@ -185,11 +187,20 @@ func _draw() -> void:
 		var a0: float = TAU * float(i) / float(segments)
 		var a1: float = TAU * float(i + 1) / float(segments)
 		draw_arc(CENTRE, RADIUS, a0, a1, 6, UI.C_CYAN, 2.0)
+	if _pulse_left > 0.0 and _marker != null:
+		var sat: Vector2 = _marker.position + Vector2(32.0, 32.0)
+		for i in range(3):
+			var ring: float = (1.0 - _pulse_left) * 70.0 + float(i) * 16.0
+			draw_arc(sat, ring, 0.0, TAU, 32, Color(0.25, 0.82, 0.88, _pulse_left * 0.7), 2.0)
+		draw_dashed_line(sat, Vector2(350.0, 590.0), Color(0.25, 0.82, 0.88, _pulse_left * 0.8), 2.0, 8.0)
 
 
 # ---------------------------------------------------------------- loop
 
 func _process(delta: float) -> void:
+	if _pulse_left > 0.0:
+		_pulse_left = maxf(0.0, _pulse_left - delta)
+		queue_redraw()
 	if _pulse != null and _marker != null:
 		_pulse.position = _marker.position + Vector2(32.0, 32.0)
 	if _paused or _ending or _event_open or GameState.tutorial_open:
