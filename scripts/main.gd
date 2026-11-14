@@ -28,12 +28,36 @@ const FLOW: Array = ["title", "ladder", "puzzle_mass", "puzzle_power", "puzzle_l
 		"briefing", "workshop", "test_lab", "launch", "ops", "report"]
 
 var _current: Control = null
+var _holder: Control = null
 var _current_id: String = ""
+
+
+## F11 or Alt+Enter toggles fullscreen. The game scales to fit any window size.
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key: InputEventKey = event
+		if key.keycode == KEY_F11 or (key.keycode == KEY_ENTER and key.alt_pressed):
+			var full: bool = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+			if full:
+				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+			else:
+				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+			get_viewport().set_input_as_handled()
 
 
 func _ready() -> void:
 	GameState.router = self
 	add_child(UI.background())
+	# Screens are laid out for 1280 x 720. They sit centred in this holder, and the
+	# space background behind it fills any extra window area.
+	_holder = Control.new()
+	_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_holder)
+	_holder.set_anchors_preset(Control.PRESET_CENTER)
+	_holder.offset_left = -640.0
+	_holder.offset_right = 640.0
+	_holder.offset_top = -360.0
+	_holder.offset_bottom = 360.0
 	go("title")
 
 
@@ -54,7 +78,7 @@ func next_in_flow(screen_id: String) -> String:
 
 func _swap(screen_id: String) -> void:
 	if _current != null:
-		remove_child(_current)
+		_holder.remove_child(_current)
 		_current.queue_free()
 		_current = null
 	var path: String = str(SCREENS.get(screen_id, ""))
@@ -71,5 +95,5 @@ func _swap(screen_id: String) -> void:
 		screen = stub
 	_current = screen
 	_current_id = screen_id
-	add_child(screen)
+	_holder.add_child(screen)
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
