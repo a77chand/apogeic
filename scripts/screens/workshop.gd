@@ -4,6 +4,7 @@ extends Control
 ## Block 2 (not here yet): clock, pause, Why red?, drag polish.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Sprites = preload("res://scripts/ui/sprites.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
 const DropZone = preload("res://scripts/ui/drop_zone.gd")
@@ -20,11 +21,17 @@ var _day_pill: Label = null
 var _money_pill: Label = null
 var _tray: ScrollContainer = null
 var _pause_btn: Button = null
+var _sat: Control = null            # the code-drawn satellite (only when the art PNG is missing)
 var _paused: bool = false
 var _popup: Control = null          # the open "Why red?" popup, if any
 var _acc: float = 0.0               # seconds collected towards the next day
 var _base_tip: String = ""
 const MAX_DAY: int = 250
+## One colour per resource, from the art guide: mass, power, battery, data, budget, time.
+const BAR_COLORS: Dictionary = {
+	"mass": Color(0.561, 0.639, 0.749), "power": Color(0.961, 0.784, 0.259), "eclipse": Color(0.180, 0.769, 0.714),
+	"data": Color(0.247, 0.816, 0.878), "budget": Color(0.357, 0.761, 0.478), "time": Color(0.949, 0.549, 0.157),
+}
 
 
 ## The clock. A day passes every seconds_per_day. Stops while paused or while a popup is open.
@@ -122,7 +129,12 @@ func _build_centre() -> void:
 	var col: VBoxContainer = UI.vbox(8)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	centre.add_child(col)
-	col.add_child(UI.picture("res://art/modules/cubesat_3u.png", Vector2(560, 187), "CubeSat body (drop parts here)"))
+	var sat_art: String = "res://art/modules/cubesat_3u.png"
+	if ResourceLoader.exists(sat_art):
+		col.add_child(UI.picture(sat_art, Vector2(560, 187)))
+	else:
+		_sat = Sprites.live_satellite(Vector2(560, 300))   # builds itself as parts are fitted
+		col.add_child(_sat)
 	var hint: Label = UI.label("Drop parts here, or click them below", 14, UI.C_MUTED)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -150,6 +162,11 @@ func _build_right_panel() -> void:
 		var def: Array = item
 		var key: String = str(def[0])
 		var head: HBoxContainer = UI.hbox(6)
+		var dot: ColorRect = ColorRect.new()
+		dot.custom_minimum_size = Vector2(10.0, 10.0)
+		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		dot.color = BAR_COLORS.get(key, UI.C_MUTED)
+		head.add_child(dot)
 		var title: Label = UI.label(str(def[1]), 13, UI.C_MUTED)
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(title)
@@ -463,6 +480,13 @@ func _refresh() -> void:
 	_money_pill.text = "%s left" % UI.money(float(ev.get("money_left_k", 0.0)))
 
 	_refresh_slots()
+	if _sat != null:
+		var fitted: Array = []
+		for slot_id in GameState.design.keys():
+			var pid: String = str(GameState.design[slot_id])
+			if pid != "":
+				fitted.append(pid)
+		_sat.call("set_parts", fitted)
 	for key in _cards.keys():
 		var card: PanelContainer = _cards[key]
 		card.call("set_fitted", _is_fitted(str(key)))

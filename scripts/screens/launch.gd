@@ -4,6 +4,8 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const Sprites = preload("res://scripts/ui/sprites.gd")
+const Starfield = preload("res://scripts/ui/starfield.gd")
 
 const START_Y: float = 230.0     # where the rocket stands
 const TOP_Y: float = -520.0      # off the top of the screen: reached orbit
@@ -22,8 +24,20 @@ func _ready() -> void:
 	GameState.begin_ops()
 	_reached = bool(GameState.launch_outcome.get("reached_orbit", true))
 	_climb = float(GameState.launch_outcome.get("climb_pct", 100.0))
-	add_child(UI.background("res://art/backgrounds/bg_launch_pad.png"))
-	_orbit_bg = UI.background("res://art/backgrounds/bg_earth_orbit.png")
+	if ResourceLoader.exists("res://art/backgrounds/bg_launch_pad.png"):
+		add_child(UI.background("res://art/backgrounds/bg_launch_pad.png"))
+	else:
+		add_child(Sprites.make("bg_launch_pad", Vector2(1280, 720)))   # drawn sky, ground and tower
+	if ResourceLoader.exists("res://art/backgrounds/bg_earth_orbit.png"):
+		_orbit_bg = UI.background("res://art/backgrounds/bg_earth_orbit.png")
+	else:
+		_orbit_bg = Control.new()   # drawn: stars with the curve of the Earth below
+		_orbit_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var stars: Control = Starfield.new()
+		_orbit_bg.add_child(stars)
+		stars.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var limb: Control = Sprites.make("bg_earth_orbit", Vector2(1280, 720))
+		_orbit_bg.add_child(limb)
 	_orbit_bg.modulate = Color(1, 1, 1, 0)
 	add_child(_orbit_bg)
 
@@ -35,7 +49,6 @@ func _ready() -> void:
 	# The rocket drawn depends on the design's mass: small, medium or heavy.
 	var rocket: String = "rocket_" + Sim.rocket_for_mass(GameState.level, float(GameState.launch_eval.get("mass_kg", 0.0)))
 	var pic: Control = UI.picture("res://art/modules/%s.png" % rocket, Vector2(150, 450), rocket)
-	_rocket.add_child(pic)
 	var frames: SpriteFrames = UI.frames("res://art/animations/exhaust_flame", "exhaust_flame", 6, 12.0, true)
 	if frames != null:
 		var flame: AnimatedSprite2D = AnimatedSprite2D.new()
@@ -44,6 +57,9 @@ func _ready() -> void:
 		flame.visible = false
 		flame.name = "Flame"
 		_rocket.add_child(flame)
+	else:
+		_rocket.add_child(_make_flame_fx())   # added before the rocket, so it is drawn behind it
+	_rocket.add_child(pic)
 
 	_count = UI.label("", 96, UI.C_TEXT)
 	_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -115,17 +131,71 @@ func _play(id: String) -> void:
 func _flame_on() -> void:
 	GameState.play_sound("rumble")
 	var flame: Node = _rocket.get_node_or_null("Flame")
-	if flame != null:
+	if flame is AnimatedSprite2D:
 		var sprite: AnimatedSprite2D = flame
 		sprite.visible = true
 		sprite.play("exhaust_flame")
+	elif flame != null:
+		_set_particles(flame, true)
 
 
 func _flame_off() -> void:
 	var flame: Node = _rocket.get_node_or_null("Flame")
-	if flame != null:
+	if flame is AnimatedSprite2D:
 		var sprite: AnimatedSprite2D = flame
 		sprite.visible = false
+	elif flame != null:
+		_set_particles(flame, false)
+
+
+func _set_particles(fx: Node, on: bool) -> void:
+	for child in fx.get_children():
+		if child is CPUParticles2D:
+			var p: CPUParticles2D = child
+			p.emitting = on
+
+
+## A flame (yellow core fading to red) and a grey smoke trail, as particles. They are
+## built in code and leave a trail behind the moving rocket (local_coords is off).
+func _make_flame_fx() -> Node2D:
+	var fx: Node2D = Node2D.new()
+	fx.name = "Flame"
+	fx.position = Vector2(75.0, 392.0)   # the engine bell of the drawn rocket
+	var smoke: CPUParticles2D = CPUParticles2D.new()
+	smoke.emitting = false
+	smoke.amount = 40
+	smoke.lifetime = 1.8
+	smoke.local_coords = false
+	smoke.direction = Vector2(0, 1)
+	smoke.spread = 25.0
+	smoke.gravity = Vector2.ZERO
+	smoke.initial_velocity_min = 40.0
+	smoke.initial_velocity_max = 90.0
+	smoke.scale_amount_min = 9.0
+	smoke.scale_amount_max = 18.0
+	var smoke_ramp: Gradient = Gradient.new()
+	smoke_ramp.offsets = PackedFloat32Array([0.0, 1.0])
+	smoke_ramp.colors = PackedColorArray([Color(0.84, 0.86, 0.9, 0.55), Color(0.84, 0.86, 0.9, 0.0)])
+	smoke.color_ramp = smoke_ramp
+	fx.add_child(smoke)
+	var fire: CPUParticles2D = CPUParticles2D.new()
+	fire.emitting = false
+	fire.amount = 70
+	fire.lifetime = 0.55
+	fire.local_coords = false
+	fire.direction = Vector2(0, 1)
+	fire.spread = 12.0
+	fire.gravity = Vector2.ZERO
+	fire.initial_velocity_min = 140.0
+	fire.initial_velocity_max = 230.0
+	fire.scale_amount_min = 5.0
+	fire.scale_amount_max = 11.0
+	var fire_ramp: Gradient = Gradient.new()
+	fire_ramp.offsets = PackedFloat32Array([0.0, 0.25, 0.6, 1.0])
+	fire_ramp.colors = PackedColorArray([Color(1.0, 0.95, 0.77, 1.0), Color(0.96, 0.78, 0.26, 1.0), Color(0.95, 0.55, 0.16, 0.9), Color(0.88, 0.29, 0.29, 0.0)])
+	fire.color_ramp = fire_ramp
+	fx.add_child(fire)
+	return fx
 
 
 func _failure_text() -> String:
