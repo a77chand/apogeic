@@ -13,6 +13,8 @@ var _patch: int = 0
 var _preview_holder: VBoxContainer = null
 var _preview: Control = null
 var _caption: Label = null
+var _rank_label: Label = null
+var _colour_note: Label = null
 var _name_edit: LineEdit = null
 var _title_buttons: Dictionary = {}   # title -> Button
 var _suit_buttons: Array = []
@@ -59,11 +61,32 @@ func _build_preview() -> void:
 	var centre: CenterContainer = CenterContainer.new()
 	centre.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_preview_holder.add_child(centre)
-	_preview = Player.figure_for(380.0, _suit, _patch, _name_text)
+	_preview = Player.figure_for(330.0, _suit, _patch, _name_text)
 	centre.add_child(_preview)
-	_caption = UI.label("", 22, UI.C_CYAN)
+	# a name plate under the figure: title in gold capitals, name in white, cut off if too long
+	var plate: PanelContainer = PanelContainer.new()
+	var sb: StyleBoxFlat = UI.box(Color(0.02, 0.05, 0.11, 0.96), Color(UI.C_ACCENT, 0.6), 8, 1, 10.0)
+	sb.corner_detail = 1
+	plate.add_theme_stylebox_override("panel", sb)
+	plate.custom_minimum_size = Vector2(320.0, 0.0)
+	plate.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_preview_holder.add_child(plate)
+	var pcol: VBoxContainer = UI.vbox(0)
+	plate.add_child(pcol)
+	_rank_label = UI.label("", 13, Player.C_RANK)
+	_rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pcol.add_child(_rank_label)
+	_caption = UI.label("", 16, Player.C_NAME)
+	_caption.add_theme_font_override("font", UI.display_font())
+	_caption.add_theme_font_size_override("font_size", 28)
 	_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_preview_holder.add_child(_caption)
+	_caption.clip_text = true
+	_caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_caption.custom_minimum_size = Vector2(296.0, 0.0)
+	pcol.add_child(_caption)
+	_colour_note = UI.label("", 13, UI.C_MUTED)
+	_colour_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_preview_holder.add_child(_colour_note)
 
 
 func _build_choices() -> void:
@@ -90,33 +113,48 @@ func _build_choices() -> void:
 		title_row.add_child(b)
 		_title_buttons[t] = b
 	col.add_child(UI.label("Suit colour", 18))
-	var suit_row: HBoxContainer = UI.hbox(10)
+	var suit_row: HBoxContainer = UI.hbox(14)
 	col.add_child(suit_row)
 	for i in range(Player.SUITS.size()):
 		var entry: Array = Player.SUITS[i]
-		var b: Button = _swatch(str(entry[0]), _on_suit.bind(i))
-		suit_row.add_child(b)
+		var b: Button = _swatch(str(entry[0]), _on_suit.bind(i), suit_row)
 		_suit_buttons.append(b)
 	col.add_child(UI.label("Mission patch colour", 18))
-	var patch_row: HBoxContainer = UI.hbox(10)
+	var patch_row: HBoxContainer = UI.hbox(14)
 	col.add_child(patch_row)
 	for i in range(Player.PATCHES.size()):
 		var entry: Array = Player.PATCHES[i]
-		var b: Button = _swatch(str(entry[0]), _on_patch.bind(i))
-		patch_row.add_child(b)
+		var b: Button = _swatch(str(entry[0]), _on_patch.bind(i), patch_row)
 		_patch_buttons.append(b)
-	var hint: Label = UI.label("Your name and astronaut appear in the top bar, the briefing and the mission report.", 14, UI.C_MUTED, true)
-	hint.custom_minimum_size = Vector2(780.0, 0.0)
-	col.add_child(hint)
 
 
-func _swatch(tip: String, on_press: Callable) -> Button:
+## A round colour chip with its name underneath. The chosen one gets a white ring and a tick.
+func _swatch(colour_name: String, on_press: Callable, row: HBoxContainer) -> Button:
+	var cell: VBoxContainer = UI.vbox(4)
+	row.add_child(cell)
 	var b: Button = Button.new()
-	b.custom_minimum_size = Vector2(52.0, 52.0)
+	b.custom_minimum_size = Vector2(54.0, 54.0)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	b.focus_mode = Control.FOCUS_NONE
-	b.tooltip_text = tip
+	b.tooltip_text = colour_name
+	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.pressed.connect(on_press)
+	b.draw.connect(_draw_tick.bind(b))
+	cell.add_child(b)
+	var l: Label = UI.label(colour_name, 12, UI.C_MUTED)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.custom_minimum_size = Vector2(66.0, 0.0)
+	cell.add_child(l)
+	b.set_meta("name_label", l)
 	return b
+
+
+func _draw_tick(b: Button) -> void:
+	if not bool(b.get_meta("chosen", false)):
+		return
+	var c: Vector2 = b.size * 0.5
+	var dark: Color = Color(0.02, 0.05, 0.12)
+	b.draw_polyline(PackedVector2Array([c + Vector2(-9, 0), c + Vector2(-3, 7), c + Vector2(10, -7)]), dark, 4.0, true)
 
 
 func _build_buttons() -> void:
@@ -161,13 +199,24 @@ func _style_choice(b: Button, selected: bool) -> void:
 
 
 func _style_swatch(b: Button, color: Color, selected: bool) -> void:
-	var border: Color = UI.C_OUTLINE
-	var width: int = 2
+	var normal: StyleBoxFlat = UI.box(color, Color(color.darkened(0.45), 1.0), 27, 2, 0.0)
+	normal.anti_aliasing = true
+	var hover: StyleBoxFlat = UI.box(color.lightened(0.12), Color(1, 1, 1, 0.6), 27, 2, 0.0)
+	hover.shadow_color = Color(color, 0.45)
+	hover.shadow_size = 6
 	if selected:
-		border = Color(1, 1, 1)
-		width = 4
-	for state in ["normal", "hover", "pressed"]:
-		b.add_theme_stylebox_override(state, UI.box(color, border, 26, width, 0.0))
+		normal = UI.box(color, Color(1, 1, 1), 27, 4, 0.0)
+		normal.shadow_color = Color(color, 0.7)
+		normal.shadow_size = 10
+		hover = normal
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("hover", hover)
+	b.add_theme_stylebox_override("pressed", normal)
+	b.set_meta("chosen", selected)
+	b.queue_redraw()
+	var l: Label = b.get_meta("name_label", null)
+	if l != null:
+		l.add_theme_color_override("font_color", UI.C_TEXT if selected else UI.C_MUTED)
 
 
 func _refresh() -> void:
@@ -177,11 +226,13 @@ func _refresh() -> void:
 		_style_swatch(_suit_buttons[i], Player.suit_color(i), i == _suit)
 	for i in range(_patch_buttons.size()):
 		_style_swatch(_patch_buttons[i], Player.patch_color(i), i == _patch)
-	_preview.call("setup", 380.0, Player.suit_color(_suit), Player.patch_color(_patch), _name_text)
+	_preview.call("setup", 330.0, Player.suit_color(_suit), Player.patch_color(_patch), _name_text)
 	var shown: String = _name_text.strip_edges()
 	if shown == "":
 		shown = "Your name"
-	_caption.text = "%s %s" % [_title, shown]
+	_rank_label.text = _title.to_upper()
+	_caption.text = shown
+	_colour_note.text = "%s suit  ·  %s patch" % [str((Player.SUITS[_suit] as Array)[0]), str((Player.PATCHES[_patch] as Array)[0])]
 	_done_btn.disabled = _name_text.strip_edges() == ""
 
 

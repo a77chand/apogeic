@@ -1,44 +1,43 @@
 {
-  "_note": "First-visit tips, shown once per screen. Placeholders in {braces} are filled from data/level1.json so the text never goes stale: {goal}, {mass_kg}, {budget}, {deadline}, {weeks}, {goal_mb}, {reserve_pct}.",
+  "_note": "First-visit tips, shown once per screen. Each step is a short list of bullet points (a plain string also works). Placeholders in {braces} are filled from the current level so the text never goes stale: {goal}, {mass_kg}, {budget}, {deadline}, {weeks}, {goal_mb}, {reserve_pct}.",
   "screens": {
     "briefing": {
       "title": "Briefing",
       "steps": [
-        "Your goal: {goal}",
-        "You must stay inside the limits: at most {mass_kg} kg, a budget of {budget}, and launch by day {deadline}.",
-        "The grey locked choices (bigger craft, higher orbit) are not available in this level. Click one to see why."
+        ["Goal: {goal}"],
+        ["Mass: at most {mass_kg} kg", "Budget: {budget}", "Launch by day {deadline}"],
+        ["Grey choices are locked in this mission", "Click one to see why"]
       ]
     },
     "workshop": {
       "title": "Workshop",
       "steps": [
-        "Build your satellite here. Click a part in the tray at the bottom, or drag it onto the satellite, to fit it. Slots that are still empty and required show in yellow.",
-        "The six bars on the right check your design. Green is fine, yellow is close to the limit, red means a check fails. Hover a bar, or press Why red?, to see what is wrong.",
-        "Time is money. Every day of building costs staff pay and pushes launch later, and the deadline is day {deadline}. Press Pause to stop the clock while you think.",
-        "Stay under {mass_kg} kg and {budget}. When you are ready, press Test it."
+        ["Click a part in the tray to fit it", "Or drag it onto the satellite", "Yellow slot = required and still empty"],
+        ["Six bars check your design", "Green = fine, yellow = close, red = fails", "Hover a bar or press Why red? for the reason"],
+        ["The clock is running: every day costs money", "Removing a fitted part costs rework time", "Deadline: day {deadline}. Pause stops the clock"],
+        ["Stay under {mass_kg} kg and {budget}", "Press Test it when the bars are green"]
       ]
     },
     "test_lab": {
       "title": "Test lab",
       "steps": [
-        "The test lab checks your design against every requirement. PASS means it is fine, FAIL means it is not.",
-        "Each red card tells you why a check failed and gives a tip. Fix it sends you back to the workshop, and a failed test costs time.",
-        "You may Launch anyway with failed checks, but each one has a consequence once the satellite is in orbit."
+        ["Every requirement is tested", "PASS = fine, FAIL = a problem"],
+        ["Fix it: back to the workshop (costs days)", "Launch anyway: risky, and each failure has a cost in orbit"]
       ]
     },
     "ops": {
       "title": "Operations",
       "steps": [
-        "Your satellite flies for {weeks} weeks. One week passes every few seconds. The goal is {goal_mb} MB of photos delivered to the ground.",
-        "You can switch on Safe mode (no photos, the battery recovers), Smaller photos (less data, so storage fills slower) or buy an extra ground pass (costs money, then needs time to recharge).",
-        "Events will pop up and ask you to choose. What you built earlier can change how an event turns out."
+        ["The satellite flies for {weeks} weeks", "Goal: {goal_mb} MB delivered to the ground"],
+        ["Safe mode: no data, the battery recovers", "Smaller files: storage fills slower", "Extra pass: costs money, sends more"],
+        ["Events pop up with a timer", "What you built changes how they turn out", "Watch the fuel meter"]
       ]
     },
     "report": {
       "title": "Report",
       "steps": [
-        "You can earn up to three stars: one for reaching the goal, one for passing every check, and one for finishing with {reserve_pct}% of the budget left.",
-        "Why it happened explains, step by step, what went wrong. Retry with changes keeps your parts so you can fix just the problem."
+        ["Star 1: reach the goal", "Star 2: pass every check", "Star 3: keep {reserve_pct}% of the budget"],
+        ["Why it happened: what went wrong, step by step", "Fix my satellite keeps your parts"]
       ]
     }
   }

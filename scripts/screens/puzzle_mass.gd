@@ -1,19 +1,22 @@
 extends Control
-## Puzzle 1: Mass. Pick parts from a bin without going over the rocket limit.
-## Layout: intro left, toggle cards middle, live result right, reasons / lesson below.
+## Puzzle 1: Mass. Load a photo satellite into a rocket slot.
+## The rocket on the right shows every part you pick, stacked by weight, against the limit.
+## Four limits at once (mass, money, power, data rate), so it takes some thinking.
+## Layout: challenge left, part bin middle, rocket and readouts right, reasons below.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
+const RocketStack = preload("res://scripts/ui/rocket_stack.gd")
 
 const ID: String = "mass"
 
 var _pz: Dictionary = {}
 var selected_ids: Array = []
 var _cards: Dictionary = {}          # part id -> PartCard
-var _mass_bar: ProgressBar = null
-var _mass_label: Label = null
+var _rocket: Control = null
+var _lines: Dictionary = {}          # "mass"/"cost"/"power"/"data" -> Label
 var _checklist: VBoxContainer = null
 var _message: Label = null
 var _lock_btn: Button = null
@@ -48,31 +51,39 @@ func _build_top_bar() -> void:
 	bar.add_child(title)
 	var badge: Control = Player.badge(44.0)
 	add_child(badge)
-	badge.position = Vector2(14.0, 14.0)
+	badge.position = Vector2(40.0, 10.0)
 
 
 func _build_intro() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
-	_place(panel, Vector2(20, 88), Vector2(300, 470))
-	var col: VBoxContainer = UI.vbox(12)
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
+	_place(panel, Vector2(20, 88), Vector2(290, 470))
+	var col: VBoxContainer = UI.vbox(8)
 	panel.add_child(col)
 	col.add_child(UI.label("The challenge", 20))
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
-	intro.custom_minimum_size = Vector2(264.0, 0.0)
+	intro.custom_minimum_size = Vector2(262.0, 0.0)
 	col.add_child(intro)
-	var hint: Label = UI.label("Click a part to add it. Click again to take it out.", 13, UI.C_MUTED, true)
-	hint.custom_minimum_size = Vector2(264.0, 0.0)
-	col.add_child(hint)
+	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
+	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 262.0, UI.C_ORANGE))
+	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
+	col.add_child(UI.bullets(_pz.get("goal", []), 13, UI.C_TEXT, 262.0, UI.C_GREEN))
 
 
 func _build_bin() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
-	_place(panel, Vector2(336, 88), Vector2(520, 470))
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 10.0)
+	_place(panel, Vector2(326, 88), Vector2(510, 470))
+	var col: VBoxContainer = UI.vbox(6)
+	panel.add_child(col)
+	col.add_child(UI.label("Click a part to load it. Click again to take it out.", 13, UI.C_MUTED))
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(488, 424)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	col.add_child(scroll)
 	var grid: GridContainer = GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 12)
-	panel.add_child(grid)
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	scroll.add_child(grid)
 	var bin: Array = _pz.get("bin", [])
 	for item in bin:
 		var part_id: String = str(item)
@@ -87,21 +98,23 @@ func _build_bin() -> void:
 
 
 func _build_result() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
-	_place(panel, Vector2(872, 88), Vector2(388, 470))
-	var row: HBoxContainer = UI.hbox(16)
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
+	_place(panel, Vector2(852, 88), Vector2(408, 470))
+	var row: HBoxContainer = UI.hbox(10)
 	panel.add_child(row)
-	row.add_child(UI.picture("res://art/modules/rocket_small.png", Vector2(110, 330), "rocket"))
-	var col: VBoxContainer = UI.vbox(8)
+	_rocket = RocketStack.new()
+	row.add_child(_rocket)
+	var col: VBoxContainer = UI.vbox(6)
 	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(col)
-	col.add_child(UI.label("Mass", 18))
-	_mass_bar = UI.meter(200.0)
-	col.add_child(_mass_bar)
-	_mass_label = UI.label("", 14)
-	col.add_child(_mass_label)
-	col.add_child(UI.label("You need:", 16, UI.C_MUTED))
-	_checklist = UI.vbox(6)
+	col.add_child(UI.label("Limits", 18))
+	for key in ["mass", "cost", "power", "data"]:
+		var l: Label = UI.label("", 14, UI.C_TEXT, true)
+		l.custom_minimum_size = Vector2(196.0, 0.0)
+		col.add_child(l)
+		_lines[key] = l
+	col.add_child(UI.label("Parts needed", 14, UI.C_MUTED))
+	_checklist = UI.vbox(3)
 	col.add_child(_checklist)
 
 
@@ -124,7 +137,14 @@ func _on_toggle(part_id: String) -> void:
 		selected_ids.erase(part_id)
 	else:
 		selected_ids.append(part_id)
+	GameState.play_sound("select")
 	_refresh()
+
+
+func _set_line(key: String, ok: bool, text: String) -> void:
+	var l: Label = _lines[key]
+	l.text = text + ("   OK" if ok else "   FAIL")
+	l.add_theme_color_override("font_color", UI.C_GREEN if ok else UI.C_RED)
 
 
 func _refresh() -> void:
@@ -133,23 +153,42 @@ func _refresh() -> void:
 	var limit: float = maxf(0.001, float(res.get("limit_kg", 1.0)))
 	var passed: bool = bool(res.get("passed", false))
 	var reasons: Array = res.get("reasons", [])
-	var under: bool = mass <= limit + Sim.EPS
-	UI.set_meter(_mass_bar, mass / limit * 100.0, UI.status_for(under, mass >= limit * 0.9))
-	var word: String = "OK"
-	if not under:
-		word = "Fail"
-	_mass_label.text = "%.2f kg of %.1f kg  (%s)" % [mass, limit, word]
+	# the rocket picture: one block per chosen part
+	var stack: Array = []
+	for pid in selected_ids:
+		var part: Dictionary = GameState.parts.get(str(pid), {})
+		stack.append({"name": _short_name(part), "mass": float(part.get("mass_kg", 0.0)), "category": str(part.get("category", ""))})
+	_rocket.call("set_load", stack, float(_pz.get("bus_kg", 0.0)), limit)
+	# the four limits
+	_set_line("mass", mass <= limit + Sim.EPS, "Mass %.2f of %.1f kg" % [mass, limit])
+	var cost: float = float(res.get("cost_k", 0.0))
+	var budget: float = float(res.get("budget_k", 0.0))
+	_set_line("cost", budget <= 0.0 or cost <= budget + Sim.EPS, "Cost %s of %s" % [UI.money(cost), UI.money(budget)])
+	var gen: float = float(res.get("gen_w", 0.0))
+	var use: float = float(res.get("use_w", 0.0))
+	_set_line("power", gen > 0.0 and gen >= use - Sim.EPS, "Power %.1f W made, %.1f W used" % [gen, use])
+	var send: float = float(res.get("send_mb", 0.0))
+	var need: float = float(res.get("need_send_mb", 0.0))
+	_set_line("data", send >= need - Sim.EPS and send > 0.0, "Sends %d of %d MB a week" % [int(round(send)), int(round(need))])
 	for key in _cards.keys():
 		var card: PanelContainer = _cards[key]
 		card.call("set_fitted", selected_ids.has(str(key)))
 	_refresh_checklist(reasons)
 	if passed:
-		_message.text = str(_pz.get("lesson", ""))
+		_message.text = "It fits and it works. " + str(_pz.get("lesson", ""))
 		_message.add_theme_color_override("font_color", UI.C_GREEN)
+	elif selected_ids.is_empty():
+		_message.text = "Start by loading the parts you think a photo satellite needs."
+		_message.add_theme_color_override("font_color", UI.C_MUTED)
 	else:
-		_message.text = "\n".join(PackedStringArray(reasons))
+		_message.text = "  •  ".join(PackedStringArray(reasons))
 		_message.add_theme_color_override("font_color", UI.C_RED)
 	_lock_btn.disabled = not passed or _locked
+
+
+func _short_name(part: Dictionary) -> String:
+	var n: String = str(part.get("name", ""))
+	return n.replace("Small solar panels", "Small panels").replace("Large solar panels", "Large panels").replace("Standard battery", "Battery").replace("Small battery", "Sm. battery")
 
 
 func _refresh_checklist(reasons: Array) -> void:
@@ -158,12 +197,8 @@ func _refresh_checklist(reasons: Array) -> void:
 	for item in needs:
 		var need: Dictionary = item
 		var ok: bool = not reasons.has(str(need.get("missing", "")))
-		var text: String = "[ ] " + _need_name(need)
-		var color: Color = UI.C_MUTED
-		if ok:
-			text = "[x] " + _need_name(need)
-			color = UI.C_GREEN
-		_checklist.add_child(UI.label(text, 14, color))
+		var text: String = _need_name(need) + (": loaded" if ok else ": missing")
+		_checklist.add_child(UI.label(text, 14, UI.C_GREEN if ok else UI.C_MUTED))
 
 
 func _need_name(need: Dictionary) -> String:
@@ -190,7 +225,7 @@ func _on_lock() -> void:
 	_message.add_theme_color_override("font_color", UI.C_GREEN)
 	var timer: Timer = Timer.new()
 	timer.one_shot = true
-	timer.wait_time = 1.4
+	timer.wait_time = 1.6
 	add_child(timer)
 	timer.timeout.connect(_on_done)
 	timer.start()

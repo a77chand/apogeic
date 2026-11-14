@@ -2,7 +2,7 @@
   "_note": "ALL NUMBERS ARE PLACEHOLDERS for gameplay. Orbit period and eclipse time are rough figures and must be verified.",
   "id": "level3",
   "name": "Flood Watch",
-  "goal_text": "A river is about to flood. Photograph the valley every week for 12 weeks and get a lot of photos to the ground, fast.",
+  "goal_text": "A river is about to flood. Photograph the valley every week for 10 weeks and get a lot of photos to the ground, fast.",
   "goal_data_type": "images",
   "bus": {
     "name": "3U CubeSat bus",
@@ -11,8 +11,9 @@
     "cost_k": 200
   },
   "launch": {
-    "name": "Rideshare launch",
-    "cost_k": 120
+    "name": "Space station cargo ship",
+    "cost_k": 90,
+    "keep_cost": true
   },
   "launch_min_readiness_pct": 80,
   "launch_risk": {
@@ -32,12 +33,12 @@
   "limits": {
     "mass_kg": 4.0,
     "budget_k": 1000,
-    "deadline_day": 150
+    "deadline_day": 120
   },
   "orbit": {
-    "name": "Low Earth orbit, 550 km",
-    "period_min": 95.0,
-    "eclipse_min": 35.0
+    "name": "Space station orbit, 400 km",
+    "period_min": 92.6,
+    "eclipse_min": 36.0
   },
   "slots": [
     {
@@ -78,13 +79,15 @@
     }
   ],
   "schedule": {
-    "seconds_per_day": 2.0,
+    "seconds_per_day": 1.5,
     "post_build_days": 50,
     "retest_days": 10,
     "licence_days": 100,
     "staff_cost_k_per_day": 1.0,
     "slip_days": 30,
-    "slip_fee_k": 60
+    "slip_fee_k": 60,
+    "rework_days": 4,
+    "rework_cost_k": 10
   },
   "requirements": [
     {
@@ -145,20 +148,20 @@
     {
       "id": "R6",
       "kind": "launch_day_max",
-      "target": 150.0,
+      "target": 120.0,
       "unit": "day",
       "hard": false,
-      "text": "Ready to launch by day 150",
+      "text": "Ready to launch by day 120",
       "reason": "Building and testing took too long.",
       "tip": "Build faster. Each retest also adds days.",
       "consequence": "You miss your launch slot and pay to rebook a later one."
     }
   ],
   "ops": {
-    "weeks": 12,
+    "weeks": 10,
     "seconds_per_week": 5.0,
     "storage_mb": 120.0,
-    "goal_mb": 660.0,
+    "goal_mb": 550.0,
     "extra_pass_mult": 1.5,
     "extra_pass_cost_k": 10.0,
     "extra_pass_cooldown_weeks": 2,
@@ -166,8 +169,8 @@
     "brownout_loss": 0.25,
     "safe_mode_recharge_pct": 10.0,
     "max_drain_pct": 30.0,
-    "fuel_base_pct_wk": 3.0,
-    "fuel_mass_pct_wk": 3.0
+    "fuel_base_pct_wk": 5.0,
+    "fuel_mass_pct_wk": 4.0
   },
   "stars": {
     "partial_fraction": 0.6,
@@ -217,7 +220,20 @@
       "why": "Costs more than the whole budget."
     }
   ],
-  "blurb": "A rush job: far more data to send, less time to build, and almost no spare mass.",
-  "teaches": "Everything is tight at once. Mass, power, money and time all push back.",
-  "data_noun": "photos"
+  "blurb": "Huge photo files, a flood that will not wait, and a low orbit that eats fuel.",
+  "teaches": "Data and time: the radio must keep up, and every day of building counts.",
+  "data_noun": "photos",
+  "level_label": "Level 3  \u00b7  Hard",
+  "main_problem": "Data and time",
+  "rocket": {
+    "kind": "rocket_cargo",
+    "name": "Space station cargo ship",
+    "why": "Your satellite rides up in a cargo capsule with food and supplies, then astronauts push it out of the space station. The ride is cheap and gentle, but the cargo ship leaves on its date, and the station's low orbit drags on the satellite, so it burns fuel fast."
+  },
+  "differences": [
+    "Photos must arrive fast: 55 MB a week, the most of any mission.",
+    "The cargo ship leaves on day 120, and the build clock runs faster.",
+    "A low 400 km orbit: air drag burns fuel quickly. A heavy craft may run dry.",
+    "Mistakes cost more: each rework is 4 days and $10k."
+  ]
 }

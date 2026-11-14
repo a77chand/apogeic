@@ -55,7 +55,8 @@ static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 	bus["name"] = "%s bus" % str(craft.get("name", id))
 	bus["mass_kg"] = float(bus.get("mass_kg", 0.0)) * scale
 	var launch: Dictionary = out["launch"]
-	launch["cost_k"] = float(game.get("launch_cost_k", launch.get("cost_k", 0.0)))
+	if not bool(launch.get("keep_cost", false)):   # a mission with its own rocket keeps its own price
+		launch["cost_k"] = float(game.get("launch_cost_k", launch.get("cost_k", 0.0)))
 	var reqs: Array = out.get("requirements", [])
 	for item in reqs:
 		var r: Dictionary = item

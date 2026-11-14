@@ -56,25 +56,42 @@ func _card(index: int, id: String) -> Control:
 	panel.custom_minimum_size = Vector2(400.0, 480.0)
 	var col: VBoxContainer = UI.vbox(8)
 	panel.add_child(col)
-	col.add_child(UI.label("Mission %d" % (index + 1), 14, UI.C_MUTED))
+	var head: HBoxContainer = UI.hbox(8)
+	col.add_child(head)
+	var level_label: Label = UI.label(str(info.get("level_label", "Mission %d" % (index + 1))), 14, UI.C_MUTED)
+	level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(level_label)
+	var problem: String = str(info.get("main_problem", ""))
+	if problem != "":
+		var tag: PanelContainer = PanelContainer.new()
+		tag.add_theme_stylebox_override("panel", UI.box(Color(UI.C_ORANGE, 0.18), UI.C_ORANGE, 6, 1, 4.0))
+		tag.add_child(UI.label("Main problem: " + problem, 12, UI.C_ORANGE))
+		head.add_child(tag)
 	var name_color: Color = UI.C_TEXT
 	if not open:
 		name_color = UI.C_MUTED
 	col.add_child(UI.label(str(info.get("name", id)), 26, name_color, true))
-	var goal: Label = UI.label(str(info.get("goal_text", "")), 15, UI.C_TEXT, true)
+	var goal: Label = UI.label(str(info.get("goal_text", "")), 14, UI.C_TEXT, true)
 	goal.custom_minimum_size = Vector2(364.0, 0.0)
 	col.add_child(goal)
-	var teaches: Label = UI.label("What is new: " + str(info.get("blurb", "")), 13, UI.C_CYAN, true)
-	teaches.custom_minimum_size = Vector2(364.0, 0.0)
-	col.add_child(teaches)
+	# the rocket picture beside what makes this mission different
+	var row: HBoxContainer = UI.hbox(10)
+	col.add_child(row)
+	var rocket: Dictionary = info.get("rocket", {})
+	var pic: Control = UI.picture("res://art/modules/%s.png" % str(rocket.get("kind", "rocket_small")), Vector2(46, 140), "rocket")
+	pic.tooltip_text = str(rocket.get("why", ""))
+	if not open:
+		pic.modulate = Color(1, 1, 1, 0.4)
+	row.add_child(pic)
+	var right: VBoxContainer = UI.vbox(4)
+	row.add_child(right)
+	right.add_child(UI.label(str(rocket.get("name", "")), 13, UI.C_ACCENT))
+	right.add_child(UI.bullets(info.get("differences", []), 12, UI.C_TEXT if open else UI.C_MUTED, 300.0, UI.C_ORANGE))
 	var limits: Dictionary = info.get("limits", {})
 	var facts: Label = UI.label("Up to %.1f kg  |  %s  |  launch by day %d" % [
-			float(limits.get("mass_kg", 0.0)), UI.money(float(limits.get("budget_k", 0.0))), int(limits.get("deadline_day", 0))], 13, UI.C_MUTED, true)
+			float(limits.get("mass_kg", 0.0)), UI.money(float(limits.get("budget_k", 0.0))), int(limits.get("deadline_day", 0))], 13, UI.C_YELLOW, true)
 	facts.custom_minimum_size = Vector2(364.0, 0.0)
 	col.add_child(facts)
-	var learn: Label = UI.label(str(info.get("teaches", "")), 13, UI.C_MUTED, true)
-	learn.custom_minimum_size = Vector2(364.0, 0.0)
-	col.add_child(learn)
 	var spacer: Control = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
@@ -106,9 +123,9 @@ func _build_bottom() -> void:
 	var bar: PanelContainer = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", UI.bar_style(false))
 	_place(bar, Vector2(0, 662), Vector2(1280, 58))
-	_tip = UI.label("Reach the goal, or get close, to unlock the next mission.", 15)
+	_tip = UI.label("Each mission is a level: a new main problem and a new rocket. Reach the goal, or get close, to unlock the next.", 15)
 	bar.add_child(_tip)
-	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 590), Vector2(160, 52))
+	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 602), Vector2(160, 52))
 
 
 func _on_start(id: String) -> void:

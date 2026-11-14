@@ -1,21 +1,22 @@
 extends Control
-## Puzzle 3: Data link. The camera makes more than the radio can send.
-## Switch fixes on or off and watch Made, Sent and Delivered.
+## Puzzle 3: Data link, as an idea board. The camera makes more than the radio can send.
+## Nine ideas are on the board: some work, some are traps, some only work together.
+## Switch ideas on and off and watch the pipeline: the narrowest pipe is the bottleneck.
+## Any answer that fits the spare mass, money and power passes; the cleverest one is free.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const DataPipe = preload("res://scripts/ui/data_pipe.gd")
 
 const ID: String = "link"
 
 var _pz: Dictionary = {}
 var selected_option_ids: Array = []
 var _option_buttons: Dictionary = {}   # option id -> Button
-var _bars: Dictionary = {}             # "make"/"send"/"delivered" -> {"bar", "text"}
-var _spare_mass_label: Label = null
-var _spare_mass_bar: ProgressBar = null
-var _spare_cost_label: Label = null
-var _spare_cost_bar: ProgressBar = null
+var _pipe: Control = null
+var _meters: Dictionary = {}           # "mass"/"cost"/"power" -> {"bar", "text"}
+var _idea_note: Label = null
 var _message: Label = null
 var _lock_btn: Button = null
 var _back_btn: Button = null
@@ -26,8 +27,8 @@ func _ready() -> void:
 	_pz = GameState.puzzles.get(ID, {})
 	_build_top_bar()
 	_build_intro()
-	_build_middle()
-	_build_result()
+	_build_pipe()
+	_build_board()
 	_build_bottom()
 	_refresh()
 
@@ -49,83 +50,77 @@ func _build_top_bar() -> void:
 	bar.add_child(title)
 	var badge: Control = Player.badge(44.0)
 	add_child(badge)
-	badge.position = Vector2(14.0, 14.0)
+	badge.position = Vector2(40.0, 10.0)
 
 
 func _build_intro() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
 	_place(panel, Vector2(20, 88), Vector2(300, 470))
-	var col: VBoxContainer = UI.vbox(12)
-	panel.add_child(col)
-	col.add_child(UI.label("The challenge", 20))
-	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
-	intro.custom_minimum_size = Vector2(264.0, 0.0)
-	col.add_child(intro)
-	var hint: Label = UI.label("Switch the fixes on and off. The bars show where the photos get stuck.", 13, UI.C_MUTED, true)
-	hint.custom_minimum_size = Vector2(264.0, 0.0)
-	col.add_child(hint)
-
-
-func _build_middle() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
-	_place(panel, Vector2(336, 88), Vector2(520, 470))
 	var col: VBoxContainer = UI.vbox(6)
 	panel.add_child(col)
-	# picture strip: satellite, dotted arc, ground station
-	var strip: HBoxContainer = UI.hbox(8)
-	strip.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_child(strip)
-	strip.add_child(UI.picture("res://art/modules/cubesat_3u.png", Vector2(150, 60), "satellite"))
-	var arc: Label = UI.label("- - - - - - - >", 20, UI.C_CYAN)
-	arc.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	strip.add_child(arc)
-	strip.add_child(UI.picture("res://art/modules/ground_station.png", Vector2(70, 70), "ground station"))
-	# three bars
-	var defs: Array = [["make", "Made"], ["send", "Sent capacity"], ["delivered", "Delivered"]]
-	for item in defs:
-		var def: Array = item
-		var key: String = str(def[0])
-		var head: HBoxContainer = UI.hbox(8)
-		var name_label: Label = UI.label(str(def[1]), 14, UI.C_MUTED)
-		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		head.add_child(name_label)
+	col.add_child(UI.label("The challenge", 20))
+	var intro: Label = UI.label(str(_pz.get("intro", "")), 14, UI.C_TEXT, true)
+	intro.custom_minimum_size = Vector2(272.0, 0.0)
+	col.add_child(intro)
+	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
+	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 272.0, UI.C_ORANGE))
+	col.add_child(UI.label("What you have spare", 14, UI.C_MUTED))
+	for item in [["mass", "Mass"], ["cost", "Money"], ["power", "Power"]]:
+		var pair: Array = item
+		var row: HBoxContainer = UI.hbox(6)
+		col.add_child(row)
+		var name_label: Label = UI.label(str(pair[1]), 13, UI.C_MUTED)
+		name_label.custom_minimum_size = Vector2(52.0, 0.0)
+		row.add_child(name_label)
+		var bar: ProgressBar = UI.meter(110.0)
+		bar.custom_minimum_size = Vector2(110.0, 10.0)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(bar)
 		var text: Label = UI.label("", 13)
-		head.add_child(text)
-		col.add_child(head)
-		var bar: ProgressBar = UI.meter(470.0)
-		col.add_child(bar)
-		_bars[key] = {"bar": bar, "text": text}
-	# option toggles
-	var options: Array = _pz.get("options", [])
-	for item in options:
+		row.add_child(text)
+		_meters[str(pair[0])] = {"bar": bar, "text": text}
+
+
+func _build_pipe() -> void:
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 10.0)
+	_place(panel, Vector2(336, 88), Vector2(924, 150))
+	_pipe = DataPipe.new()
+	_pipe.custom_minimum_size = Vector2(900, 126)
+	panel.add_child(_pipe)
+
+
+func _build_board() -> void:
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 10.0)
+	_place(panel, Vector2(336, 246), Vector2(924, 312))
+	var col: VBoxContainer = UI.vbox(6)
+	panel.add_child(col)
+	var head: HBoxContainer = UI.hbox(10)
+	col.add_child(head)
+	head.add_child(UI.label("Idea board", 18))
+	_idea_note = UI.label("Switch ideas on and off. Try combining them.", 13, UI.C_MUTED)
+	_idea_note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_idea_note.clip_text = true
+	head.add_child(_idea_note)
+	var grid: GridContainer = GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	col.add_child(grid)
+	for item in _pz.get("options", []):
 		var opt: Dictionary = item
 		var id: String = str(opt.get("id", ""))
-		var b: Button = UI.button("%s\n%s" % [str(opt.get("label", id)), str(opt.get("detail", ""))], Callable(), 470.0, false)
+		var b: Button = UI.button("%s\n%s" % [str(opt.get("label", id)), str(opt.get("detail", ""))], Callable(), 294.0, false)
 		b.toggle_mode = true
-		b.custom_minimum_size = Vector2(470.0, 48.0)
-		b.add_theme_stylebox_override("pressed", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 4))
-		b.add_theme_stylebox_override("hover_pressed", UI.box(UI.C_HOVER.lightened(0.1), UI.C_GREEN, 16, 4))
+		b.custom_minimum_size = Vector2(294.0, 78.0)
+		b.add_theme_font_size_override("font_size", 15)
+		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var on: StyleBoxFlat = UI.chunky(Color(0.10, 0.30, 0.22), UI.C_GREEN, true)
+		b.add_theme_stylebox_override("pressed", on)
+		b.add_theme_stylebox_override("hover_pressed", on)
 		b.toggled.connect(_on_option_toggled.bind(id))
-		col.add_child(b)
+		grid.add_child(b)
 		_option_buttons[id] = b
-
-
-func _build_result() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
-	_place(panel, Vector2(872, 88), Vector2(388, 470))
-	var col: VBoxContainer = UI.vbox(10)
-	panel.add_child(col)
-	col.add_child(UI.label("What you have left", 20))
-	col.add_child(UI.label("Spare mass used", 14, UI.C_MUTED))
-	_spare_mass_bar = UI.meter(340.0)
-	col.add_child(_spare_mass_bar)
-	_spare_mass_label = UI.label("", 14)
-	col.add_child(_spare_mass_label)
-	col.add_child(UI.label("Spare money used", 14, UI.C_MUTED))
-	_spare_cost_bar = UI.meter(340.0)
-	col.add_child(_spare_cost_bar)
-	_spare_cost_label = UI.label("", 14)
-	col.add_child(_spare_cost_label)
 
 
 func _build_bottom() -> void:
@@ -140,6 +135,14 @@ func _build_bottom() -> void:
 	_place(_lock_btn, Vector2(1040, 660), Vector2(220, 52))
 
 
+func _option(id: String) -> Dictionary:
+	for item in _pz.get("options", []):
+		var opt: Dictionary = item
+		if str(opt.get("id", "")) == id:
+			return opt
+	return {}
+
+
 func _on_option_toggled(pressed: bool, id: String) -> void:
 	if _locked:
 		return
@@ -147,15 +150,20 @@ func _on_option_toggled(pressed: bool, id: String) -> void:
 		selected_option_ids.append(id)
 	elif not pressed:
 		selected_option_ids.erase(id)
+	GameState.play_sound("select")
+	if pressed:
+		_idea_note.text = str(_option(id).get("why", ""))
+		_idea_note.add_theme_color_override("font_color", UI.C_ACCENT)
 	_refresh()
 
 
-func _set_flow_bar(key: String, value: float, need: float, ok: bool) -> void:
-	var entry: Dictionary = _bars[key]
-	var close: bool = value <= need * 1.1
-	UI.set_meter(entry["bar"], value / maxf(1.0, need) * 100.0, UI.status_for(ok, close))
-	var text: Label = entry["text"]
-	text.text = "%d MB/wk  (need %d)" % [int(round(value)), int(round(need))]
+func _set_meter(key: String, used: float, spare: float, text: String) -> void:
+	var entry: Dictionary = _meters[key]
+	var ok: bool = used <= spare + Sim.EPS
+	UI.set_meter(entry["bar"], used / maxf(0.001, spare) * 100.0, UI.status_for(ok, used >= spare * 0.9))
+	var l: Label = entry["text"]
+	l.text = text
+	l.add_theme_color_override("font_color", UI.C_TEXT if ok else UI.C_RED)
 
 
 func _refresh() -> void:
@@ -166,24 +174,27 @@ func _refresh() -> void:
 	var delivered: float = float(res.get("delivered", 0.0))
 	var mass: float = float(res.get("mass_kg", 0.0))
 	var cost: float = float(res.get("cost_k", 0.0))
+	var power: float = float(res.get("power_w", 0.0))
 	var passed: bool = bool(res.get("passed", false))
 	var reasons: Array = res.get("reasons", [])
-	_set_flow_bar("make", make, need, make >= need - Sim.EPS)
-	_set_flow_bar("send", send, need, send >= need - Sim.EPS)
-	_set_flow_bar("delivered", delivered, need, delivered >= need - Sim.EPS)
+	_pipe.call("set_flow", make, send, delivered, need)
 	var spare_mass: float = float(_pz.get("spare_mass_kg", 1.0))
 	var spare_cost: float = float(_pz.get("spare_cost_k", 1.0))
-	var mass_ok: bool = mass <= spare_mass + Sim.EPS
-	var cost_ok: bool = cost <= spare_cost + Sim.EPS
-	UI.set_meter(_spare_mass_bar, mass / maxf(0.001, spare_mass) * 100.0, UI.status_for(mass_ok, mass >= spare_mass * 0.9))
-	UI.set_meter(_spare_cost_bar, cost / maxf(0.001, spare_cost) * 100.0, UI.status_for(cost_ok, cost >= spare_cost * 0.9))
-	_spare_mass_label.text = "%.1f kg of %.1f kg  (%s)" % [mass, spare_mass, "OK" if mass_ok else "Fail"]
-	_spare_cost_label.text = "%s of %s  (%s)" % [UI.money(cost), UI.money(spare_cost), "OK" if cost_ok else "Fail"]
+	var spare_power: float = float(_pz.get("spare_power_w", 1.0))
+	_set_meter("mass", mass, spare_mass, "%.1f / %.1f kg" % [mass, spare_mass])
+	_set_meter("cost", cost, spare_cost, "%s / %s" % [UI.money(cost), UI.money(spare_cost)])
+	_set_meter("power", maxf(0.0, power), spare_power, "%d / %d W" % [int(round(power)), int(round(spare_power))])
 	if passed:
-		_message.text = str(_pz.get("lesson", ""))
+		var best: float = float(_pz.get("best_cost_k", 0.0))
+		var line: String = "It works: %d MB a week reach the ground, for %s." % [int(round(delivered)), UI.money(cost)]
+		if cost <= best + Sim.EPS:
+			line += " Engineer's pick: that is the cheapest answer there is!"
+		else:
+			line += " Lock it in, or look for an answer that costs nothing (hint: power)."
+		_message.text = line
 		_message.add_theme_color_override("font_color", UI.C_GREEN)
 	else:
-		_message.text = "\n".join(PackedStringArray(reasons))
+		_message.text = "  •  ".join(PackedStringArray(reasons))
 		_message.add_theme_color_override("font_color", UI.C_RED)
 	_lock_btn.disabled = not passed or _locked
 
@@ -199,7 +210,7 @@ func _on_lock() -> void:
 	_message.add_theme_color_override("font_color", UI.C_GREEN)
 	var timer: Timer = Timer.new()
 	timer.one_shot = true
-	timer.wait_time = 1.4
+	timer.wait_time = 1.8
 	add_child(timer)
 	timer.timeout.connect(_on_done)
 	timer.start()

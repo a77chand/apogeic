@@ -321,7 +321,7 @@ static func launch_outcome(level: Dictionary, results: Array, ev: Dictionary = {
 	var ready: float = readiness_pct(results)
 	var failures: Array = []   # { stage, climb, text }
 	if ready < needed - EPS:
-		failures.append({"stage": "climb", "climb": ready, "text": "Only %d%% of the checks passed (needs %d%%), so the satellite never reached orbit." % [int(round(ready)), int(round(needed))]})
+		failures.append({"stage": "climb", "climb": ready, "text": "Only %d%% of the checks passed (needs %d%%). The launch was called off." % [int(round(ready)), int(round(needed))]})
 	var cfg: Dictionary = level.get("launch_risk", {})
 	var stage_climb: Dictionary = cfg.get("stage_climb_pct", {})
 	var risks: Array = launch_risks(level, results, ev)
@@ -379,17 +379,17 @@ static func launch_risks(level: Dictionary, results: Array, ev: Dictionary) -> A
 	var fitted: Array = ev.get("part_ids", [])
 	# max-Q: the rocket shakes hardest
 	if flaws.size() >= 1 and fraction > float(cfg.get("heavy_fraction", 0.8)) + EPS:
-		out.append({"stage": "max_q", "text": "The spacecraft was heavy (%d%% of the mass limit) and it flew with %s. A heavy launch shakes harder, and the weak spot gave way." % [int(round(fraction * 100.0)), flaw_text]})
+		out.append({"stage": "max_q", "text": "The craft was heavy (%d%% of the mass limit) and flew with %s. The extra shaking broke the weak spot." % [int(round(fraction * 100.0)), flaw_text]})
 	if flaws.has("the cracked antenna mount") and fitted.has("antenna_big"):
-		out.append({"stage": "max_q", "text": "The big antenna sticks out, and its cracked mount tore off in the shaking."})
+		out.append({"stage": "max_q", "text": "The big antenna's cracked mount tore off in the shaking."})
 	# the second stage: too heavy to reach orbit speed
 	if fraction > float(cfg.get("huge_fraction", 0.95)) + EPS and not all_passed(results):
-		out.append({"stage": "second_stage", "text": "The spacecraft was almost at the mass limit (%d%%) with a check still failing. There was no margin for error, and the engine ran short." % int(round(fraction * 100.0))})
+		out.append({"stage": "second_stage", "text": "Almost at the mass limit (%d%%) with a check still failing. The engine ran short of speed." % int(round(fraction * 100.0))})
 	# separation: the deployer lets go of the satellite
 	if flaws.size() >= int(cfg.get("flaws_to_fail", 2)):
-		out.append({"stage": "separation", "text": "Too many known problems were left unfixed (%s). The satellite jammed in its deployer." % flaw_text})
+		out.append({"stage": "separation", "text": "Too many known problems left unfixed (%s). The satellite jammed in its deployer." % flaw_text})
 	elif flaws.size() >= 1 and fitted.has("solar_large"):
-		out.append({"stage": "separation", "text": "The large solar panels have to unfold when the satellite is released. With %s left unfixed, they jammed." % flaw_text})
+		out.append({"stage": "separation", "text": "The large solar panels jammed while unfolding, because %s was left unfixed." % flaw_text})
 	return out
 
 
@@ -655,8 +655,29 @@ static func puzzle_mass(pz: Dictionary, parts: Dictionary, ids: Array) -> Dictio
 			reasons.append(str(need.get("missing", "")))
 	var limit: float = float(pz.get("limit_kg", 0.0))
 	if mass > limit + EPS:
-		reasons.append("Too heavy by %.1f kg. Swap a part for a lighter one." % (mass - limit))
-	return {"mass_kg": mass, "limit_kg": limit, "passed": reasons.is_empty(), "reasons": reasons}
+		reasons.append("Too heavy by %.2f kg. Swap a part for a lighter one." % (mass - limit))
+	# Optional extra limits (puzzles.json): money, power and how fast the radio sends.
+	var cost: float = 0.0
+	var gen: float = 0.0
+	var use: float = float(pz.get("bus_w", 0.0))
+	var send: float = 0.0
+	for part_id in ids:
+		if parts.has(part_id):
+			var p: Dictionary = parts[part_id]
+			cost += float(p.get("cost_k", 0.0))
+			gen += float(p.get("power_gen_w", 0.0))
+			use += float(p.get("power_use_w", 0.0))
+			send += float(p.get("send_mb_wk", 0.0))
+	var budget: float = float(pz.get("budget_k", 0.0))
+	if budget > 0.0 and cost > budget + EPS:
+		reasons.append("Over budget by $%dk." % int(round(cost - budget)))
+	if pz.has("bus_w") and gen > 0.0 and gen < use - EPS:
+		reasons.append("The parts need %.1f W but the panels make only %.1f W." % [use, gen])
+	var need_send: float = float(pz.get("need_send_mb", 0.0))
+	if need_send > 0.0 and send > 0.0 and send < need_send - EPS:
+		reasons.append("The radio sends %d MB a week. The photos need %d." % [int(round(send)), int(round(need_send))])
+	return {"mass_kg": mass, "limit_kg": limit, "passed": reasons.is_empty(), "reasons": reasons,
+			"cost_k": cost, "budget_k": budget, "gen_w": gen, "use_w": use, "send_mb": send, "need_send_mb": need_send}
 
 
 ## Puzzle 2. panel_w = average panel power, battery_wh = battery size.
@@ -696,6 +717,7 @@ static func puzzle_link(pz: Dictionary, selected: Array) -> Dictionary:
 	var send: float = float(pz.get("send_mb_wk", 0.0))
 	var mass: float = 0.0
 	var cost: float = 0.0
+	var power: float = 0.0    # extra power used (a negative option frees power)
 	var options: Array = pz.get("options", [])
 	for item in options:
 		var opt: Dictionary = item
@@ -703,8 +725,9 @@ static func puzzle_link(pz: Dictionary, selected: Array) -> Dictionary:
 			send += float(opt.get("add_send", 0.0))
 			mass += float(opt.get("mass_kg", 0.0))
 			cost += float(opt.get("cost_k", 0.0))
+			power += float(opt.get("power_w", 0.0))
 			if float(opt.get("set_make", -1.0)) >= 0.0:
-				make = float(opt.get("set_make", -1.0))
+				make = minf(make, float(opt.get("set_make", -1.0)))
 	var delivered: float = minf(make, send)
 	var reasons: Array = []
 	if delivered < float(pz.get("need_mb_wk", 0.0)) - EPS:
@@ -713,7 +736,9 @@ static func puzzle_link(pz: Dictionary, selected: Array) -> Dictionary:
 		reasons.append("That adds more mass than the rocket has left.")
 	if cost > float(pz.get("spare_cost_k", 0.0)) + EPS:
 		reasons.append("That costs more than the money you have left.")
-	return {"make": make, "send": send, "delivered": delivered, "mass_kg": mass, "cost_k": cost, "passed": reasons.is_empty(), "reasons": reasons}
+	if pz.has("spare_power_w") and power > float(pz.get("spare_power_w", 0.0)) + EPS:
+		reasons.append("That needs %d W more power, and only %d W is spare." % [int(round(power)), int(round(float(pz.get("spare_power_w", 0.0))))])
+	return {"make": make, "send": send, "delivered": delivered, "mass_kg": mass, "cost_k": cost, "power_w": power, "passed": reasons.is_empty(), "reasons": reasons}
 
 
 static func _option_by_id(options: Array, id: String) -> Dictionary:

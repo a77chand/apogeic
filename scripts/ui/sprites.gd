@@ -31,6 +31,7 @@ const LAND: Color = Color(0.298, 0.686, 0.416)
 const KINDS: Array = [
 	"earth_large", "ground_station", "spacecraft_marker", "cubesat_1u", "cubesat_3u", "cubesat_6u",
 	"rocket_small", "rocket_medium", "rocket_heavy", "bg_launch_pad", "bg_earth_orbit",
+	"rocket_rideshare", "rocket_launcher", "rocket_cargo",
 	"part_solar_small", "part_solar_large", "part_battery", "part_camera", "part_spectrometer",
 	"part_antenna_small", "part_antenna_large", "icon_health", "ui_logo",
 ]
@@ -104,6 +105,9 @@ func _draw() -> void:
 		"rocket_small": _rocket(0.15, false)
 		"rocket_medium": _rocket(0.19, false)
 		"rocket_heavy": _rocket(0.21, true)
+		"rocket_rideshare": _rocket_rideshare()
+		"rocket_launcher": _rocket_launcher()
+		"rocket_cargo": _rocket_cargo()
 		"bg_launch_pad": _launch_pad()
 		"bg_earth_orbit": _orbit_bg()
 		"ui_logo": _logo()
@@ -318,6 +322,62 @@ func _rocket(half_width: float, boosters: bool) -> void:
 		var out: float = fx + float(side) * 0.13
 		_poly([Vector2(fx, 0.66), Vector2(out, 0.86), Vector2(fx, 0.84)], ROCKET_RED)
 	_rect(0.5 - half_width * 0.6, 0.84, half_width * 1.2, 0.03, METAL_DARK, false)   # engine bell
+
+
+## Mission 1: a big two-stage rideshare rocket. Its fairing is wider than its body,
+## because it carries dozens of small satellites at once.
+func _rocket_rideshare() -> void:
+	var hw: float = 0.13
+	var fw: float = 0.20
+	_poly([Vector2(0.5 - fw, 0.26), Vector2(0.5 + fw, 0.26), Vector2(0.5 + fw * 0.7, 0.10), Vector2(0.5, 0.02), Vector2(0.5 - fw * 0.7, 0.10)], ROCKET_WHITE)   # big fairing
+	_rect(0.5 - fw, 0.22, fw * 2.0, 0.04, METAL_LIGHT)
+	_poly([Vector2(0.5 - fw, 0.26), Vector2(0.5 + fw, 0.26), Vector2(0.5 + hw, 0.31), Vector2(0.5 - hw, 0.31)], METAL)   # boat tail
+	_rect(0.5 - hw, 0.31, hw * 2.0, 0.53, ROCKET_WHITE)                     # body
+	_rect(0.5 - hw, 0.31, hw * 0.5, 0.53, Color(1, 1, 1, 0.45), false)
+	_rect(0.5 + hw * 0.45, 0.31, hw * 0.55, 0.53, Color(0.1, 0.15, 0.35, 0.18), false)
+	_rect(0.5 - hw, 0.44, hw * 2.0, 0.035, OUTLINE, false)                  # interstage: two stages
+	_rect(0.5 - hw, 0.62, hw * 2.0, 0.02, ROCKET_RED, false)
+	for side in [-1, 1]:                                                    # small grid fins
+		var fx: float = 0.5 + float(side) * hw
+		_rect(fx - (0.05 if side < 0 else 0.0), 0.47, 0.05, 0.03, METAL_DARK)
+		_poly([Vector2(fx, 0.74), Vector2(fx + float(side) * 0.07, 0.86), Vector2(fx, 0.84)], METAL_DARK)
+	_rect(0.5 - hw * 0.8, 0.84, hw * 1.6, 0.03, METAL_DARK, false)
+
+
+## Mission 2: a slim, small launcher with a dark carbon-fibre body and a white nose.
+func _rocket_launcher() -> void:
+	var hw: float = 0.10
+	var carbon: Color = Color(0.16, 0.18, 0.22)
+	_poly([Vector2(0.5 - hw, 0.30), Vector2(0.5 + hw, 0.30), Vector2(0.5, 0.12)], ROCKET_WHITE)   # nose
+	_rect(0.5 - hw, 0.30, hw * 2.0, 0.54, carbon)
+	_rect(0.5 - hw, 0.30, hw * 0.5, 0.54, Color(1, 1, 1, 0.12), false)
+	_rect(0.5 - hw, 0.48, hw * 2.0, 0.02, METAL, false)
+	_rect(0.5 - hw, 0.36, hw * 2.0, 0.015, CYAN, false)
+	for side in [-1, 1]:
+		var fx: float = 0.5 + float(side) * hw
+		_poly([Vector2(fx, 0.76), Vector2(fx + float(side) * 0.06, 0.86), Vector2(fx, 0.85)], carbon)
+	_rect(0.5 - hw * 0.8, 0.84, hw * 1.6, 0.03, METAL_DARK, false)
+
+
+## Mission 3: a rocket with two side boosters, topped by a cargo capsule with small
+## solar panels. The satellite rides inside with the supplies for the space station.
+func _rocket_cargo() -> void:
+	var hw: float = 0.15
+	for side in [-1, 1]:
+		var bx: float = 0.5 + float(side) * (hw + 0.07) - 0.04
+		_rect(bx, 0.42, 0.08, 0.42, METAL_LIGHT)
+		_poly([Vector2(bx, 0.42), Vector2(bx + 0.08, 0.42), Vector2(bx + 0.04, 0.35)], ROCKET_WHITE)
+	# capsule: a blunt cone with panels folded at its sides
+	_poly([Vector2(0.5 - hw, 0.30), Vector2(0.5 + hw, 0.30), Vector2(0.5 + hw * 0.55, 0.12), Vector2(0.5 - hw * 0.55, 0.12)], METAL)
+	_rect(0.5 - hw * 0.55, 0.09, hw * 1.1, 0.03, METAL_DARK)
+	_rect(0.5 - hw - 0.06, 0.17, 0.06, 0.10, SOLAR)
+	_rect(0.5 + hw, 0.17, 0.06, 0.10, SOLAR)
+	draw_circle(_p(0.5, 0.22), size.x * 0.035, CYAN)
+	_rect(0.5 - hw, 0.30, hw * 2.0, 0.54, ROCKET_WHITE)
+	_rect(0.5 - hw, 0.30, hw * 0.5, 0.54, Color(1, 1, 1, 0.45), false)
+	_rect(0.5 - hw, 0.30, hw * 2.0, 0.025, OUTLINE, false)
+	_rect(0.5 - hw, 0.56, hw * 2.0, 0.05, ROCKET_RED, false)
+	_rect(0.5 - hw * 0.8, 0.84, hw * 1.6, 0.03, METAL_DARK, false)
 
 
 # ---------------------------------------------------------------- backgrounds and logo

@@ -54,21 +54,51 @@ static func figure(height: float) -> Control:
 	return figure_for(height, GameState.avatar_suit, GameState.avatar_patch, GameState.player_name)
 
 
-## A small figure with the name and title beside it. Fits a 72 px top bar at height 44.
+const BADGE_WIDTH: float = 210.0
+const C_NAME: Color = Color(1.0, 1.0, 1.0)
+const C_RANK: Color = Color(0.98, 0.80, 0.33)   # gold, like a rank on a flight suit
+
+
+## A name plate: a small figure, the title in gold capitals and the name in white, on a
+## solid dark plate with a coloured edge. It has a fixed width and cuts off long names,
+## so it never pushes into the box next to it. Fits a 72 px top bar at height 44.
 static func badge(height: float = 44.0) -> Control:
-	var row: HBoxContainer = UI.hbox(10)
+	var plate: PanelContainer = PanelContainer.new()
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	plate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var sb: StyleBoxFlat = UI.box(Color(0.02, 0.05, 0.11, 0.96), Color(patch_color(GameState.avatar_patch), 0.9), 8, 1, 4.0)
+	sb.border_width_left = 4
+	sb.corner_detail = 1
+	sb.content_margin_left = 8.0
+	sb.content_margin_right = 10.0
+	plate.add_theme_stylebox_override("panel", sb)
+	var width: float = BADGE_WIDTH * clampf(height / 44.0, 0.8, 1.3)
+	plate.custom_minimum_size = Vector2(width, 0.0)
+	var row: HBoxContainer = UI.hbox(8)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	plate.add_child(row)
 	row.add_child(figure(height))
-	var col: VBoxContainer = UI.vbox(0)
+	var col: VBoxContainer = UI.vbox(-2)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var name_text: String = GameState.player_name.strip_edges()
-	if name_text == "":
-		name_text = "Cadet"
-	col.add_child(UI.label(name_text, 16, UI.C_TEXT))
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(col)
 	var title_text: String = GameState.player_title
 	if title_text == "":
 		title_text = "Astronaut"
-	col.add_child(UI.label(title_text, 12, UI.C_MUTED))
-	row.add_child(col)
-	return row
+	var rank: Label = UI.label(title_text.to_upper(), 11, C_RANK)
+	rank.add_theme_constant_override("outline_size", 1)
+	rank.clip_text = true
+	col.add_child(rank)
+	var name_text: String = GameState.player_name.strip_edges()
+	if name_text == "":
+		name_text = "Cadet"
+	var name_label: Label = UI.label(name_text, 16, C_NAME)
+	name_label.add_theme_font_override("font", UI.display_font())
+	name_label.add_theme_font_size_override("font_size", 19 if name_text.length() <= 10 else 16)
+	name_label.clip_text = true
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.custom_minimum_size = Vector2(width - height - 30.0, 0.0)
+	col.add_child(name_label)
+	return plate

@@ -27,6 +27,9 @@ var _paused: bool = false
 var _popup: Control = null          # the open "Why red?" popup, if any
 var _acc: float = 0.0               # seconds collected towards the next day
 var _base_tip: String = ""
+var _hurry: Label = null            # the "hurry up" warning over the satellite
+var _hurry_tween: Tween = null
+var _restore_btn: Button = null     # "Bring back my last parts", after Start with empty satellite
 const MAX_DAY: int = 250
 ## One colour per resource, from the art guide: mass, power, battery, data, budget, time.
 const BAR_COLORS: Dictionary = {
@@ -117,6 +120,11 @@ func _build_left_panel() -> void:
 	col.add_child(UI.label("On your satellite", 20))
 	_slot_col = UI.vbox(8)
 	col.add_child(_slot_col)
+	_restore_btn = UI.button("Bring back my last parts", _on_restore, 266.0, false)
+	_restore_btn.custom_minimum_size = Vector2(266.0, 36.0)
+	_restore_btn.add_theme_font_size_override("font_size", 15)
+	_restore_btn.tooltip_text = "Puts back the parts from your last attempt."
+	col.add_child(_restore_btn)
 
 
 func _build_centre() -> void:
@@ -140,6 +148,12 @@ func _build_centre() -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(hint)
+	# the pressure warning: shows when the launch date gets close to the deadline
+	_hurry = UI.label("", 16, UI.C_ORANGE)
+	_hurry.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hurry.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hurry.visible = false
+	_place(_hurry, Vector2(336, 96), Vector2(580, 28))
 
 
 func _build_right_panel() -> void:
@@ -284,17 +298,87 @@ func _fit(slot_id: String, part_id: String) -> void:
 	if _is_fitted(part_id):
 		_set_tip("That part is already fitted.")
 		return
+	var was: String = str(GameState.design.get(slot_id, ""))
 	if GameState.set_slot(slot_id, part_id):
+		if was != "":
+			_charge_rework()   # only after the swap worked, so a rejected swap is free
+			_refresh()
 		var part: Dictionary = GameState.parts[part_id]
-		_set_tip("Fitted: %s." % str(part.get("name", part_id)))
+		var line: String = "Fitted: %s." % str(part.get("name", part_id))
+		if was != "":
+			line = "Swapped in %s. %s" % [str(part.get("name", part_id)), _rework_text()]
+		_set_tip(line)
 		GameState.play_sound("fit")
 	else:
 		_set_tip("That part is already fitted.")
 
 
 func _on_remove(slot_id: String) -> void:
+	if str(GameState.design.get(slot_id, "")) == "":
+		return
+	_charge_rework()
 	GameState.set_slot(slot_id, "")
-	_set_tip("Removed.")
+	_set_tip("Removed. " + _rework_text())
+
+
+## Taking out a part that was already built in costs time and money, like on a real
+## team: so think first, then fit. Numbers from the level's schedule (rework_days, rework_cost_k).
+func _charge_rework() -> void:
+	var sc: Dictionary = GameState.level.get("schedule", {})
+	GameState.sched["extra_days"] = int(GameState.sched.get("extra_days", 0)) + int(sc.get("rework_days", 2))
+	GameState.sched["extra_cost_k"] = float(GameState.sched.get("extra_cost_k", 0.0)) + float(sc.get("rework_cost_k", 5.0))
+	GameState.sched["reworks"] = int(GameState.sched.get("reworks", 0)) + 1
+	GameState.play_sound("alert")
+	_flash_penalty()
+
+
+func _rework_text() -> String:
+	var sc: Dictionary = GameState.level.get("schedule", {})
+	return "Rework: +%d days, +%s." % [int(sc.get("rework_days", 2)), UI.money(float(sc.get("rework_cost_k", 5.0)))]
+
+
+## A short red "+2 days +$5k" that floats up over the satellite.
+func _flash_penalty() -> void:
+	var sc: Dictionary = GameState.level.get("schedule", {})
+	var pop: Label = UI.label("+%d days  +%s" % [int(sc.get("rework_days", 2)), UI.money(float(sc.get("rework_cost_k", 5.0)))], 22, UI.C_RED)
+	pop.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_place(pop, Vector2(476, 300), Vector2(300, 40))
+	var t: Tween = pop.create_tween()
+	t.tween_property(pop, "position:y", 230.0, 1.1)
+	t.parallel().tween_property(pop, "modulate:a", 0.0, 1.1)
+	t.tween_callback(pop.queue_free)
+
+
+func _on_restore() -> void:
+	GameState.restore_last_design()
+	_set_tip("Your last parts are back. Change only what went wrong.")
+
+
+## The warning over the satellite: on when the launch date nears the deadline, louder after it.
+func _update_hurry(launch_day: float, deadline: float) -> void:
+	if _hurry == null:
+		return
+	var per_day: float = float((GameState.level.get("schedule", {}) as Dictionary).get("staff_cost_k_per_day", 1.0))
+	var warn: bool = launch_day >= deadline * 0.85
+	if warn:
+		if launch_day > deadline:
+			_hurry.text = "LATE: launch day %d is after the deadline (day %d). You will miss the rocket." % [int(launch_day), int(deadline)]
+			_hurry.add_theme_color_override("font_color", UI.C_RED)
+		else:
+			_hurry.text = "HURRY: only %d days of slack left. Every day costs %s." % [int(deadline - launch_day), UI.money(per_day)]
+			_hurry.add_theme_color_override("font_color", UI.C_ORANGE)
+	if warn and not _hurry.visible:
+		_hurry.visible = true
+		GameState.play_sound("alert")
+		_hurry_tween = _hurry.create_tween().set_loops()
+		_hurry_tween.tween_property(_hurry, "modulate:a", 0.35, 0.45)
+		_hurry_tween.tween_property(_hurry, "modulate:a", 1.0, 0.45)
+	elif not warn and _hurry.visible:
+		_hurry.visible = false
+		if _hurry_tween != null:
+			_hurry_tween.kill()
+		_hurry.modulate.a = 1.0
 
 
 func _on_test() -> void:
@@ -369,10 +453,10 @@ func _on_help() -> void:
 	col.add_child(UI.label("How the workshop works", 24))
 	var lines: Array = [
 		"1. Click a part in the tray (or drag it onto the satellite) to fit it.",
-		"2. Click X on a slot to take a part out. Required slots show yellow when empty.",
+		"2. Click X to take a part out. Removing or swapping a fitted part costs rework time and money.",
 		"3. Watch the six bars. Red means a check fails. Hover a bar to see why.",
 		"4. Time is money: every day of building costs staff pay and pushes launch later.",
-		"5. Pause stops the clock. Why red? lists every problem with a tip.",
+		"5. A warning flashes when the launch date nears the deadline. Pause stops the clock.",
 		"6. Press Test it when you are ready. A failed test costs 10 days.",
 	]
 	for line in lines:
@@ -478,6 +562,13 @@ func _refresh() -> void:
 	_readiness_label.text = "%d%% ready" % int(round(ready))
 
 	_day_pill.text = "Day %d of %d" % [int(GameState.sched.get("day", 1)), int(deadline)]
+	_update_hurry(launch_day, deadline)
+	if _restore_btn != null:
+		var empty: bool = true
+		for key in GameState.design.keys():
+			if str(GameState.design[key]) != "":
+				empty = false
+		_restore_btn.visible = empty and not GameState.last_design.is_empty()
 	_money_pill.text = "%s left" % UI.money(float(ev.get("money_left_k", 0.0)))
 
 	_refresh_slots()

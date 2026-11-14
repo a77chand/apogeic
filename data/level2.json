@@ -5,18 +5,19 @@
   "goal_text": "Measure the gases in the air above a big city for 12 weeks and send the readings to the ground.",
   "goal_data_type": "spectra",
   "bus": {
-    "name": "3U CubeSat bus",
+    "name": "3U CubeSat bus with instrument heater",
     "mass_kg": 1.3,
-    "power_use_w": 2.4,
+    "power_use_w": 3.4,
     "cost_k": 200
   },
   "launch": {
-    "name": "Rideshare launch",
-    "cost_k": 120
+    "name": "Small dedicated launcher",
+    "cost_k": 180,
+    "keep_cost": true
   },
   "launch_min_readiness_pct": 80,
   "launch_risk": {
-    "heavy_fraction": 0.8,
+    "heavy_fraction": 0.75,
     "huge_fraction": 0.95,
     "flaws_to_fail": 2,
     "stage_climb_pct": {
@@ -31,13 +32,13 @@
   },
   "limits": {
     "mass_kg": 4.0,
-    "budget_k": 950,
+    "budget_k": 1100,
     "deadline_day": 170
   },
   "orbit": {
     "name": "Sun-synchronous orbit, 600 km",
     "period_min": 96.0,
-    "eclipse_min": 32.0
+    "eclipse_min": 38.0
   },
   "slots": [
     {
@@ -84,7 +85,9 @@
     "licence_days": 120,
     "staff_cost_k_per_day": 1.0,
     "slip_days": 30,
-    "slip_fee_k": 60
+    "slip_fee_k": 60,
+    "rework_days": 3,
+    "rework_cost_k": 8
   },
   "requirements": [
     {
@@ -217,7 +220,20 @@
       "why": "Costs more than the whole budget."
     }
   ],
-  "blurb": "A new instrument: the spectrometer. It makes less data than a camera, but it is heavy and hungry for power.",
-  "teaches": "Match the instrument to the goal. A heavy craft leaves little room for mistakes.",
-  "data_noun": "readings"
+  "blurb": "A power-hungry instrument, a longer night on every orbit, and its own small rocket.",
+  "teaches": "Power is the hard part: every watt the radio uses must come from heavier panels.",
+  "data_noun": "readings",
+  "level_label": "Level 2  \u00b7  Medium",
+  "main_problem": "Power",
+  "rocket": {
+    "kind": "rocket_launcher",
+    "name": "Small dedicated launcher",
+    "why": "A small rocket that carries only a few satellites, so it can go to the exact orbit you need. It costs more per seat, and it shakes harder: even a 75% full slot is risky with a known problem."
+  },
+  "differences": [
+    "The spectrometer uses 8 W, and its heater adds 1 W all the time.",
+    "Night lasts 38 minutes of every orbit (not 35), so the battery works harder.",
+    "Readings are small files: data is easy, power is not.",
+    "Own small rocket: dearer, and less forgiving of a heavy, flawed craft."
+  ]
 }

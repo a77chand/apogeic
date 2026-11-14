@@ -59,7 +59,7 @@ static func run() -> Array:
 	var events: Array = Data.load_events()
 	_same(fails, "parts loaded", parts.size(), 11)
 	_same(fails, "requirements loaded", (level.get("requirements", []) as Array).size(), 6)
-	_same(fails, "events loaded", events.size(), 3)
+	_same(fails, "events loaded", events.size(), 11)
 	if not fails.is_empty():
 		return fails
 
@@ -186,9 +186,11 @@ static func run() -> Array:
 
 	# --- puzzles
 	var p1: Dictionary = puzzles["mass"]
-	_same(fails, "p1 good", Sim.puzzle_mass(p1, parts, ["camera_std", "solar_small", "battery_std", "radio_sband"])["passed"], true)
+	_same(fails, "p1 good", Sim.puzzle_mass(p1, parts, ["camera_std", "solar_small", "battery_small", "radio_sband", "antenna_big"])["passed"], true)
+	_same(fails, "p1 radio alone is too slow", Sim.puzzle_mass(p1, parts, ["camera_std", "solar_small", "battery_small", "radio_sband"])["passed"], false)
+	_same(fails, "p1 standard battery is too heavy", Sim.puzzle_mass(p1, parts, ["camera_std", "solar_small", "battery_std", "radio_sband", "antenna_big"])["passed"], false)
 	_same(fails, "p1 heavy", Sim.puzzle_mass(p1, parts, ["camera_std", "solar_large", "battery_std", "radio_sband", "antenna_big"])["passed"], false)
-	_same(fails, "p1 missing", (Sim.puzzle_mass(p1, parts, ["spectrometer", "solar_small", "radio_uhf"])["reasons"] as Array).size(), 2)
+	_same(fails, "p1 missing", (Sim.puzzle_mass(p1, parts, ["spectrometer", "solar_small", "radio_uhf"])["reasons"] as Array).size(), 3)
 	var p2: Dictionary = puzzles["power"]
 	_same(fails, "p2 start fails", Sim.puzzle_power(p2, 8.0, 4.0)["passed"], false)
 	var p2_ok: Dictionary = Sim.puzzle_power(p2, 13.0, 10.0)
@@ -202,6 +204,11 @@ static func run() -> Array:
 	_same(fails, "p3 lowres", Sim.puzzle_link(p3, ["lowres"])["passed"], false)
 	_same(fails, "p3 ground2", Sim.puzzle_link(p3, ["ground2"])["passed"], true)
 	_near(fails, "p3 ground2 delivered", Sim.puzzle_link(p3, ["ground2"])["delivered"], 54.0)
+	_same(fails, "p3 compression works", Sim.puzzle_link(p3, ["compress"])["passed"], true)
+	_same(fails, "p3 full power needs more power than is spare", Sim.puzzle_link(p3, ["boost"])["passed"], false)
+	_same(fails, "p3 full power plus heater off works", Sim.puzzle_link(p3, ["boost", "heater"])["passed"], true)
+	_near(fails, "p3 the clever answer is free", Sim.puzzle_link(p3, ["boost", "heater"])["cost_k"], 0.0)
+	_same(fails, "p3 storing data does not help", Sim.puzzle_link(p3, ["store"])["passed"], false)
 	var p4: Dictionary = puzzles["time"]
 	_same(fails, "p4 default fails", Sim.puzzle_time(p4, "normal", "full", 60)["passed"], false)
 	var p4_ok: Dictionary = Sim.puzzle_time(p4, "normal", "full", 10)
@@ -267,14 +274,16 @@ static func run() -> Array:
 	var lvl2: Dictionary = Data.load_level("level2")
 	var lvl3: Dictionary = Data.load_level("level3")
 	_same(fails, "mission 2 loads", str(lvl2.get("goal_data_type", "")), "spectra")
-	_same(fails, "mission 3 loads", int(lvl3["limits"]["deadline_day"]), 150)
+	_same(fails, "mission 3 loads", int(lvl3["limits"]["deadline_day"]), 120)
 	_same(fails, "unknown mission is empty", Data.load_level("nope").is_empty(), true)
 	var day_sched: Dictionary = Sim.new_schedule()
 	day_sched["day"] = 41
-	var d2: Dictionary = _design(lvl2, "solar_small", "battery_small", "spectrometer", "radio_uhf", "antenna_big", "")
+	var d2: Dictionary = _design(lvl2, "solar_small", "battery_small", "spectrometer", "radio_uhf", "ground2", "")
 	var ev_m2: Dictionary = Sim.evaluate_design(lvl2, parts, d2, day_sched)
 	_same(fails, "mission 2 reference design passes every check", Sim.all_passed(Sim.check_requirements(lvl2, ev_m2)), true)
 	_same(fails, "mission 2 reference reaches orbit", Sim.launch_outcome(lvl2, Sim.check_requirements(lvl2, ev_m2), ev_m2)["reached_orbit"], true)
+	var hungry_m2: Dictionary = _design(lvl2, "solar_small", "battery_small", "spectrometer", "radio_uhf", "antenna_big", "")
+	_same(fails, "mission 2: the antenna's watt is one too many", Sim.result_by_id(Sim.check_requirements(lvl2, Sim.evaluate_design(lvl2, parts, hungry_m2, day_sched)), "R3")["passed"], false)
 	var camera_m2: Dictionary = _design(lvl2, "solar_small", "battery_small", "camera_std", "radio_uhf", "antenna_big", "")
 	_same(fails, "a camera cannot do the air mission", Sim.result_by_id(Sim.check_requirements(lvl2, Sim.evaluate_design(lvl2, parts, camera_m2, day_sched)), "R2")["passed"], false)
 	var d3: Dictionary = _design(lvl3, "solar_large", "battery_small", "camera_std", "radio_sband", "antenna_big", "")
