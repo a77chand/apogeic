@@ -16,7 +16,7 @@ var _launch_day: int = 0
 
 
 func _init() -> void:
-	custom_minimum_size = Vector2(612.0, 180.0)
+	custom_minimum_size = Vector2(612.0, 138.0)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 

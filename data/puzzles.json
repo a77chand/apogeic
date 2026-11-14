@@ -1,6 +1,6 @@
 {
   "_note": "ALL NUMBERS ARE PLACEHOLDERS for gameplay.",
-  "order": ["mass", "link"],
+  "order": ["mass", "power", "link", "time"],
   "mass": {"title": "Puzzle 1: Mass", "intro": "The rocket slot can lift 4.0 kg. Load the parts for a photo mission without going over.", "lesson": "Every part has mass, and the rocket has a hard limit.", "limit_kg": 4.0, "bus_kg": 1.3,
     "bin": ["camera_std", "spectrometer", "solar_small", "solar_large", "battery_std", "radio_uhf", "radio_sband", "antenna_big"],
     "needs": [{"category": "instrument", "data_type": "images", "missing": "You need a camera to take photos."}, {"category": "solar", "data_type": "", "missing": "You need solar panels for power."}, {"category": "battery", "data_type": "", "missing": "You need a battery for the dark part of the orbit."}, {"category": "radio", "data_type": "", "missing": "You need a radio to send the photos down."}]},
