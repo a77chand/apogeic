@@ -8,6 +8,7 @@ extends RefCounted
 ## in float(), int() and str() and never uses := on a Dictionary value.
 
 const EPS: float = 0.0001
+const TIMEOUT_DAYS: int = 3   # launch slip when a pre-launch decision misses its deadline
 
 
 # ---------------------------------------------------------------- design
@@ -266,6 +267,28 @@ static func apply_prelaunch_choice(sched: Dictionary, part_ids: Array, event: Di
 			"extra_power_w":
 				sched["extra_power_w"] = float(sched.get("extra_power_w", 0.0)) + value
 	return str(choice.get("log", ""))
+
+
+## The extra cost of letting an event's timer run out (on top of the default choice).
+## Before launch the schedule slips; in orbit the satellite goes to safe mode for the week.
+## Advice bought on the event card is charged here too. Returns the log line.
+static func apply_late_and_advice(target: Dictionary, when: String, late: bool, advice_k: float) -> String:
+	var line: String = ""
+	if when == "ops":
+		if advice_k > 0.0:
+			target["money_k"] = float(target.get("money_k", 0.0)) - advice_k
+		if late:
+			target["force_safe"] = true
+			line = "Nobody answered in time, so the satellite went into safe mode and lost the week. "
+	else:
+		if advice_k > 0.0:
+			target["extra_cost_k"] = float(target.get("extra_cost_k", 0.0)) + advice_k
+		if late:
+			target["extra_days"] = int(target.get("extra_days", 0)) + TIMEOUT_DAYS
+			line = "The decision missed its deadline and went back to review: launch slipped %d days. " % TIMEOUT_DAYS
+	if advice_k > 0.0:
+		line += "Expert advice cost %s. " % ("$%dk" % int(advice_k))
+	return line
 
 
 ## Applies a choice made in orbit (when == "ops"). Changes the ops state. Returns the log line.

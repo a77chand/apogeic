@@ -59,11 +59,12 @@ func _build_intro() -> void:
 	var col: VBoxContainer = UI.vbox(6)
 	panel.add_child(col)
 	col.add_child(UI.label("The challenge", 20))
-	var intro: Label = UI.label(str(_pz.get("intro", "")), 14, UI.C_TEXT, true)
-	intro.custom_minimum_size = Vector2(272.0, 0.0)
-	col.add_child(intro)
-	col.add_child(UI.label("Why it is hard", 14, UI.C_ORANGE))
-	col.add_child(UI.bullets(_pz.get("why_hard", []), 13, UI.C_TEXT, 272.0, UI.C_ORANGE))
+	col.add_child(UI.bullets([
+		"Camera makes: %d MB/wk" % int(_pz.get("make_mb_wk", 0)),
+		"Radio sends: %d MB/wk" % int(_pz.get("send_mb_wk", 0)),
+		"Goal: %d MB/wk to the ground" % int(_pz.get("need_mb_wk", 0)),
+	], 15, UI.C_TEXT, 272.0))
+	col.add_child(UI.label("Each card: what it adds, then its cost.", 12, UI.C_MUTED, true))
 	col.add_child(UI.label("What you have spare", 14, UI.C_MUTED))
 	for item in [["mass", "Mass"], ["cost", "Money"], ["power", "Power"]]:
 		var pair: Array = item
@@ -109,10 +110,10 @@ func _build_board() -> void:
 	for item in _pz.get("options", []):
 		var opt: Dictionary = item
 		var id: String = str(opt.get("id", ""))
-		var b: Button = UI.button("%s\n%s" % [str(opt.get("label", id)), str(opt.get("detail", ""))], Callable(), 294.0, false)
+		var b: Button = UI.button("%s\n%s" % [str(opt.get("label", id)), _card_numbers(opt)], Callable(), 294.0, false)
 		b.toggle_mode = true
 		b.custom_minimum_size = Vector2(294.0, 78.0)
-		b.add_theme_font_size_override("font_size", 15)
+		b.add_theme_font_size_override("font_size", 14)
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var on: StyleBoxFlat = UI.chunky(Color(0.10, 0.30, 0.22), UI.C_GREEN, true)
@@ -121,6 +122,24 @@ func _build_board() -> void:
 		b.toggled.connect(_on_option_toggled.bind(id))
 		grid.add_child(b)
 		_option_buttons[id] = b
+
+
+## The numbers on an idea card, short and in the same order on every card so they line up:
+## effect first, then mass, money and power.
+func _card_numbers(opt: Dictionary) -> String:
+	var bits: Array = []
+	if float(opt.get("add_send", 0.0)) > 0.0:
+		bits.append("+%d sent" % int(opt.get("add_send", 0.0)))
+	if float(opt.get("set_make", -1.0)) >= 0.0:
+		bits.append("camera %d" % int(opt.get("set_make", 0.0)))
+	var pw: float = float(opt.get("power_w", 0.0))
+	if bits.is_empty() and pw < 0.0:
+		bits.append("frees %d W" % int(-pw))
+	bits.append("%.1f kg" % float(opt.get("mass_kg", 0.0)) if float(opt.get("mass_kg", 0.0)) > 0.0 else "0 kg")
+	bits.append(UI.money(float(opt.get("cost_k", 0.0))) if float(opt.get("cost_k", 0.0)) > 0.0 else "free")
+	if pw > 0.0:
+		bits.append("%d W" % int(pw))
+	return "• " + "  • ".join(PackedStringArray(bits))
 
 
 func _build_bottom() -> void:

@@ -1,69 +1,107 @@
-extends HBoxContainer
-## The game's logo, built in code: a planet with a satellite on a tilted orbit, then the
-## name in the display font. Used on the title screen. If art/ui/ui_logo.png is added
-## later, title.gd shows that instead.
+extends Control
+## The game's title art, drawn in code in a pixel style: the name "AP0GEIC 11" in big
+## blocky letters with a purple drop shadow, and a slowly turning pixel planet under it
+## with a satellite on a tilted orbit. Used on the title screen. If art/ui/ui_logo.png is
+## added later, title.gd shows that instead.
 
 const UI = preload("res://scripts/ui/ui.gd")
 
-var _emblem: Control = null
+const TITLE: String = "AP0GEIC 11"
+const C_CREAM: Color = Color(0.98, 0.96, 0.78)
+const C_SHADOW: Color = Color(0.33, 0.22, 0.58)
+const PX: float = 8.0   # size of one planet "pixel"
+
+var planet_centre: Vector2 = Vector2(640, 700)
+var planet_radius: float = 230.0
 var _t: float = 0.0
 
 
 func _ready() -> void:
-	add_theme_constant_override("separation", 22)
-	alignment = BoxContainer.ALIGNMENT_CENTER
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_emblem = Control.new()
-	_emblem.custom_minimum_size = Vector2(150, 150)
-	_emblem.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_emblem.draw.connect(_draw_emblem)
-	add_child(_emblem)
-	var words: VBoxContainer = UI.vbox(-6)
-	words.alignment = BoxContainer.ALIGNMENT_CENTER
-	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(words)
-	var top: Label = UI.label("Space Mission", 54, UI.C_TEXT)
-	words.add_child(top)
-	var bottom: Label = UI.label("Designer", 54, UI.C_ACCENT)
-	words.add_child(bottom)
-	var strap: Label = UI.label("NASA Space Apps 2026", 13, UI.C_MUTED)
-	strap.add_theme_constant_override("outline_size", 1)
-	words.add_child(strap)
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	_emblem.queue_redraw()
+	queue_redraw()
 
 
-func _draw_emblem() -> void:
-	var c: Vector2 = Vector2(75, 75)
-	# soft glow behind the planet
-	for i in range(6):
-		_emblem.draw_circle(c, 62.0 - float(i) * 3.0, Color(UI.C_ACCENT, 0.03))
-	# the planet: blue disc, a lit edge, and two land shapes
-	_emblem.draw_circle(c, 44.0, Color(0.10, 0.32, 0.62))
-	_emblem.draw_circle(c + Vector2(-6, -6), 38.0, Color(0.16, 0.45, 0.80))
-	_emblem.draw_colored_polygon(PackedVector2Array([c + Vector2(-26, -14), c + Vector2(-8, -24), c + Vector2(4, -12), c + Vector2(-6, 2), c + Vector2(-22, 0)]), Color(0.30, 0.70, 0.45))
-	_emblem.draw_colored_polygon(PackedVector2Array([c + Vector2(8, 10), c + Vector2(24, 4), c + Vector2(30, 18), c + Vector2(14, 28)]), Color(0.30, 0.70, 0.45))
-	_emblem.draw_arc(c, 44.0, PI * 1.05, PI * 1.7, 24, Color(0.75, 0.95, 1.0, 0.8), 2.5)
-	# the orbit: a tilted ellipse, the back half faint and the front half bright
-	var tilt: float = -0.38
-	var steps: int = 64
+func _draw() -> void:
+	_draw_planet()
+	_draw_title()
+
+
+func _draw_title() -> void:
+	var font: Font = UI.pixel_font()
+	var fs: int = 108
+	var w: float = font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var pos: Vector2 = Vector2(560.0 - w * 0.5, 165)
+	# stepped shadow, a few pixels down and right, like an old arcade cabinet
+	for i in range(3, 0, -1):
+		draw_string(font, pos + Vector2(i * 3, i * 3), TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(C_SHADOW, 0.5 + 0.15 * i))
+	draw_string(font, pos, TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, C_CREAM)
+	# the pixel font draws 0 like O, so add a stepped slash to show it is a zero
+	var x0: float = pos.x + font.get_string_size("AP", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var gw: float = font.get_string_size("0", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var asc: float = font.get_ascent(fs)
+	var step: float = fs / 14.0
+	for k in range(4):
+		var px: Vector2 = Vector2(x0 + gw * 0.30 + k * step, pos.y - asc * 0.30 - k * step * 1.4)
+		draw_rect(Rect2(px, Vector2(step, step * 1.4)), C_CREAM)
+	var strap: String = "D E S I G N    ·    L A U N C H    ·    L E A R N"
+	var ss: int = 14
+	var sw: float = font.get_string_size(strap, HORIZONTAL_ALIGNMENT_LEFT, -1, ss).x
+	draw_string(font, Vector2(560.0 - sw * 0.5, 210), strap, HORIZONTAL_ALIGNMENT_LEFT, -1, ss, Color(UI.C_ACCENT, 0.85))
+
+
+## A pixel planet: each square is coloured by light direction and a fixed noise pattern
+## that slides sideways, so the surface turns slowly.
+func _draw_planet() -> void:
+	var c: Vector2 = planet_centre
+	var r: float = planet_radius
+	var light: Vector2 = Vector2(-0.7, -0.6).normalized()
+	var shades: Array = [Color(0.16, 0.10, 0.27), Color(0.27, 0.18, 0.42), Color(0.42, 0.31, 0.60), Color(0.58, 0.47, 0.74), Color(0.72, 0.63, 0.84)]
+	var n: int = int(r / PX) + 1
+	var spin: float = _t * 1.2
+	for gy in range(-n, n + 1):
+		for gx in range(-n, n + 1):
+			var d: Vector2 = Vector2(gx, gy) * PX
+			if d.length() > r:
+				continue
+			var p: Vector2 = c + d
+			if p.y > size.y or p.y + PX < 0.0:
+				continue
+			var nz: Vector2 = d / r
+			var z: float = sqrt(max(0.0, 1.0 - nz.length_squared()))
+			var lit: float = clamp(nz.dot(light) * 0.9 + z * 0.35, -1.0, 1.0)
+			# surface pattern: craters and dark patches that move with the spin
+			var u: int = int(floor(gx + spin))
+			var h: int = abs(hash(Vector2i(u >> 1, gy >> 1))) % 100
+			var level: float = (lit + 1.0) * 2.2
+			if h < 18:
+				level -= 1.0
+			elif h > 92:
+				level += 0.6
+			var idx: int = clampi(int(level), 0, shades.size() - 1)
+			draw_rect(Rect2(p, Vector2(PX, PX)), shades[idx])
+	# the orbit and a satellite on it
+	var tilt: float = -0.22
+	var rx: float = r * 1.45
+	var ry: float = r * 0.32
+	var steps: int = 90
 	for i in range(steps):
-		var a0: float = TAU * float(i) / float(steps)
-		var a1: float = TAU * float(i + 1) / float(steps)
-		var p0: Vector2 = c + Vector2(cos(a0) * 70.0, sin(a0) * 22.0).rotated(tilt)
-		var p1: Vector2 = c + Vector2(cos(a1) * 70.0, sin(a1) * 22.0).rotated(tilt)
-		var front: bool = sin((a0 + a1) * 0.5) > 0.0
-		_emblem.draw_line(p0, p1, Color(UI.C_ACCENT, 0.95 if front else 0.25), 2.0 if front else 1.2)
-	# the satellite moving along the orbit
-	var a: float = _t * 0.8
-	var sp: Vector2 = c + Vector2(cos(a) * 70.0, sin(a) * 22.0).rotated(tilt)
-	var behind: bool = sin(a) < 0.0 and sp.distance_to(c) < 44.0
-	if behind:
+		if i % 2 == 1:
+			continue
+		var a: float = TAU * float(i) / float(steps)
+		var q: Vector2 = c + Vector2(cos(a) * rx, sin(a) * ry).rotated(tilt)
+		var front: bool = sin(a) > 0.0
+		if not front and q.distance_to(c) < r:
+			continue
+		draw_rect(Rect2(q.snapped(Vector2(4, 4)), Vector2(4, 4)), Color(UI.C_ACCENT, 0.8 if front else 0.3))
+	var sa: float = _t * 0.35 + PI
+	var sp: Vector2 = c + Vector2(cos(sa) * rx, sin(sa) * ry).rotated(tilt)
+	if sin(sa) < 0.0 and sp.distance_to(c) < r:
 		return
-	_emblem.draw_rect(Rect2(sp - Vector2(5, 5), Vector2(10, 10)), Color(0.92, 0.94, 0.98))
-	_emblem.draw_rect(Rect2(sp - Vector2(17, 2.5), Vector2(10, 5)), Color(0.30, 0.55, 0.95))
-	_emblem.draw_rect(Rect2(sp + Vector2(7, -2.5), Vector2(10, 5)), Color(0.30, 0.55, 0.95))
-	_emblem.draw_circle(sp, 14.0, Color(UI.C_ACCENT, 0.12))
+	sp = sp.snapped(Vector2(4, 4))
+	draw_rect(Rect2(sp - Vector2(6, 6), Vector2(12, 12)), C_CREAM)
+	draw_rect(Rect2(sp - Vector2(22, 3), Vector2(12, 6)), Color(0.30, 0.55, 0.95))
+	draw_rect(Rect2(sp + Vector2(10, -3), Vector2(12, 6)), Color(0.30, 0.55, 0.95))

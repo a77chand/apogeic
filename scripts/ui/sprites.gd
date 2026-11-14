@@ -450,9 +450,9 @@ func _logo() -> void:
 		font = v
 	var x: float = size.x * 0.32
 	var w: float = size.x * 0.68
-	draw_string(font, Vector2(x, size.y * 0.36), "SPACE MISSION", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.16), Color(CYAN, 0.95))
-	draw_string_outline(font, Vector2(x, size.y * 0.70), "DESIGNER", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.34), 4, Color(0, 0, 0, 0.6))
-	draw_string(font, Vector2(x, size.y * 0.70), "DESIGNER", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.34), SOFT_WHITE)
+	draw_string(font, Vector2(x, size.y * 0.36), "MISSION DESIGN", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.16), Color(CYAN, 0.95))
+	draw_string_outline(font, Vector2(x, size.y * 0.70), "AP0GEIC 11", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.34), 4, Color(0, 0, 0, 0.6))
+	draw_string(font, Vector2(x, size.y * 0.70), "AP0GEIC 11", HORIZONTAL_ALIGNMENT_LEFT, w, int(size.y * 0.34), SOFT_WHITE)
 	draw_line(Vector2(x, size.y * 0.80), Vector2(x + w * 0.80, size.y * 0.80), Color(CYAN, 0.6), 2.0)
 	draw_line(Vector2(x, size.y * 0.80), Vector2(x + w * 0.12, size.y * 0.80), CYAN, 4.0)
 

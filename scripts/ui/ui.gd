@@ -20,6 +20,8 @@ const C_BTN_MAIN: Color = Color(0.20, 0.62, 0.74)         # main action: a solid
 const C_BTN: Color = Color(0.07, 0.13, 0.24)              # other buttons: dark, with a cyan edge
 const C_TEXT_EDGE: Color = Color(0.01, 0.03, 0.08, 0.85)  # thin outline around all text
 const FONT_PATH: String = "res://art/fonts/Rajdhani-Bold.ttf"
+const PIXEL_FONT: String = "res://art/fonts/Silkscreen-Regular.ttf"
+const PIXEL_FONT_BOLD: String = "res://art/fonts/Silkscreen-Bold.ttf"
 const HEADING_SIZE: int = 18   # labels this size or bigger use the display font, in capitals
 const C_BORDER: Color = Color(0.310, 0.525, 0.839)  # 4F86D6
 const C_HOVER: Color = Color(0.169, 0.365, 0.659)  # 2B5DA8
@@ -41,6 +43,38 @@ static func display_font() -> Font:
 	f.base_font = load(FONT_PATH)
 	f.spacing_glyph = 1
 	return f
+
+
+## The pixel font used for the title and the main menu (Silkscreen, OFL).
+static func pixel_font(bold: bool = true) -> Font:
+	var path: String = PIXEL_FONT_BOLD if bold else PIXEL_FONT
+	if not ResourceLoader.exists(path):
+		return display_font()
+	return load(path)
+
+
+## A menu button in the title-screen style: near-black, thin rounded light edge, pixel text.
+## main = the big choices (Play, Skip); accent = the colour of the edge and text.
+static func pixel_button(text: String, on_press: Callable, width: float, height: float, font_size: int, accent: Color) -> Button:
+	var b: Button = Button.new()
+	b.text = text.to_upper()
+	b.custom_minimum_size = Vector2(width, height)
+	b.focus_mode = Control.FOCUS_NONE
+	b.add_theme_font_override("font", pixel_font())
+	b.add_theme_font_size_override("font_size", font_size)
+	b.add_theme_color_override("font_color", accent)
+	b.add_theme_color_override("font_hover_color", Color(0.06, 0.05, 0.12))
+	b.add_theme_color_override("font_pressed_color", Color(0.06, 0.05, 0.12))
+	var normal: StyleBoxFlat = box(Color(0.02, 0.02, 0.06, 0.88), Color(accent, 0.85), 8, 2, 8.0)
+	var hover: StyleBoxFlat = box(accent, accent, 8, 2, 8.0)
+	var pressed: StyleBoxFlat = box(accent.darkened(0.2), accent, 8, 2, 8.0)
+	b.add_theme_stylebox_override("normal", normal)
+	b.add_theme_stylebox_override("hover", hover)
+	b.add_theme_stylebox_override("pressed", pressed)
+	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	b.pressed.connect(_click_sound)
+	b.pressed.connect(on_press)
+	return b
 
 
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:

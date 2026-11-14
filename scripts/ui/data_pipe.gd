@@ -5,6 +5,9 @@ extends Control
 ##   pipe.call("set_flow", make, send, delivered, need)
 
 const UI = preload("res://scripts/ui/ui.gd")
+## Fixed scale for pipe thickness, so changing the camera only changes the camera's pipe
+## (it used to scale to the biggest flow, which made the radio pipe grow when the camera shrank).
+const FULL_MB_WK: float = 80.0
 
 var _make: float = 0.0
 var _send: float = 0.0
@@ -36,14 +39,13 @@ func _draw() -> void:
 	var font: Font = ThemeDB.fallback_font
 	var nodes: Array = [["CAMERA", "makes", _make], ["RADIO", "sends", _send], ["GROUND", "gets", _delivered]]
 	var xs: Array = [70.0, w * 0.5, w - 70.0]
-	var top: float = maxf(_make, maxf(_send, 1.0))
 	var bottleneck_is_radio: bool = _send < _make
 	# pipes between the boxes
 	for i in range(2):
 		var x0: float = float(xs[i]) + 56.0
 		var x1: float = float(xs[i + 1]) - 56.0
 		var rate: float = _make if i == 0 else _delivered
-		var thick: float = clampf(rate / top * 34.0, 3.0, 34.0)
+		var thick: float = clampf(rate / FULL_MB_WK * 34.0, 3.0, 34.0)
 		var c: Color = UI.C_ACCENT
 		if i == 1 and bottleneck_is_radio and _delivered < _need:
 			c = UI.C_RED

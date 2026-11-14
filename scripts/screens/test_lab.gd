@@ -55,8 +55,8 @@ func _prelaunch_events() -> void:
 			return
 		var late: bool = is_instance_valid(card) and bool(card.get("timed_out"))
 		var line: String = Sim.apply_prelaunch_choice(GameState.sched, part_ids, event, index)
-		if late:
-			line = "Time ran out, so the default was chosen. " + line
+		var paid: float = float(card.get("advice_paid_k")) if is_instance_valid(card) else 0.0
+		line = Sim.apply_late_and_advice(GameState.sched, "test_lab", late, paid) + line
 		GameState.add_log(line)
 
 
