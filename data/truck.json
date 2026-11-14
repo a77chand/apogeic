@@ -1,0 +1,34 @@
+{
+  "_note": "Sensing-truck scenario. EVERY NUMBER HERE IS A PLACEHOLDER chosen to show the trade-offs, NOT measured or NASA data. Replace each value and its source when real figures are found. Only the general idea (lidar and cameras degrade in dust, cameras need light, radar sees through dust but is coarse) reflects commonly known behaviour.",
+  "title": "Can the truck see?",
+  "intro": "Autonomous construction trucks must sense what is around them, but sensing accuracy is still a hard problem. No single sensor works everywhere. Pick a sensor set, then see where the truck would miss an obstacle.",
+  "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots, within mass, power and budget.",
+  "fusion_note": "Sensors are treated as independent: the chance every sensor misses is the product of each miss chance. Real sensors are not fully independent, so this is a simplification.",
+  "source": "placeholder",
+  "target_detect_pct": 95.0,
+  "limits": {"mass_kg": 6.0, "power_w": 45.0, "budget_k": 170.0},
+  "conditions": [
+    {"id": "clear", "name": "Clear daylight", "why": "Good light and clean air. The easy case."},
+    {"id": "dust", "name": "Dust cloud", "why": "Dust scatters laser light and blurs cameras. Radar still sees through it, but with less detail."},
+    {"id": "shadow", "name": "Long shadows", "why": "Low sun hides rocks in deep shadow, so cameras struggle. Lidar brings its own light."},
+    {"id": "dark", "name": "Dark (night)", "why": "No sunlight at all. Cameras are blind. Lidar, radar and heat sensors do not need light."},
+    {"id": "slope", "name": "Steep slope", "why": "The truck tilts, so sensors point at the sky or the ground instead of ahead."}
+  ],
+  "sensors": [
+    {"id": "camera", "name": "Camera", "blurb": "Cheap and light, but needs light and clean air.",
+     "mass_kg": 0.5, "power_w": 5.0, "cost_k": 10.0,
+     "detect": {"clear": 0.90, "dust": 0.45, "shadow": 0.55, "dark": 0.05, "slope": 0.85}},
+    {"id": "stereo", "name": "Stereo camera", "blurb": "Depth from two cameras. Same weak spots as one.",
+     "mass_kg": 1.0, "power_w": 8.0, "cost_k": 25.0,
+     "detect": {"clear": 0.93, "dust": 0.50, "shadow": 0.60, "dark": 0.05, "slope": 0.90}},
+    {"id": "lidar", "name": "Lidar", "blurb": "Laser scanner: great in dark and shadow, hurt by dust.",
+     "mass_kg": 3.0, "power_w": 25.0, "cost_k": 90.0,
+     "detect": {"clear": 0.95, "dust": 0.55, "shadow": 0.95, "dark": 0.95, "slope": 0.85}},
+    {"id": "radar", "name": "Radar", "blurb": "Sees through dust and dark, but only coarse shapes.",
+     "mass_kg": 1.5, "power_w": 12.0, "cost_k": 60.0,
+     "detect": {"clear": 0.75, "dust": 0.85, "shadow": 0.75, "dark": 0.75, "slope": 0.70}},
+    {"id": "thermal", "name": "Thermal camera", "blurb": "Sees heat, so it works in the dark. Warm rocks only.",
+     "mass_kg": 1.2, "power_w": 10.0, "cost_k": 45.0,
+     "detect": {"clear": 0.70, "dust": 0.60, "shadow": 0.70, "dark": 0.80, "slope": 0.65}}
+  ]
+}

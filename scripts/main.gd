@@ -20,6 +20,7 @@ const SCREENS: Dictionary = {
 	"launch": "res://scripts/screens/launch.gd",
 	"ops": "res://scripts/screens/ops.gd",
 	"report": "res://scripts/screens/report.gd",
+	"truck": "res://scripts/screens/truck.gd",
 }
 
 ## The order the stub screens walk through, so the whole game is clickable from day one.
