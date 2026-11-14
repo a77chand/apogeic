@@ -3,6 +3,7 @@ extends Control
 ## Reads only from GameState and recomputes everything with Sim (spec 12.13).
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
 const WeekChart = preload("res://scripts/ui/week_chart.gd")
@@ -22,7 +23,6 @@ func _ready() -> void:
 	_build_causes(causes)
 	_build_chart()
 	_build_log()
-	_build_compare()
 	_build_buttons()
 	var grade: String = str(score.get("grade", "failed"))
 	GameState.play_sound("fanfare" if grade == "success" else ("chime" if int(score.get("stars", 0)) > 0 else "fail"))
@@ -64,6 +64,9 @@ func _build_top_bar(grade: String) -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	bar.add_child(title)
+	var badge: Control = Player.badge(44.0)
+	add_child(badge)
+	badge.position = Vector2(14.0, 14.0)
 
 
 ## A star: the art file if it exists, otherwise a shape drawn with code.
@@ -165,10 +168,10 @@ func _build_chart() -> void:
 	col.add_child(chart)
 	var cfg: Dictionary = GameState.level.get("ops", {})
 	var flags: Array = []
-	for item in GameState.events:
-		var ev: Dictionary = item
-		if str(ev.get("when", "")) == "ops":
-			flags.append({"week": int(ev.get("week", 0)), "label": str(ev.get("title", ""))})
+	for week in range(1, int(cfg.get("weeks", 12)) + 1):
+		for item in GameState.events_due("ops", week):
+			var ev: Dictionary = item
+			flags.append({"week": week, "label": str(ev.get("title", ""))})
 	var reason: String = str(GameState.ops.get("end_reason", ""))
 	var early: bool = reason != "" and reason != "complete"
 	var why_empty: String = "There is nothing to chart."
@@ -181,12 +184,12 @@ func _build_chart() -> void:
 
 func _build_log() -> void:
 	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
-	_place(panel, Vector2(676, 430), Vector2(584, 138))
+	_place(panel, Vector2(676, 430), Vector2(584, 220))
 	var col: VBoxContainer = UI.vbox(4)
 	panel.add_child(col)
 	col.add_child(UI.label("What happened on the way", 18))
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(550.0, 84.0)
+	scroll.custom_minimum_size = Vector2(550.0, 166.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(scroll)
 	var lines: VBoxContainer = UI.vbox(3)
@@ -200,26 +203,20 @@ func _build_log() -> void:
 		lines.add_child(text)
 
 
-func _build_compare() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
-	_place(panel, Vector2(676, 576), Vector2(584, 74))
-	var col: VBoxContainer = UI.vbox(3)
-	panel.add_child(col)
-	col.add_child(UI.label("Compare with a real mission", 18))
-	var text: Label = UI.label("Real mission figures will be added from verified NASA data.", 12, UI.C_MUTED, true)
-	text.custom_minimum_size = Vector2(550.0, 0.0)
-	col.add_child(text)
-
-
 func _build_buttons() -> void:
 	_place(UI.button("Retry with changes", _on_retry, 260.0, true), Vector2(20, 660), Vector2(260, 52))
 	_place(UI.button("New design", _on_new, 220.0, false), Vector2(296, 660), Vector2(220, 52))
+	_place(UI.button("Choose mission", _on_missions, 220.0, false), Vector2(532, 660), Vector2(220, 52))
 	_place(UI.button("Title", _on_title, 160.0, false), Vector2(1100, 660), Vector2(160, 52))
 
 
 func _on_retry() -> void:
 	GameState.retry_mission()
 	GameState.go("workshop")
+
+
+func _on_missions() -> void:
+	GameState.go("missions")
 
 
 func _on_new() -> void:

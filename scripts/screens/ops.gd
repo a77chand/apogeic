@@ -3,6 +3,7 @@ extends Control
 ## Loop, actions, event cards, and optional animations (pulse, warning light, sparks).
 
 const UI = preload("res://scripts/ui/ui.gd")
+const Player = preload("res://scripts/ui/player.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Data = preload("res://scripts/core/data.gd")
 const EventCard = preload("res://scripts/ui/event_card.gd")
@@ -21,6 +22,8 @@ var _battery_label: Label = null
 var _stored_label: Label = null
 var _delivered_label: Label = null
 var _money_label: Label = null
+var _fuel_bar: ProgressBar = null
+var _fuel_label: Label = null
 var _log_label: Label = null
 var _marker: Control = null
 var _pass_btn: Button = null
@@ -73,7 +76,7 @@ func _build() -> void:
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
-	row.add_child(UI.label("Space Mission Designer", 16, UI.C_MUTED))
+	row.add_child(Player.badge(44.0))
 	var spacer: Control = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
@@ -114,7 +117,7 @@ func _build() -> void:
 
 	# left panel: numbers
 	var left: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
-	_place(left, Vector2(20, 88), Vector2(250, 300))
+	_place(left, Vector2(20, 88), Vector2(250, 380))
 	var lcol: VBoxContainer = UI.vbox(8)
 	left.add_child(lcol)
 	lcol.add_child(UI.label("Satellite", 20))
@@ -129,6 +132,11 @@ func _build() -> void:
 	lcol.add_child(_delivered_label)
 	_money_label = UI.label("", 14)
 	lcol.add_child(_money_label)
+	lcol.add_child(UI.label("Fuel", 13, UI.C_MUTED))
+	_fuel_bar = UI.meter(220.0)
+	lcol.add_child(_fuel_bar)
+	_fuel_label = UI.label("", 14)
+	lcol.add_child(_fuel_label)
 
 	# right panel: actions
 	var right: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
@@ -268,7 +276,7 @@ func _process(delta: float) -> void:
 func _run_week() -> void:
 	# Events first: each one is shown once, the clock waits while the card is open.
 	var next_week: int = int(GameState.ops.get("week", 0)) + 1
-	var list: Array = Data.events_for(GameState.events, "ops", next_week)
+	var list: Array = GameState.events_due("ops", next_week)
 	for item in list:
 		var event: Dictionary = item
 		var id: String = str(event.get("id", ""))
@@ -286,7 +294,10 @@ func _run_week() -> void:
 			return
 		var make_before: float = float(GameState.ops.get("make_mult", 1.0))
 		var part_ids: Array = GameState.launch_eval.get("part_ids", [])
+		var late: bool = is_instance_valid(card) and bool(card.get("timed_out"))
 		var line: String = Sim.apply_ops_choice(GameState.ops, part_ids, event, index)
+		if late:
+			line = "Time ran out, so the default was chosen. " + line
 		GameState.add_log(line)
 		if float(GameState.ops.get("make_mult", 1.0)) < make_before - 0.0001:
 			_play_sparks()
@@ -320,6 +331,7 @@ func _end_mission() -> void:
 func _on_end_timer() -> void:
 	var score: Dictionary = Sim.score_mission(GameState.level, GameState.ops, GameState.launch_results)
 	GameState.record_stars(int(score.get("stars", 0)))
+	GameState.record_mission_result(str(score.get("grade", "failed")), int(score.get("stars", 0)))
 	GameState.go("report")
 
 
@@ -338,6 +350,11 @@ func _refresh() -> void:
 	_stored_label.text = "Stored data: %d of %d MB" % [int(round(float(st.get("stored_mb", 0.0)))), int(cfg.get("storage_mb", 80))]
 	_delivered_label.text = "Delivered: %d of %d MB" % [int(round(float(st.get("delivered_mb", 0.0)))), int(cfg.get("goal_mb", 480))]
 	_money_label.text = "Money: %s" % UI.money(float(st.get("money_k", 0.0)))
+	var fuel: float = float(st.get("fuel_pct", 100.0))
+	UI.set_meter(_fuel_bar, fuel, UI.status_for(fuel > 0.0, fuel < 25.0))
+	_fuel_label.text = "%d%%" % int(round(fuel))
+	if int(st.get("decay_week", 0)) > 0:
+		_fuel_label.text += "  (the orbit decays in week %d)" % int(st.get("decay_week", 0))
 	if _warning != null:
 		_warning.visible = battery < 30.0 or _brownout
 	_refresh_pass_button()

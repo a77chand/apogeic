@@ -49,9 +49,9 @@ static func evaluate_design(level: Dictionary, parts: Dictionary, design: Dictio
 		if chosen != "" and parts.has(chosen):
 			part_ids.append(chosen)
 
-	var mass: float = float(bus.get("mass_kg", 0.0))
+	var mass: float = float(bus.get("mass_kg", 0.0)) + float(sched.get("extra_mass_kg", 0.0))
 	var gen: float = 0.0
-	var use: float = float(bus.get("power_use_w", 0.0))
+	var use: float = float(bus.get("power_use_w", 0.0)) + float(sched.get("extra_power_w", 0.0))
 	var wh: float = 0.0
 	var make: float = 0.0
 	var send: float = 0.0
@@ -126,6 +126,8 @@ static func evaluate_design(level: Dictionary, parts: Dictionary, design: Dictio
 		"total_cost_k": total_cost,
 		"reserve_pct": reserve_pct,
 		"money_left_k": budget - total_cost,
+		"flaws": (sched.get("flaws", []) as Array).duplicate(),
+		"data_noun": str(level.get("data_noun", "photos")),
 	}
 
 
@@ -255,6 +257,14 @@ static func apply_prelaunch_choice(sched: Dictionary, part_ids: Array, event: Di
 				sched["send_mult"] = float(sched.get("send_mult", 1.0)) * value
 			"mult_make":
 				sched["make_mult"] = float(sched.get("make_mult", 1.0)) * value
+			"extra_mass_kg":
+				sched["extra_mass_kg"] = float(sched.get("extra_mass_kg", 0.0)) + value
+			"flaw":
+				var known: Array = sched.get("flaws", [])
+				known.append(str(fx.get("label", "a known problem")))
+				sched["flaws"] = known
+			"extra_power_w":
+				sched["extra_power_w"] = float(sched.get("extra_power_w", 0.0)) + value
 	return str(choice.get("log", ""))
 
 
@@ -281,6 +291,22 @@ static func apply_ops_choice(st: Dictionary, part_ids: Array, event: Dictionary,
 				st["force_safe"] = true
 			"skip_send":
 				st["force_skip_send"] = true
+			"fuel_pct":
+				st["fuel_pct"] = clampf(float(st.get("fuel_pct", 100.0)) + value, 0.0, 100.0)
+			"fuel_drain":
+				st["fuel_extra_drain"] = float(st.get("fuel_extra_drain", 0.0)) + value
+			"decay_in_weeks":
+				st["decay_week"] = int(st.get("week", 0)) + int(value)
+			"battery_pct":
+				st["battery_pct"] = clampf(float(st.get("battery_pct", 100.0)) + value, 1.0, 100.0)
+			"bonus_mb":
+				st["stored_mb"] = float(st.get("stored_mb", 0.0)) + value
+			"boost_send":
+				st["temp_send_mult"] = value
+				st["temp_send_weeks"] = int(fx.get("weeks", 1))
+			"boost_make":
+				st["temp_make_mult"] = value
+				st["temp_make_weeks"] = int(fx.get("weeks", 1))
 	return str(choice.get("log", ""))
 
 
@@ -290,14 +316,81 @@ static func apply_ops_choice(st: Dictionary, part_ids: Array, event: Dictionary,
 ## (readiness) must reach launch_min_readiness_pct in level1.json. Below that the rocket
 ## climbs only as far as the readiness number says, then the launch fails.
 ## Returns { reached_orbit, readiness_pct, needed_pct, climb_pct }
-static func launch_outcome(level: Dictionary, results: Array) -> Dictionary:
+static func launch_outcome(level: Dictionary, results: Array, ev: Dictionary = {}) -> Dictionary:
 	var needed: float = float(level.get("launch_min_readiness_pct", 0.0))
 	var ready: float = readiness_pct(results)
-	var ok: bool = ready >= needed - EPS
-	var climb: float = 100.0
-	if not ok:
-		climb = ready
-	return {"reached_orbit": ok, "readiness_pct": ready, "needed_pct": needed, "climb_pct": climb}
+	var failures: Array = []   # { stage, climb, text }
+	if ready < needed - EPS:
+		failures.append({"stage": "climb", "climb": ready, "text": "Only %d%% of the checks passed (needs %d%%), so the satellite never reached orbit." % [int(round(ready)), int(round(needed))]})
+	var cfg: Dictionary = level.get("launch_risk", {})
+	var stage_climb: Dictionary = cfg.get("stage_climb_pct", {})
+	var risks: Array = launch_risks(level, results, ev)
+	for item in risks:
+		var risk: Dictionary = item
+		var stage: String = str(risk.get("stage", ""))
+		failures.append({"stage": stage, "climb": float(stage_climb.get(stage, STAGE_CLIMB.get(stage, 50.0))), "text": str(risk.get("text", ""))})
+	if failures.is_empty():
+		return {"reached_orbit": true, "readiness_pct": ready, "needed_pct": needed, "climb_pct": 100.0, "risks": risks, "fail_text": "", "stage": "", "stage_name": ""}
+	# the rocket fails at the earliest of the problems
+	var first: Dictionary = failures[0]
+	var texts: Array = []
+	for item in failures:
+		var f: Dictionary = item
+		texts.append(str(f.get("text", "")))
+		if float(f.get("climb", 100.0)) < float(first.get("climb", 100.0)):
+			first = f
+	var stage_label: String = stage_name(str(first.get("stage", "")))
+	var text: String = ("Failure at %s. " % stage_label + " ".join(PackedStringArray(texts))).strip_edges()
+	return {"reached_orbit": false, "readiness_pct": ready, "needed_pct": needed, "climb_pct": float(first.get("climb", 0.0)), "risks": risks, "fail_text": text, "stage": str(first.get("stage", "")), "stage_name": stage_label}
+
+
+## How far up (percent of the climb) each failure stage happens, unless level1.json says otherwise.
+const STAGE_CLIMB: Dictionary = {"max_q": 35.0, "second_stage": 65.0, "separation": 100.0}
+
+
+static func stage_name(stage: String) -> String:
+	match stage:
+		"max_q":
+			return "max-Q, the moment of strongest shaking"
+		"second_stage":
+			return "the second-stage burn"
+		"separation":
+			return "separation, when the satellite is released"
+	return "the climb"
+
+
+## One line for the screens: where in the launch the risk bites, and why.
+static func risk_line(risk: Dictionary) -> String:
+	return "At %s: %s" % [stage_name(str(risk.get("stage", ""))), str(risk.get("text", ""))]
+
+
+## Ways a launch fails even when enough checks pass. All of them come from the player's picks:
+## known problems left unfixed (events), the parts fitted, and how close the spacecraft is to the mass limit.
+## ev = evaluate_design(). Returns a list of { stage, text } (empty = no problem).
+static func launch_risks(level: Dictionary, results: Array, ev: Dictionary) -> Array:
+	var out: Array = []
+	var cfg: Dictionary = level.get("launch_risk", {})
+	if cfg.is_empty() or ev.is_empty():
+		return out
+	var limit: float = float(level.get("limits", {}).get("mass_kg", 1.0))
+	var fraction: float = float(ev.get("mass_kg", 0.0)) / maxf(0.001, limit)
+	var flaws: Array = ev.get("flaws", [])
+	var flaw_text: String = ", ".join(PackedStringArray(flaws))
+	var fitted: Array = ev.get("part_ids", [])
+	# max-Q: the rocket shakes hardest
+	if flaws.size() >= 1 and fraction > float(cfg.get("heavy_fraction", 0.8)) + EPS:
+		out.append({"stage": "max_q", "text": "The spacecraft was heavy (%d%% of the mass limit) and it flew with %s. A heavy launch shakes harder, and the weak spot gave way." % [int(round(fraction * 100.0)), flaw_text]})
+	if flaws.has("the cracked antenna mount") and fitted.has("antenna_big"):
+		out.append({"stage": "max_q", "text": "The big antenna sticks out, and its cracked mount tore off in the shaking."})
+	# the second stage: too heavy to reach orbit speed
+	if fraction > float(cfg.get("huge_fraction", 0.95)) + EPS and not all_passed(results):
+		out.append({"stage": "second_stage", "text": "The spacecraft was almost at the mass limit (%d%%) with a check still failing. There was no margin for error, and the engine ran short." % int(round(fraction * 100.0))})
+	# separation: the deployer lets go of the satellite
+	if flaws.size() >= int(cfg.get("flaws_to_fail", 2)):
+		out.append({"stage": "separation", "text": "Too many known problems were left unfixed (%s). The satellite jammed in its deployer." % flaw_text})
+	elif flaws.size() >= 1 and fitted.has("solar_large"):
+		out.append({"stage": "separation", "text": "The large solar panels have to unfold when the satellite is released. With %s left unfixed, they jammed." % flaw_text})
+	return out
 
 
 ## Which of "small", "medium" or "heavy" rocket to draw, from the design's mass.
@@ -313,7 +406,8 @@ static func rocket_for_mass(level: Dictionary, mass_kg: float) -> String:
 
 
 ## Ends the mission at launch: the satellite never works.
-static func fail_launch(st: Dictionary) -> void:
+static func fail_launch(st: Dictionary, text: String = "") -> void:
+	st["fail_text"] = text
 	st["ended"] = true
 	st["alive"] = false
 	st["end_reason"] = "launch_failed"
@@ -337,6 +431,14 @@ static func new_ops_state(level: Dictionary, ev: Dictionary, results: Array) -> 
 		"money_k": money,
 		"make_mult": 1.0,
 		"send_mult": 1.0,
+		"fuel_pct": 100.0,       # fuel left. Station-keeping burns some every week, events burn more
+		"fuel_extra_drain": 0.0, # extra percent per week, set by an event
+		"decay_week": 0,         # the week the orbit decays (0 = it does not)
+		"fail_text": "",
+		"temp_make_mult": 1.0,   # a multiplier from an event that lasts temp_make_weeks more weeks
+		"temp_make_weeks": 0,
+		"temp_send_mult": 1.0,
+		"temp_send_weeks": 0,
 		"cooldown": 0,          # weeks until the extra pass can be bought again
 		"passes_used": 0,
 		"brownout_weeks": 0,
@@ -348,6 +450,13 @@ static func new_ops_state(level: Dictionary, ev: Dictionary, results: Array) -> 
 		"history": [],          # one record per week flown, for the report chart
 		"end_reason": "",       # complete, no_battery, battery_empty, out_of_money
 	}
+
+
+## The multiplier an event put on "make" or "send" for a few weeks. 1.0 when it has run out.
+static func _temp_mult(st: Dictionary, which: String) -> float:
+	if int(st.get("temp_%s_weeks" % which, 0)) > 0:
+		return float(st.get("temp_%s_mult" % which, 1.0))
+	return 1.0
 
 
 ## Advances the mission by one week. Changes st. Returns what happened this week:
@@ -386,7 +495,7 @@ static func ops_week(level: Dictionary, ev: Dictionary, st: Dictionary, act: Dic
 	if safe:
 		battery = minf(100.0, battery + recharge)
 	else:
-		var made: float = float(ev.get("make_mb_wk", 0.0)) * float(st.get("make_mult", 1.0))
+		var made: float = float(ev.get("make_mb_wk", 0.0)) * float(st.get("make_mult", 1.0)) * _temp_mult(st, "make")
 		if bool(act.get("lowres", false)):
 			made *= float(o.get("lowres_mult", 1.0))
 		if float(ev.get("eclipse_min_pct", 0.0)) < 10.0 - EPS:
@@ -395,7 +504,7 @@ static func ops_week(level: Dictionary, ev: Dictionary, st: Dictionary, act: Dic
 			summary["brownout"] = true
 		var cap: float = 0.0
 		if not skip_send:
-			cap = float(ev.get("send_mb_wk", 0.0)) * float(st.get("send_mult", 1.0))
+			cap = float(ev.get("send_mb_wk", 0.0)) * float(st.get("send_mult", 1.0)) * _temp_mult(st, "send")
 			if extra_pass:
 				cap *= float(o.get("extra_pass_mult", 1.0))
 		var stored: float = float(st.get("stored_mb", 0.0)) + made
@@ -421,6 +530,13 @@ static func ops_week(level: Dictionary, ev: Dictionary, st: Dictionary, act: Dic
 
 	if int(st.get("cooldown", 0)) > 0:
 		st["cooldown"] = int(st.get("cooldown", 0)) - 1
+	var mass_fraction: float = float(ev.get("mass_kg", 0.0)) / maxf(0.001, float(level.get("limits", {}).get("mass_kg", 1.0)))
+	var burn: float = float(o.get("fuel_base_pct_wk", 0.0)) + mass_fraction * float(o.get("fuel_mass_pct_wk", 0.0)) + float(st.get("fuel_extra_drain", 0.0))
+	st["fuel_pct"] = maxf(0.0, float(st.get("fuel_pct", 100.0)) - burn)
+	for which in ["make", "send"]:
+		var key: String = "temp_%s_weeks" % which
+		if int(st.get(key, 0)) > 0:
+			st[key] = int(st.get(key, 0)) - 1
 
 	if battery <= 0.0:
 		battery = 0.0
@@ -430,6 +546,14 @@ static func ops_week(level: Dictionary, ev: Dictionary, st: Dictionary, act: Dic
 	elif float(st.get("money_k", 0.0)) < 0.0:
 		st["ended"] = true
 		st["end_reason"] = "out_of_money"
+	elif float(st.get("fuel_pct", 100.0)) <= 0.0 and int(st.get("week", 0)) < int(o.get("weeks", 0)):
+		st["alive"] = false
+		st["ended"] = true
+		st["end_reason"] = "out_of_fuel"
+	elif int(st.get("decay_week", 0)) > 0 and int(st.get("week", 0)) >= int(st.get("decay_week", 0)) and int(st.get("week", 0)) < int(o.get("weeks", 0)):
+		st["alive"] = false
+		st["ended"] = true
+		st["end_reason"] = "orbit_decay"
 	elif int(st.get("week", 0)) >= int(o.get("weeks", 0)):
 		st["ended"] = true
 		st["end_reason"] = "complete"
@@ -474,9 +598,15 @@ static func score_mission(level: Dictionary, st: Dictionary, results: Array) -> 
 static func build_causes(ev: Dictionary, results: Array, st: Dictionary) -> Array:
 	var out: Array = []
 	var reason: String = str(st.get("end_reason", ""))
-	if reason == "launch_failed":
+	if reason == "launch_failed" and str(st.get("fail_text", "")) != "":
+		out.append({"cause": str(st.get("fail_text", "")), "effect": "The launch failed, so the satellite never reached orbit and never worked.", "tip": "Repair known problems in the test lab, and keep the spacecraft well under the mass limit."})
+	elif reason == "launch_failed":
 		var o: Dictionary = launch_outcome({"launch_min_readiness_pct": float(ev.get("launch_min_readiness_pct", 0.0))}, results)
 		out.append({"cause": "Only %d%% of the checks passed, and the rocket needs at least %d%% to reach orbit." % [int(round(float(o["readiness_pct"]))), int(round(float(o["needed_pct"])))], "effect": "The launch failed, so the satellite never reached orbit and never worked.", "tip": "Fix the failed checks first. Aim for the marker on the readiness meter."})
+	elif reason == "out_of_fuel":
+		out.append({"cause": "The satellite used up all its fuel. Heavier spacecraft burn more just to hold their orbit, and big burns in events used more.", "effect": "It could no longer hold its orbit and fell back to Earth in week %d." % int(st.get("week", 0)), "tip": "Keep the spacecraft lighter, and save fuel for the decisions that matter."})
+	elif reason == "orbit_decay":
+		out.append({"cause": "You let the orbit sink to get sharper photos.", "effect": "The satellite burned up in the atmosphere in week %d, so the mission ended early." % int(st.get("week", 0)), "tip": "Spend fuel to raise the orbit if you want the mission to last."})
 	elif reason == "no_battery":
 		out.append({"cause": "The satellite had no battery.", "effect": "It lost power in its first eclipse and never woke up.", "tip": "Add a battery. Every orbit has a dark part."})
 	elif reason == "battery_empty":
@@ -484,13 +614,13 @@ static func build_causes(ev: Dictionary, results: Array, st: Dictionary) -> Arra
 	elif reason == "out_of_money":
 		out.append({"cause": "There was no money left in reserve.", "effect": "A cost in orbit emptied the budget and the mission was cancelled in week %d." % int(st.get("week", 0)), "tip": "Keep at least 10% of the budget in reserve."})
 	if not bool(ev.get("data_useful", true)):
-		out.append({"cause": "The instrument did not match the goal.", "effect": "The mission needed photos, and this instrument cannot take them.", "tip": "Pick the instrument that makes the data the goal asks for."})
+		out.append({"cause": "The instrument did not match the goal.", "effect": "The mission needed %s, and this instrument cannot make them." % str(ev.get("data_noun", "photos")), "tip": "Pick the instrument that makes the data the goal asks for."})
 	for item in results:
 		var r: Dictionary = item
 		if not bool(r.get("passed", false)):
 			out.append({"cause": str(r.get("reason", "")), "effect": str(r.get("consequence", "")), "tip": str(r.get("tip", ""))})
 	if float(st.get("lost_mb", 0.0)) > EPS:
-		out.append({"cause": "Photos were made faster than they could be sent.", "effect": "Storage filled up and %d MB of photos were lost." % int(round(float(st.get("lost_mb", 0.0)))), "tip": "Send more each week, or make smaller photos."})
+		out.append({"cause": "Data was made faster than it could be sent.", "effect": "Storage filled up and %d MB of %s were lost." % [int(round(float(st.get("lost_mb", 0.0)))), str(ev.get("data_noun", "photos"))], "tip": "Send more each week, or make less data."})
 	if out.is_empty():
 		out.append({"cause": "Every check passed before launch.", "effect": "The satellite had the mass, power, data link and money it needed.", "tip": "Try again with a cheaper or lighter design."})
 	return out

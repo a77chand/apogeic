@@ -209,4 +209,93 @@ static func run() -> Array:
 	_same(fails, "p4 finish", p4_ok["finish_day"], 150)
 	_near(fails, "p4 cost", p4_ok["cost_k"], 360.0)
 	_same(fails, "p4 rushed fails", Sim.puzzle_time(p4, "rushed", "full", 0)["passed"], false)
+	# --- richer event choices
+	var vib2: Dictionary = Data.events_for(events, "test_lab", 0)[0]
+	var brace_sched: Dictionary = Sim.new_schedule()
+	brace_sched["day"] = 41
+	Sim.apply_prelaunch_choice(brace_sched, [], vib2, 2)
+	_same(fails, "brace adds days", brace_sched["extra_days"], 4)
+	_near(fails, "brace adds mass", Sim.evaluate_design(level, parts, base, brace_sched)["mass_kg"], 3.7)
+	var hot_sched: Dictionary = Sim.new_schedule()
+	var heater: Dictionary = {"choices": [{"effects": [{"kind": "extra_power_w", "value": 3.0}]}]}
+	Sim.apply_prelaunch_choice(hot_sched, [], heater, 0)
+	_near(fails, "heater uses power", Sim.evaluate_design(level, parts, base, hot_sched)["power_use_w"], 15.4)
+	var boost_st: Dictionary = Sim.new_ops_state(level, ev, results)
+	var boost: Dictionary = {"choices": [{"effects": [{"kind": "boost_send", "value": 0.5, "weeks": 1}, {"kind": "battery_pct", "value": -10.0}, {"kind": "bonus_mb", "value": 30.0}]}]}
+	Sim.apply_ops_choice(boost_st, [], boost, 0)
+	_same(fails, "boost lasts one week", boost_st["temp_send_weeks"], 1)
+	_near(fails, "battery cost", boost_st["battery_pct"], 90.0)
+	_near(fails, "bonus data", boost_st["stored_mb"], 30.0)
+	var slow: Dictionary = Sim.ops_week(level, ev, boost_st, {})
+	_same(fails, "boost has run out", boost_st["temp_send_weeks"], 0)
+	_near(fails, "boosted week sends half", slow["sent"], 18.0)
+	# --- more ways for the launch to fail (all from the player's picks)
+	var calm_ev: Dictionary = {"mass_kg": 3.0, "flaws": []}
+	_same(fails, "no flaws, no risk", Sim.launch_outcome(level, m3["results"], calm_ev)["reached_orbit"], true)
+	var light_flaw: Dictionary = {"mass_kg": 3.0, "flaws": ["the software bug"]}
+	_same(fails, "one flaw on a light craft is fine", Sim.launch_outcome(level, m3["results"], light_flaw)["reached_orbit"], true)
+	var heavy_flaw: Dictionary = {"mass_kg": 3.3, "flaws": ["the software bug"]}
+	_same(fails, "one flaw on a heavy craft fails", Sim.launch_outcome(level, m3["results"], heavy_flaw)["reached_orbit"], false)
+	_same(fails, "that failure says why", str(Sim.launch_outcome(level, m3["results"], heavy_flaw)["fail_text"]).contains("heavy"), true)
+	var two_flaws: Dictionary = {"mass_kg": 2.5, "flaws": ["a", "b"]}
+	_same(fails, "two flaws fail even when light", Sim.launch_outcome(level, m3["results"], two_flaws)["reached_orbit"], false)
+	var no_margin: Dictionary = {"mass_kg": 3.9, "flaws": []}
+	_same(fails, "no margin with all checks passing is fine", Sim.launch_outcome(level, m3["results"], no_margin)["reached_orbit"], true)
+	_same(fails, "no margin with a failed check fails", Sim.launch_outcome(level, m1["results"], no_margin)["reached_orbit"], false)
+	var flawed_sched: Dictionary = Sim.new_schedule()
+	Sim.apply_prelaunch_choice(flawed_sched, [], Data.events_for(events, "test_lab", 0)[0], 1)
+	_same(fails, "fly as it is leaves a flaw", (Sim.evaluate_design(level, parts, base, flawed_sched)["flaws"] as Array).size(), 1)
+	# --- fuel
+	var fuel_st: Dictionary = Sim.new_ops_state(level, ev, results)
+	_near(fails, "full tank at the start", fuel_st["fuel_pct"], 100.0)
+	Sim.apply_ops_choice(fuel_st, [], {"choices": [{"effects": [{"kind": "fuel_pct", "value": -30.0}]}]}, 0)
+	_near(fails, "a burn uses fuel", fuel_st["fuel_pct"], 70.0)
+	Sim.ops_week(level, ev, fuel_st, {})
+	_same(fails, "holding the orbit uses fuel every week", float(fuel_st["fuel_pct"]) < 70.0, true)
+	var empty_st: Dictionary = Sim.new_ops_state(level, ev, results)
+	empty_st["fuel_pct"] = 4.0
+	Sim.ops_week(level, ev, empty_st, {})
+	_same(fails, "out of fuel ends the mission", empty_st["end_reason"], "out_of_fuel")
+	var decay_st: Dictionary = Sim.new_ops_state(level, ev, results)
+	Sim.apply_ops_choice(decay_st, [], {"choices": [{"effects": [{"kind": "decay_in_weeks", "value": 2.0}]}]}, 0)
+	Sim.ops_week(level, ev, decay_st, {})
+	_same(fails, "still flying after one week", decay_st["ended"], false)
+	Sim.ops_week(level, ev, decay_st, {})
+	_same(fails, "the orbit decays after three weeks", decay_st["end_reason"], "orbit_decay")
+	# --- the three missions
+	_same(fails, "three missions", Data.MISSIONS.size(), 3)
+	var lvl2: Dictionary = Data.load_level("level2")
+	var lvl3: Dictionary = Data.load_level("level3")
+	_same(fails, "mission 2 loads", str(lvl2.get("goal_data_type", "")), "spectra")
+	_same(fails, "mission 3 loads", int(lvl3["limits"]["deadline_day"]), 150)
+	_same(fails, "unknown mission is empty", Data.load_level("nope").is_empty(), true)
+	var day_sched: Dictionary = Sim.new_schedule()
+	day_sched["day"] = 41
+	var d2: Dictionary = _design(lvl2, "solar_small", "battery_small", "spectrometer", "radio_uhf", "antenna_big", "")
+	var ev_m2: Dictionary = Sim.evaluate_design(lvl2, parts, d2, day_sched)
+	_same(fails, "mission 2 reference design passes every check", Sim.all_passed(Sim.check_requirements(lvl2, ev_m2)), true)
+	_same(fails, "mission 2 reference reaches orbit", Sim.launch_outcome(lvl2, Sim.check_requirements(lvl2, ev_m2), ev_m2)["reached_orbit"], true)
+	var camera_m2: Dictionary = _design(lvl2, "solar_small", "battery_small", "camera_std", "radio_uhf", "antenna_big", "")
+	_same(fails, "a camera cannot do the air mission", Sim.result_by_id(Sim.check_requirements(lvl2, Sim.evaluate_design(lvl2, parts, camera_m2, day_sched)), "R2")["passed"], false)
+	var d3: Dictionary = _design(lvl3, "solar_large", "battery_small", "camera_std", "radio_sband", "antenna_big", "")
+	var ev_m3: Dictionary = Sim.evaluate_design(lvl3, parts, d3, day_sched)
+	_same(fails, "mission 3 reference design passes every check", Sim.all_passed(Sim.check_requirements(lvl3, ev_m3)), true)
+	var slow_m3: Dictionary = _design(lvl3, "solar_large", "battery_small", "camera_std", "radio_sband", "", "")
+	_same(fails, "mission 3 needs the extra antenna", Sim.result_by_id(Sim.check_requirements(lvl3, Sim.evaluate_design(lvl3, parts, slow_m3, day_sched)), "R2")["passed"], false)
+	# --- failure stages: where in the launch it goes wrong
+	var heavy_stage: Dictionary = Sim.launch_outcome(level, m3["results"], heavy_flaw)
+	_same(fails, "heavy and flawed fails at max-Q", heavy_stage["stage"], "max_q")
+	_near(fails, "max-Q is early in the climb", heavy_stage["climb_pct"], 35.0)
+	var jammed: Dictionary = Sim.launch_outcome(level, m3["results"], {"mass_kg": 2.5, "flaws": ["a", "b"]})
+	_same(fails, "two flaws fail at separation", jammed["stage"], "separation")
+	_near(fails, "separation is at the top of the climb", jammed["climb_pct"], 100.0)
+	var tear: Dictionary = {"mass_kg": 2.5, "flaws": ["the cracked antenna mount"], "part_ids": ["antenna_big"]}
+	_same(fails, "cracked mount plus big antenna fails at max-Q", Sim.launch_outcome(level, m3["results"], tear)["stage"], "max_q")
+	var no_antenna: Dictionary = {"mass_kg": 2.5, "flaws": ["the cracked antenna mount"], "part_ids": []}
+	_same(fails, "cracked mount alone is survivable on a light craft", Sim.launch_outcome(level, m3["results"], no_antenna)["reached_orbit"], true)
+	var panels: Dictionary = {"mass_kg": 2.5, "flaws": ["the software bug"], "part_ids": ["solar_large"]}
+	_same(fails, "large panels plus a flaw jam at separation", Sim.launch_outcome(level, m3["results"], panels)["stage"], "separation")
+	var both: Dictionary = {"mass_kg": 3.3, "flaws": ["a", "b"], "part_ids": []}
+	_same(fails, "the earliest problem sets the failure point", Sim.launch_outcome(level, m3["results"], both)["stage"], "max_q")
+	_same(fails, "the failure text names the stage", str(Sim.launch_outcome(level, m3["results"], both)["fail_text"]).begins_with("Failure at max-Q"), true)
 	return fails

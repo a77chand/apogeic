@@ -4,6 +4,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui.gd")
 const SimTests = preload("res://tests/sim_tests.gd")
+const Player = preload("res://scripts/ui/player.gd")
 
 var _test_label: Label = null
 var _sound_button: Button = null
@@ -18,6 +19,13 @@ func _ready() -> void:
 	center.add_child(v)
 	v.add_child(UI.picture("res://art/ui/ui_logo.png", Vector2(640, 240), "Space Mission Designer"))
 	v.add_child(UI.label("Plan it. Build it. Launch it. Find out why it worked.", 18, UI.C_MUTED))
+	if GameState.has_profile():
+		var greet: Control = Player.badge(56.0)
+		greet.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		v.add_child(greet)
+		var welcome: Label = UI.label("Welcome back, %s." % GameState.display_name(), 18, UI.C_CYAN)
+		welcome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(welcome)
 	var row: HBoxContainer = UI.hbox(16)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(row)
@@ -36,6 +44,10 @@ func _ready() -> void:
 	tools.add_child(_sound_button)
 	tools.add_child(UI.button("Show tips again", _on_tips, 180.0))
 	tools.add_child(UI.button("Reset progress", _on_reset, 180.0))
+	var custom_row: HBoxContainer = UI.hbox(16)
+	custom_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(custom_row)
+	custom_row.add_child(UI.button("Customise astronaut", _on_customise, 240.0))
 	_test_label = UI.label("", 13, UI.C_MUTED, true)
 	_test_label.custom_minimum_size = Vector2(760, 0)  # a wrapping label needs a width
 	_test_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -43,12 +55,20 @@ func _ready() -> void:
 
 
 func _on_play() -> void:
+	if not GameState.has_profile():
+		GameState.profile_next = "ladder"
+		GameState.go("profile")
+		return
 	GameState.go("ladder")
 
 
+func _on_customise() -> void:
+	GameState.profile_next = "title"
+	GameState.go("profile")
+
+
 func _on_mission() -> void:
-	GameState.reset_mission()
-	GameState.go("briefing")
+	GameState.go("missions")
 
 
 func _on_truck() -> void:
