@@ -5,6 +5,7 @@ extends Control
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
+const WeekChart = preload("res://scripts/ui/week_chart.gd")
 
 const STAR_ON: Color = Color(0.95, 0.78, 0.26)
 const STAR_OFF: Color = Color(0.35, 0.4, 0.5)
@@ -19,6 +20,7 @@ func _ready() -> void:
 	_build_top_bar(str(score.get("grade", "failed")))
 	_build_stars(score)
 	_build_causes(causes)
+	_build_chart()
 	_build_log()
 	_build_compare()
 	_build_buttons()
@@ -103,17 +105,30 @@ func _build_stars(score: Dictionary) -> void:
 		[bool(score.get("star_checks", false)), "All checks passed"],
 		[bool(score.get("star_budget", false)), "Finished with 10% in reserve"],
 	]
+	var row_index: int = 0
 	for item in rows:
 		var row_data: Array = item
 		var row: HBoxContainer = UI.hbox(10)
-		row.add_child(_star(bool(row_data[0])))
+		var star: Control = _star(bool(row_data[0]))
+		star.pivot_offset = Vector2(27.0, 27.0)
+		star.scale = Vector2.ZERO
+		row.add_child(star)
+		var pop: Tween = star.create_tween()
+		pop.tween_interval(0.25 + 0.3 * float(row_index))
+		pop.tween_property(star, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		row_index += 1
 		var label: Label = UI.label(str(row_data[1]), 16)
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		row.add_child(label)
 		col.add_child(row)
 	var cfg: Dictionary = GameState.level.get("ops", {})
 	var ops: Dictionary = GameState.ops
-	col.add_child(UI.label("Delivered: %d of %d MB" % [int(round(float(ops.get("delivered_mb", 0.0)))), int(float(cfg.get("goal_mb", 0.0)))], 14))
+	var delivered_label: Label = UI.label("", 14)
+	col.add_child(delivered_label)
+	var delivered: float = float(ops.get("delivered_mb", 0.0))
+	var goal: int = int(float(cfg.get("goal_mb", 0.0)))
+	var count: Tween = delivered_label.create_tween()
+	count.tween_method(func(v: float): delivered_label.text = "Delivered: %d of %d MB" % [int(round(v)), goal], 0.0, delivered, 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	col.add_child(UI.label("Lost: %d MB   Money left: %s" % [int(round(float(ops.get("lost_mb", 0.0)))), UI.money(float(ops.get("money_k", 0.0)))], 14))
 	col.add_child(UI.label("Weeks flown: %d of %d" % [int(ops.get("week", 0)), int(cfg.get("weeks", 12))], 14))
 
@@ -139,35 +154,59 @@ func _build_causes(causes: Array) -> void:
 		col.add_child(card)
 
 
-func _build_log() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
+func _build_chart() -> void:
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
 	_place(panel, Vector2(20, 430), Vector2(640, 220))
-	var col: VBoxContainer = UI.vbox(6)
+	var col: VBoxContainer = UI.vbox(4)
 	panel.add_child(col)
-	col.add_child(UI.label("What happened on the way", 18))
+	col.add_child(UI.label("How the mission went", 18))
+	var chart: Control = WeekChart.new()
+	col.add_child(chart)
+	var cfg: Dictionary = GameState.level.get("ops", {})
+	var flags: Array = []
+	for item in GameState.events:
+		var ev: Dictionary = item
+		if str(ev.get("when", "")) == "ops":
+			flags.append({"week": int(ev.get("week", 0)), "label": str(ev.get("title", ""))})
+	var reason: String = str(GameState.ops.get("end_reason", ""))
+	var early: bool = reason != "" and reason != "complete"
+	var why_empty: String = "There is nothing to chart."
+	if reason == "launch_failed":
+		why_empty = "The rocket never reached orbit, so there is nothing to chart."
+	elif reason == "no_battery":
+		why_empty = "The satellite lost power in its first orbit, so there is nothing to chart."
+	chart.call("set_data", GameState.ops.get("history", []), float(cfg.get("goal_mb", 1.0)), int(cfg.get("weeks", 12)), flags, early and not (GameState.ops.get("history", []) as Array).is_empty(), why_empty)
+
+
+func _build_log() -> void:
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
+	_place(panel, Vector2(676, 430), Vector2(584, 138))
+	var col: VBoxContainer = UI.vbox(4)
+	panel.add_child(col)
+	col.add_child(UI.label("What happened on the way", 16))
 	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(600.0, 140.0)
+	scroll.custom_minimum_size = Vector2(550.0, 84.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	col.add_child(scroll)
-	var lines: VBoxContainer = UI.vbox(4)
+	var lines: VBoxContainer = UI.vbox(3)
 	lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(lines)
 	if GameState.log_lines.is_empty():
-		lines.add_child(UI.label("Nothing unusual happened.", 14, UI.C_MUTED))
+		lines.add_child(UI.label("Nothing unusual happened.", 13, UI.C_MUTED))
 	for item in GameState.log_lines:
-		var text: Label = UI.label("- " + str(item), 14, UI.C_TEXT, true)
-		text.custom_minimum_size = Vector2(580.0, 0.0)
+		var text: Label = UI.label("- " + str(item), 13, UI.C_TEXT, true)
+		text.custom_minimum_size = Vector2(540.0, 0.0)
 		lines.add_child(text)
 
 
 func _build_compare() -> void:
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 14.0)
-	_place(panel, Vector2(676, 430), Vector2(584, 220))
-	var col: VBoxContainer = UI.vbox(6)
+	var panel: PanelContainer = UI.panel(UI.C_BORDER, 12.0)
+	_place(panel, Vector2(676, 576), Vector2(584, 74))
+	var col: VBoxContainer = UI.vbox(3)
 	panel.add_child(col)
-	col.add_child(UI.label("Compare with a real mission", 18))
-	var text: Label = UI.label("Real mission figures will be added from verified NASA data.", 14, UI.C_MUTED, true)
-	text.custom_minimum_size = Vector2(540.0, 0.0)
+	col.add_child(UI.label("Compare with a real mission", 15))
+	var text: Label = UI.label("Real mission figures will be added from verified NASA data.", 12, UI.C_MUTED, true)
+	text.custom_minimum_size = Vector2(550.0, 0.0)
 	col.add_child(text)
 
 

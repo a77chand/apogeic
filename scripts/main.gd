@@ -101,3 +101,5 @@ func _swap(screen_id: String) -> void:
 	_current_id = screen_id
 	_holder.add_child(screen)
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	screen.modulate = Color(1, 1, 1, 0)   # fade in, so changing screen is not a hard cut
+	screen.create_tween().tween_property(screen, "modulate:a", 1.0, 0.2)
