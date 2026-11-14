@@ -324,6 +324,7 @@ func _run_week() -> void:
 		var paid: float = float(card.get("advice_paid_k")) if is_instance_valid(card) else 0.0
 		line = Sim.apply_late_and_advice(GameState.ops, "ops", late, paid) + line
 		GameState.add_log(line)
+		UI.choice_toast(self, Sim.choice_rating(event, index, part_ids), late)
 		if float(GameState.ops.get("make_mult", 1.0)) < make_before - 0.0001:
 			_play_sparks()
 		_event_open = false

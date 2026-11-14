@@ -58,6 +58,7 @@ func _prelaunch_events() -> void:
 		var paid: float = float(card.get("advice_paid_k")) if is_instance_valid(card) else 0.0
 		line = Sim.apply_late_and_advice(GameState.sched, "test_lab", late, paid) + line
 		GameState.add_log(line)
+		UI.choice_toast(self, Sim.choice_rating(event, index, part_ids), late)
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:

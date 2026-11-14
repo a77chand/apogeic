@@ -78,7 +78,11 @@ func _build_concept() -> void:
 		if not groups.has(group):
 			groups.append(group)
 	for group_name in groups:
-		col.add_child(UI.label(str(group_name), 14, UI.C_MUTED))
+		# the group name, with a few words on what the term means
+		var head: HBoxContainer = UI.hbox(8)
+		col.add_child(head)
+		head.add_child(UI.label(str(group_name), 14, UI.C_MUTED))
+		head.add_child(UI.label(str(GLOSSARY.get(str(group_name), "")), 12, Color(UI.C_ACCENT, 0.85)))
 		if str(group_name) == "Spacecraft":
 			col.add_child(_craft_row())  # the one choice you can change
 			continue
@@ -95,6 +99,14 @@ func _build_concept() -> void:
 	_build_facts(col)
 
 
+## A few words for each term in the concept, so "3U" or "rideshare" is not a buzzword.
+const GLOSSARY: Dictionary = {
+	"Spacecraft": "CubeSat: built from 10 cm cubes. 1U = one cube",
+	"Orbit": "the path it circles Earth on",
+	"Launch": "how it gets to space",
+}
+
+
 ## 1U / 3U / 6U buttons. The chosen one is highlighted; pressing another reloads this screen.
 func _craft_row() -> Control:
 	var row: HBoxContainer = UI.hbox(8)
@@ -105,7 +117,29 @@ func _craft_row() -> Control:
 			b.add_theme_stylebox_override("normal", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 3, 8.0))
 			b.add_theme_stylebox_override("hover", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 3, 8.0))
 		row.add_child(b)
+	# the chosen size drawn as cubes: 1U one cube, 3U three in a stack, 6U two stacks
+	var cubes: Control = Control.new()
+	cubes.custom_minimum_size = Vector2(70.0, 40.0)
+	cubes.tooltip_text = "Each cube is 10 x 10 x 10 cm (one \"U\")"
+	cubes.mouse_filter = Control.MOUSE_FILTER_PASS
+	cubes.draw.connect(_draw_cubes.bind(cubes))
+	row.add_child(cubes)
 	return row
+
+
+func _draw_cubes(c: Control) -> void:
+	var n: int = int(GameState.craft_id.to_int())
+	var cols: int = 2 if n >= 6 else 1
+	var rows: int = maxi(1, n / cols)
+	var u: float = minf(12.0, 36.0 / float(rows))
+	var x0: float = 8.0
+	var y0: float = c.size.y - 2.0
+	for cx in range(cols):
+		for cy in range(rows):
+			var r: Rect2 = Rect2(Vector2(x0 + float(cx) * (u + 2.0), y0 - float(cy + 1) * (u + 1.0)), Vector2(u, u))
+			c.draw_rect(r, Color(0.85, 0.75, 0.45))
+			c.draw_rect(r, Color(0.35, 0.28, 0.12), false, 1.0)
+	c.draw_string(ThemeDB.fallback_font, Vector2(x0 + float(cols) * (u + 2.0) + 4.0, y0 - 4.0), "%d x 10 cm" % n, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, UI.C_MUTED)
 
 
 func _build_facts(col: VBoxContainer) -> void:

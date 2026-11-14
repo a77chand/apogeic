@@ -58,10 +58,10 @@ func _build_main_choices() -> void:
 	var w: float = 420.0
 	var custom: Button = UI.pixel_button("Customise astronaut" if GameState.has_profile() else "Create astronaut", _on_customise, 240.0, 32.0, 12, UI.C_GOLD)
 	_place(custom, Vector2(x + (w - 240.0) * 0.5, 262), Vector2(240, 32))
-	_place(UI.pixel_button("> Play", _on_play, w, 64.0, 30, cream), Vector2(x, 306), Vector2(w, 64))
+	_place(UI.pixel_button("Play  >", _on_play, w, 64.0, 30, Color(0.45, 0.78, 1.0)), Vector2(x, 306), Vector2(w, 64))
 	_place(UI.pixel_button("How to play", _on_guide, 204.0, 38.0, 13, UI.C_ACCENT), Vector2(x, 382), Vector2(204, 38))
 	_place(UI.pixel_button("Training", _on_training, 204.0, 38.0, 13, UI.C_ACCENT), Vector2(x + 216, 382), Vector2(204, 38))
-	_place(UI.pixel_button("Skip to missions", _on_mission, w, 64.0, 24, cream), Vector2(x, 432), Vector2(w, 64))
+	_place(UI.pixel_button("Skip to missions  >", _on_mission, w, 64.0, 24, Color(0.78, 0.55, 1.0)), Vector2(x, 432), Vector2(w, 64))
 	_place(UI.pixel_button("NASA problem: can the truck see?", _on_truck, w, 32.0, 11, Color(UI.C_ACCENT, 0.75)), Vector2(x, 520), Vector2(w, 32))
 	_sound_button = UI.pixel_button(_sound_text(), _on_sound, 136.0, 28.0, 10, Color(UI.C_MUTED, 0.8))
 	_place(_sound_button, Vector2(x, 562), Vector2(136, 28))

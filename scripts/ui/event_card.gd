@@ -20,7 +20,7 @@ const Sim = preload("res://scripts/core/sim.gd")
 
 signal chosen(index: int)
 
-const DEFAULT_SECONDS: float = 15.0
+const DEFAULT_SECONDS: float = 22.0   # 20-25 s to decide
 const ADVICE_COST_K: float = 15.0
 const TIMEOUT_NOTICE_SECONDS: float = 7.0
 

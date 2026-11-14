@@ -1,19 +1,46 @@
 extends Control
-## Choose a mission. 20 missions, each based on a real spaceflight. They unlock in order: finish a mission (reach the goal, or get close)
-## to open the next one. Progress and best stars are saved in GameState.
+## Choose a mission. 20 missions, each based on a real spaceflight, as tall cards that slide
+## left and right (arrows, arrow keys or the mouse wheel). "All missions" lists every one
+## by name. "Go to next mission" starts the next one in order.
+##
+## Unlocking (GameState.is_mission_open): a mission opens when the one before it has at
+## least one star; every 7 missions is a stage, and the next stage needs 17 of its 21 stars.
+## Finished missions can be replayed in any order. Starting a mission needs a life; a
+## failed mission (0 stars) costs one, and they come back one every 30 minutes. Star dust
+## from 3-star missions buys more lives.
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
+const CARD_SIZE: Vector2 = Vector2(440, 462)
+const CARD_Y: float = 132.0
+const GAP: float = 470.0
+const C_LOCKED_TEXT: Color = Color(0.56, 0.60, 0.70)
+
+var _cards: Array = []          # one card per mission, then the "more coming" card
+var _index: int = 0
 var _tip: Label = null
+var _lives_label: Label = null
+var _dust_label: Label = null
+var _buy_btn: Button = null
+var _list_layer: Control = null
 
 
 func _ready() -> void:
+	GameState.refresh_lives()
 	_build_top_bar()
+	_build_stats()
 	_build_cards()
 	_build_bottom()
+	var ids: Array = GameState.mission_ids()
+	_index = maxi(0, ids.find(GameState.next_mission_id()))
+	_layout(false)
 	Tutorial.maybe_show(self, "missions")
+	# wrapped text reports a tall size until it knows its width, so lay out again next frame
+	await get_tree().process_frame
+	if is_inside_tree():
+		_layout(false)
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -27,80 +54,88 @@ func _build_top_bar() -> void:
 	var bar: PanelContainer = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", UI.bar_style(true))
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
-	var title: Label = UI.label("Choose your mission", 28)
+	var title: Label = UI.label("Missions", 28)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	bar.add_child(title)
 	var badge: Control = Player.badge(44.0)
 	add_child(badge)
-	badge.position = Vector2(14.0, 14.0)
+	badge.position = Vector2(40.0, 14.0)
 
 
-## 20 missions as a grid of tiles (number, name, stars); the chosen tile's details show
-## on the right with the real mission it is based on and the start button.
-var _detail: VBoxContainer = null
-var _tiles: Array = []
+## Total stars, lives (with the time to the next one) and star dust.
+func _build_stats() -> void:
+	var row: HBoxContainer = UI.hbox(26)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_place(row, Vector2(40, 82), Vector2(1200, 40))
+	var stars: HBoxContainer = UI.hbox(6)
+	row.add_child(stars)
+	stars.add_child(UI.star_icon(true, 22.0))
+	stars.add_child(UI.label("%d / %d stars" % [GameState.total_stars(), GameState.mission_ids().size() * 3], 16, UI.C_GOLD))
+	var lives: HBoxContainer = UI.hbox(4)
+	row.add_child(lives)
+	for i in range(GameState.MAX_LIVES):
+		lives.add_child(UI.heart_icon(i < GameState.lives, 20.0))
+	_lives_label = UI.label("", 14, UI.C_MUTED)
+	lives.add_child(_lives_label)
+	_dust_label = UI.label("", 16, Color(0.78, 0.70, 1.0))
+	row.add_child(_dust_label)
+	_buy_btn = UI.button("Buy a life (%d star dust)" % GameState.LIFE_COST_STARDUST, _on_buy, 240.0, false)
+	_buy_btn.custom_minimum_size = Vector2(240.0, 34.0)
+	_buy_btn.add_theme_font_size_override("font_size", 13)
+	row.add_child(_buy_btn)
+	_refresh_stats()
+
+
+func _refresh_stats() -> void:
+	var wait: int = GameState.seconds_to_next_life()
+	if GameState.lives >= GameState.MAX_LIVES:
+		_lives_label.text = "Lives full"
+	else:
+		_lives_label.text = "Next life in %d:%02d" % [wait / 60, wait % 60]
+	_dust_label.text = "✦ %d star dust" % GameState.stardust
+	_buy_btn.disabled = GameState.lives >= GameState.MAX_LIVES or GameState.stardust < GameState.LIFE_COST_STARDUST
+
+
+func _process(_delta: float) -> void:
+	if _lives_label != null and GameState.lives < GameState.MAX_LIVES:
+		var before: int = GameState.lives
+		_refresh_stats()
+		if GameState.lives != before:
+			GameState.go("missions")
 
 
 func _build_cards() -> void:
-	var grid: GridContainer = GridContainer.new()
-	grid.columns = 5
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
-	_place(grid, Vector2(20, 88), Vector2(770, 500))
 	var ids: Array = GameState.mission_ids()
-	var first_open: int = 0
 	for i in range(ids.size()):
-		var id: String = str(ids[i])
-		grid.add_child(_tile(i, id))
-		if GameState.is_mission_open(id):
-			first_open = i
-	var panel: PanelContainer = UI.panel(UI.C_BORDER, 16.0)
-	_place(panel, Vector2(806, 88), Vector2(454, 500))
-	_detail = UI.vbox(8)
-	panel.add_child(_detail)
-	_show(first_open)
+		var card: Control = _card(i, str(ids[i]))
+		add_child(card)
+		_cards.append(card)
+	var more: Control = _more_card()
+	add_child(more)
+	_cards.append(more)
+	# arrows either side
+	var left: Button = UI.button("<", _step.bind(-1), 56.0, false)
+	_place(left, Vector2(150, CARD_Y + CARD_SIZE.y * 0.5 - 30.0), Vector2(56, 60))
+	var right: Button = UI.button(">", _step.bind(1), 56.0, false)
+	_place(right, Vector2(1074, CARD_Y + CARD_SIZE.y * 0.5 - 30.0), Vector2(56, 60))
 
 
-func _tile(index: int, id: String) -> Button:
+func _card(index: int, id: String) -> Control:
 	var info: Dictionary = GameState.mission_info(id)
 	var done: bool = GameState.is_mission_done(id)
 	var open: bool = GameState.is_mission_open(id)
-	var stars: int = int(GameState.mission_stars.get(id, 0))
-	var b: Button = Button.new()
-	b.custom_minimum_size = Vector2(146.0, 116.0)
-	b.focus_mode = Control.FOCUS_NONE
-	b.clip_text = true
-	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-	var star_text: String = "★".repeat(stars) + "☆".repeat(3 - stars)
-	b.text = "%02d\n%s\n%s" % [index + 1, str(info.get("name", id)), star_text if done else ("Open" if open else "Locked")]
-	b.add_theme_font_size_override("font_size", 14)
-	var edge: Color = UI.C_GREEN if done else (UI.C_CYAN if open else UI.C_DISABLED_BORDER)
-	var fill: Color = Color(0.03, 0.07, 0.14, 0.92) if open or done else Color(0.03, 0.05, 0.09, 0.8)
-	b.add_theme_stylebox_override("normal", UI.box(fill, Color(edge, 0.8), 6, 1, 10.0))
-	b.add_theme_stylebox_override("hover", UI.box(fill.lightened(0.08), edge, 6, 2, 10.0))
-	b.add_theme_stylebox_override("pressed", UI.box(fill.lightened(0.12), edge, 6, 3, 10.0))
-	b.add_theme_color_override("font_color", UI.C_TEXT if open or done else UI.C_MUTED)
-	b.pressed.connect(_show.bind(index))
-	_tiles.append(b)
-	return b
-
-
-func _show(index: int) -> void:
-	var id: String = str(GameState.mission_ids()[index])
-	var info: Dictionary = GameState.mission_info(id)
-	var done: bool = GameState.is_mission_done(id)
-	var open: bool = GameState.is_mission_open(id)
-	for i in range(_tiles.size()):
-		var t: Button = _tiles[i]
-		t.add_theme_constant_override("outline_size", 0)
-		t.modulate = Color(1, 1, 1) if i == index else Color(0.82, 0.86, 0.92)
-	UI.clear(_detail)
+	var border: Color = UI.C_GOLD if done else (UI.C_CYAN if open else UI.C_DISABLED_BORDER)
+	var panel: PanelContainer = UI.panel(border, 16.0)
+	panel.custom_minimum_size = CARD_SIZE
+	panel.size = CARD_SIZE
+	panel.pivot_offset = CARD_SIZE * 0.5
+	var col: VBoxContainer = UI.vbox(7)
+	panel.add_child(col)
 	var head: HBoxContainer = UI.hbox(8)
-	_detail.add_child(head)
-	var level_label: Label = UI.label(str(info.get("level_label", "Mission %d" % (index + 1))), 13, UI.C_MUTED)
+	col.add_child(head)
+	var stage_text: String = "Stage %d  ·  %s" % [GameState.stage_of(index) + 1, str(info.get("level_label", "Mission %d" % (index + 1)))]
+	var level_label: Label = UI.label(stage_text, 13, UI.C_MUTED)
 	level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(level_label)
 	var problem: String = str(info.get("main_problem", ""))
@@ -109,62 +144,225 @@ func _show(index: int) -> void:
 		tag.add_theme_stylebox_override("panel", UI.box(Color(UI.C_ORANGE, 0.18), UI.C_ORANGE, 6, 1, 4.0))
 		tag.add_child(UI.label(problem, 12, UI.C_ORANGE))
 		head.add_child(tag)
-	_detail.add_child(UI.label(str(info.get("name", id)), 26, UI.C_TEXT if open else UI.C_MUTED, true))
-	_detail.add_child(UI.based_on_tag(info, 420.0))
+	col.add_child(UI.label(str(info.get("name", id)), 26, UI.C_TEXT if open else C_LOCKED_TEXT, true))
+	col.add_child(UI.star_row(GameState.stars_for(id), 26.0))
+	col.add_child(UI.based_on_tag(info, 406.0))
 	var b: Dictionary = info.get("based_on", {})
-	var story: Label = UI.label(str(b.get("story", info.get("goal_text", ""))), 13, UI.C_TEXT, true)
-	story.custom_minimum_size = Vector2(420.0, 0.0)
-	_detail.add_child(story)
+	var story: Label = UI.label(str(b.get("story", info.get("goal_text", ""))), 13, UI.C_TEXT if open else C_LOCKED_TEXT, true)
+	story.custom_minimum_size = Vector2(406.0, 0.0)
+	col.add_child(story)
 	if b.has("lesson"):
-		var lesson: Label = UI.label("Lesson: " + str(b.get("lesson", "")), 13, UI.C_ACCENT, true)
-		lesson.custom_minimum_size = Vector2(420.0, 0.0)
-		_detail.add_child(lesson)
+		var lesson: Label = UI.label("Lesson: " + str(b.get("lesson", "")), 13, UI.C_ACCENT if open else C_LOCKED_TEXT, true)
+		lesson.custom_minimum_size = Vector2(406.0, 0.0)
+		col.add_child(lesson)
 	var row: HBoxContainer = UI.hbox(10)
-	_detail.add_child(row)
+	col.add_child(row)
 	var rocket: Dictionary = info.get("rocket", {})
-	var pic: Control = UI.picture("res://art/modules/%s.png" % str(rocket.get("kind", "rocket_small")), Vector2(40, 110), "rocket")
-	if not open:
-		pic.modulate = Color(1, 1, 1, 0.4)
-	row.add_child(pic)
-	var right: VBoxContainer = UI.vbox(4)
+	row.add_child(UI.picture("res://art/modules/%s.png" % str(rocket.get("kind", "rocket_small")), Vector2(26, 64), "rocket"))
+	var right: VBoxContainer = UI.vbox(3)
+	right.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(right)
 	right.add_child(UI.label(str(rocket.get("name", "")), 13, UI.C_ACCENT))
-	var goal: Label = UI.label(str(info.get("goal_text", "")), 12, UI.C_MUTED, true)
-	goal.custom_minimum_size = Vector2(360.0, 0.0)
-	right.add_child(goal)
 	var limits: Dictionary = info.get("limits", {})
-	right.add_child(UI.label("Up to %.1f kg  |  %s  |  launch by day %d" % [
-			float(limits.get("mass_kg", 0.0)), UI.money(float(limits.get("budget_k", 0.0))), int(limits.get("deadline_day", 0))], 13, UI.C_YELLOW, true))
+	right.add_child(UI.label("Up to %.1f kg  |  %s  |  day %d" % [
+			float(limits.get("mass_kg", 0.0)), UI.money(float(limits.get("budget_k", 0.0))), int(limits.get("deadline_day", 0))], 13, UI.C_YELLOW))
 	var spacer: Control = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_detail.add_child(spacer)
+	col.add_child(spacer)
 	if open:
-		_detail.add_child(UI.button("Play again" if done else "Start mission", _on_start.bind(id), 420.0, not done))
+		col.add_child(UI.button("Play again" if done else "Start mission", _on_start.bind(id), 406.0, not done))
 	else:
-		var before: Dictionary = GameState.mission_info(str(GameState.mission_ids()[maxi(0, index - 1)]))
-		var locked: Button = UI.button("Finish %s first" % str(before.get("name", "the one before")), _on_locked.bind(id), 420.0, false)
-		UI.look_locked(locked)
-		_detail.add_child(locked)
+		# locked: smaller, greyer words, and the whole card a shade darker
+		var lock: Label = UI.label("LOCKED", 12, C_LOCKED_TEXT)
+		lock.add_theme_font_override("font", UI.pixel_font(false))
+		col.add_child(lock)
+		var why: Label = UI.label(GameState.lock_reason(id), 12, C_LOCKED_TEXT, true)
+		why.custom_minimum_size = Vector2(406.0, 0.0)
+		col.add_child(why)
+	panel.set_meta("locked", not open)
+	panel.set_meta("shade", 0.6 if not open else 1.0)
+	return panel
+
+
+func _more_card() -> Control:
+	var panel: PanelContainer = UI.panel(UI.C_DISABLED_BORDER, 16.0)
+	panel.custom_minimum_size = CARD_SIZE
+	panel.size = CARD_SIZE
+	panel.pivot_offset = CARD_SIZE * 0.5
+	var col: VBoxContainer = UI.vbox(14)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_child(col)
+	var head: Label = UI.label("More missions incoming", 26, UI.C_ACCENT, true)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	head.custom_minimum_size = Vector2(406.0, 0.0)
+	col.add_child(head)
+	var t: Label = UI.label("New missions based on real spaceflights are on the way.", 15, UI.C_MUTED, true)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	t.custom_minimum_size = Vector2(406.0, 0.0)
+	col.add_child(t)
+	panel.set_meta("locked", true)
+	panel.set_meta("shade", 0.8)
+	return panel
+
+
+## Puts the cards in place: the chosen one in the middle, its neighbours smaller and dimmer
+## at the sides. animate = slide there.
+func _layout(animate: bool) -> void:
+	var cx: float = 640.0
+	for i in range(_cards.size()):
+		var card: Control = _cards[i]
+		var off: int = i - _index
+		var target: Vector2 = Vector2(cx - CARD_SIZE.x * 0.5 + float(off) * GAP, CARD_Y)
+		var sc: float = 1.0 if off == 0 else 0.84
+		var alpha: float = 1.0 if off == 0 else (0.45 if absi(off) == 1 else 0.0)
+		var shade: float = float(card.get_meta("shade", 1.0))
+		var tint: Color = Color(shade, shade, shade * 1.05, alpha)
+		card.size = CARD_SIZE   # containers can stretch it; keep every card the same size
+		card.visible = absi(off) <= 2
+		card.z_index = 1 if off == 0 else 0
+		card.mouse_filter = Control.MOUSE_FILTER_STOP if off == 0 else Control.MOUSE_FILTER_IGNORE
+		for child in card.find_children("*", "Button", true, false):
+			(child as Button).disabled = off != 0 or bool(card.get_meta("locked", false))
+		if animate:
+			var tw: Tween = card.create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			tw.tween_property(card, "position", target, 0.32)
+			tw.tween_property(card, "scale", Vector2(sc, sc), 0.32)
+			tw.tween_property(card, "modulate", tint, 0.32)
+		else:
+			card.position = target
+			card.scale = Vector2(sc, sc)
+			card.modulate = tint
+	if _tip != null:
+		_tip.text = "Mission %d of %d. Use the arrows, the arrow keys or the mouse wheel to slide." % [mini(_index + 1, GameState.mission_ids().size()), GameState.mission_ids().size()]
+
+
+func _step(delta: int) -> void:
+	var to: int = clampi(_index + delta, 0, _cards.size() - 1)
+	if to == _index:
+		return
+	_index = to
+	GameState.play_sound("select")
+	_layout(true)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _list_layer != null:
+		return
+	if event.is_action_pressed("ui_left"):
+		_step(-1)
+	elif event.is_action_pressed("ui_right"):
+		_step(1)
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_step(-1)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_step(1)
 
 
 func _build_bottom() -> void:
 	var bar: PanelContainer = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", UI.bar_style(false))
 	_place(bar, Vector2(0, 662), Vector2(1280, 58))
-	_tip = UI.label("20 missions, each based on a real spaceflight. Reach the goal, or get close, to unlock the next.", 15)
+	_tip = UI.label("", 15)
 	bar.add_child(_tip)
-	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 600), Vector2(160, 52))
+	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 606), Vector2(160, 50))
+	_place(UI.button("All missions", _on_list, 220.0, false), Vector2(530, 606), Vector2(220, 50))
+	_place(UI.button("Go to next mission", _on_next, 260.0, true), Vector2(1000, 606), Vector2(260, 50))
 
 
 func _on_start(id: String) -> void:
+	if not GameState.can_start_mission():
+		var wait: int = GameState.seconds_to_next_life()
+		_tip.text = "No lives left. The next one comes back in %d:%02d, or buy one with %d star dust." % [wait / 60, wait % 60, GameState.LIFE_COST_STARDUST]
+		GameState.play_sound("fail")
+		return
 	GameState.set_mission(id)
 	GameState.go("briefing")
 
 
-func _on_locked(id: String) -> void:
-	var index: int = GameState.mission_ids().find(id)
-	var before: Dictionary = GameState.mission_info(str(GameState.mission_ids()[maxi(0, index - 1)]))
-	_tip.text = "Finish %s first. Reaching the goal, or getting close, counts." % str(before.get("name", "the mission before"))
+func _on_next() -> void:
+	var id: String = GameState.next_mission_id()
+	var i: int = GameState.mission_ids().find(id)
+	if i != _index:
+		_index = i
+		_layout(true)
+	_on_start(id)
+
+
+func _on_buy() -> void:
+	if GameState.buy_life():
+		GameState.play_sound("chime")
+		GameState.go("missions")
+
+
+## Every mission by name, in a list. Click an open one to slide to it.
+func _on_list() -> void:
+	_list_layer = Control.new()
+	_list_layer.z_index = 10   # above the middle card
+	_list_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_list_layer)
+	_list_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	_list_layer.add_child(dim)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel: PanelContainer = UI.panel(UI.C_CYAN, 18.0)
+	_list_layer.add_child(panel)
+	panel.position = Vector2(170, 70)
+	panel.size = Vector2(940, 580)
+	var col: VBoxContainer = UI.vbox(10)
+	panel.add_child(col)
+	var head: HBoxContainer = UI.hbox(10)
+	col.add_child(head)
+	var title: Label = UI.label("All missions", 26, UI.C_CYAN)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(title)
+	head.add_child(UI.button("Close", _close_list, 120.0, false))
+	var grid: GridContainer = GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 6)
+	col.add_child(grid)
+	var ids: Array = GameState.mission_ids()
+	for i in range(ids.size()):
+		var id: String = str(ids[i])
+		var open: bool = GameState.is_mission_open(id)
+		var info: Dictionary = GameState.mission_info(id)
+		var row: Button = Button.new()
+		row.custom_minimum_size = Vector2(440.0, 42.0)
+		row.focus_mode = Control.FOCUS_NONE
+		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var s: int = GameState.stars_for(id)
+		row.text = "%02d   %s%s" % [i + 1, str(info.get("name", id)), "" if open else "   LOCKED"]
+		if open:
+			var stars_row: HBoxContainer = UI.star_row(s, 18.0)
+			row.add_child(stars_row)
+			stars_row.position = Vector2(350.0, 12.0)
+		row.add_theme_font_size_override("font_size", 15 if open else 13)
+		row.add_theme_color_override("font_color", UI.C_TEXT if open else C_LOCKED_TEXT)
+		row.add_theme_color_override("font_disabled_color", C_LOCKED_TEXT)
+		var fill: Color = Color(0.04, 0.09, 0.17) if open else Color(0.02, 0.03, 0.06)
+		row.add_theme_stylebox_override("normal", UI.box(fill, Color(UI.C_GOLD if s > 0 else UI.C_BORDER, 0.6) if open else Color(UI.C_DISABLED_BORDER, 0.4), 6, 1, 10.0))
+		row.add_theme_stylebox_override("hover", UI.box(fill.lightened(0.1), UI.C_CYAN, 6, 1, 10.0))
+		row.add_theme_stylebox_override("disabled", UI.box(fill, Color(UI.C_DISABLED_BORDER, 0.4), 6, 1, 10.0))
+		row.disabled = not open
+		row.pressed.connect(_pick_from_list.bind(i))
+		grid.add_child(row)
+	var more: Label = UI.label("21+   More missions incoming", 13, C_LOCKED_TEXT)
+	col.add_child(more)
+
+
+func _pick_from_list(i: int) -> void:
+	_close_list()
+	_index = i
+	GameState.play_sound("select")
+	_layout(true)
+
+
+func _close_list() -> void:
+	if _list_layer != null:
+		_list_layer.queue_free()
+		_list_layer = null
 
 
 func _on_back() -> void:

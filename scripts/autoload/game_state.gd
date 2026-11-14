@@ -9,6 +9,14 @@ const Sim = preload("res://scripts/core/sim.gd")
 const Craft = preload("res://scripts/core/craft.gd")
 const SAVE_PATH: String = "user://save.json"
 
+# ---- mission progress rules (see is_mission_open, record_mission_result, the lives below)
+const STAGE_SIZE: int = 7               # missions come in stages of 7
+const STAGE_STARS_NEEDED: int = 17      # stars (of 21) in a stage to open the next stage
+const MAX_LIVES: int = 5
+const LIFE_SECONDS: float = 1800.0      # one life comes back every 30 minutes
+const STARDUST_PER_PERFECT: int = 500   # the first time a mission gets 3 stars
+const LIFE_COST_STARDUST: int = 1500
+
 # ---- loaded once from data/*.json
 var parts: Dictionary = {}
 var level: Dictionary = {}          # the level for the chosen craft (see set_craft)
@@ -24,6 +32,10 @@ var puzzles_done: Dictionary = {}   # puzzle id -> true
 var best_stars: int = 0
 var missions_done: Dictionary = {}  # mission id -> best grade ("partial" or "success"). Failed does not count
 var mission_stars: Dictionary = {}  # mission id -> best stars
+var lives: int = MAX_LIVES          # a failed mission (0 stars) costs one, saved
+var life_clock: float = 0.0         # unix time the next life started refilling (0 = full)
+var stardust: int = 0               # earned by 3-star missions, spent on lives, saved
+var last_reward: Dictionary = {}    # what the last mission earned or cost, for the report (not saved)
 var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
 var tutorial_open: bool = false     # true while a tip box is on screen (clocks wait)
 var muted: bool = false             # sound effects on/off, saved
@@ -298,21 +310,133 @@ func mission_info(id: String) -> Dictionary:
 	return Data.load_level(id)
 
 
+## A mission counts as done once it has at least one star.
 func is_mission_done(id: String) -> bool:
-	return missions_done.has(id)
+	return stars_for(id) >= 1
 
 
-## A mission is open when it is the first one, or the one before it was finished
-## (reached the goal or got close: a failed attempt does not unlock the next one).
+func stars_for(id: String) -> int:
+	return int(mission_stars.get(id, 0))
+
+
+func total_stars() -> int:
+	var n: int = 0
+	for id in Data.MISSIONS:
+		n += stars_for(str(id))
+	return n
+
+
+## Missions come in stages of 7: stage 0 is missions 1-7, stage 1 is 8-14, and so on.
+func stage_of(index: int) -> int:
+	return index / STAGE_SIZE
+
+
+func stage_stars(stage: int) -> int:
+	var n: int = 0
+	for i in range(stage * STAGE_SIZE, mini((stage + 1) * STAGE_SIZE, Data.MISSIONS.size())):
+		n += stars_for(str(Data.MISSIONS[i]))
+	return n
+
+
+## A stage opens when the stage before it has at least STAGE_STARS_NEEDED stars.
+func is_stage_open(stage: int) -> bool:
+	return stage <= 0 or stage_stars(stage - 1) >= STAGE_STARS_NEEDED
+
+
+## A mission is open when it is the first one, or the one before it has at least one star.
+## The first mission of a stage also needs the stage before it to have enough stars.
+## Finished missions can be replayed in any order.
 func is_mission_open(id: String) -> bool:
 	var index: int = Data.MISSIONS.find(id)
 	if index <= 0:
 		return index == 0
+	if not is_stage_open(stage_of(index)):
+		return false
 	return is_mission_done(str(Data.MISSIONS[index - 1]))
+
+
+## Why a mission is locked, in one short line.
+func lock_reason(id: String) -> String:
+	var index: int = Data.MISSIONS.find(id)
+	var stage: int = stage_of(index)
+	if not is_stage_open(stage):
+		return "Needs %d of %d stars in missions %d-%d (you have %d)" % [STAGE_STARS_NEEDED, STAGE_SIZE * 3, (stage - 1) * STAGE_SIZE + 1, stage * STAGE_SIZE, stage_stars(stage - 1)]
+	return "Earn a star in mission %d first" % index
+
+
+## The mission "Go to next mission" starts: the one after the current mission if it is
+## open, otherwise the first open mission with no stars yet, otherwise the current one.
+func next_mission_id() -> String:
+	var index: int = Data.MISSIONS.find(mission_id)
+	if index >= 0 and index + 1 < Data.MISSIONS.size() and is_mission_open(str(Data.MISSIONS[index + 1])) and stars_for(mission_id) >= 1:
+		return str(Data.MISSIONS[index + 1])
+	for item in Data.MISSIONS:
+		var id: String = str(item)
+		if is_mission_open(id) and stars_for(id) == 0:
+			return id
+	return mission_id
+
+
+# ---- lives and star dust
+
+## Gives back any lives that have refilled since the clock started.
+func refresh_lives() -> void:
+	if lives >= MAX_LIVES:
+		lives = MAX_LIVES
+		life_clock = 0.0
+		return
+	var now: float = Time.get_unix_time_from_system()
+	if life_clock <= 0.0:
+		life_clock = now
+	while lives < MAX_LIVES and now - life_clock >= LIFE_SECONDS:
+		lives += 1
+		life_clock += LIFE_SECONDS
+	if lives >= MAX_LIVES:
+		life_clock = 0.0
+
+
+## Seconds until the next life comes back (0 when lives are full).
+func seconds_to_next_life() -> int:
+	refresh_lives()
+	if lives >= MAX_LIVES:
+		return 0
+	return maxi(0, int(ceil(LIFE_SECONDS - (Time.get_unix_time_from_system() - life_clock))))
+
+
+func lose_life() -> void:
+	refresh_lives()
+	if lives >= MAX_LIVES:
+		life_clock = Time.get_unix_time_from_system()
+	lives = maxi(0, lives - 1)
+	save_game()
+
+
+func buy_life() -> bool:
+	refresh_lives()
+	if lives >= MAX_LIVES or stardust < LIFE_COST_STARDUST:
+		return false
+	stardust -= LIFE_COST_STARDUST
+	lives += 1
+	if lives >= MAX_LIVES:
+		life_clock = 0.0
+	save_game()
+	return true
+
+
+func can_start_mission() -> bool:
+	refresh_lives()
+	return lives > 0
 
 
 ## Called when the mission ends. grade is "success", "partial" or "failed".
 func record_mission_result(grade: String, stars: int) -> void:
+	last_reward = {}
+	if stars >= 3 and stars_for(mission_id) < 3:
+		stardust += STARDUST_PER_PERFECT
+		last_reward["stardust"] = STARDUST_PER_PERFECT
+	if stars <= 0:
+		lose_life()
+		last_reward["life_lost"] = true
 	if grade != "failed":
 		if grade == "success" or not missions_done.has(mission_id):
 			missions_done[mission_id] = grade
@@ -372,7 +496,8 @@ func save_game() -> void:
 		return
 	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
 			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch,
-			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size}))
+			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size,
+			"lives": lives, "life_clock": life_clock, "stardust": stardust}))
 	file.close()
 
 
@@ -391,6 +516,9 @@ func load_save() -> void:
 	player_title = "Commander"
 	avatar_suit = 0
 	avatar_patch = 0
+	lives = MAX_LIVES
+	life_clock = 0.0
+	stardust = 0
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
 	var data: Dictionary = Data.load_dict(SAVE_PATH)
@@ -413,6 +541,10 @@ func load_save() -> void:
 	music_volume = clampf(float(data.get("music_volume", 0.5)), 0.0, 1.0)
 	music_muted = bool(data.get("music_muted", false))
 	font_size = str(data.get("font_size", "medium"))
+	lives = clampi(int(data.get("lives", MAX_LIVES)), 0, MAX_LIVES)
+	life_clock = float(data.get("life_clock", 0.0))
+	stardust = maxi(0, int(data.get("stardust", 0)))
+	refresh_lives()
 	var seen: Variant = data.get("tutorial_seen", {})
 	if typeof(seen) == TYPE_DICTIONARY:
 		tutorial_seen = seen
@@ -424,6 +556,9 @@ func reset_progress() -> void:
 	missions_done = {}
 	mission_stars = {}
 	tutorial_seen = {}
+	lives = MAX_LIVES
+	life_clock = 0.0
+	stardust = 0
 	save_game()
 
 
