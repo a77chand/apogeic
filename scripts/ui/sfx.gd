@@ -43,6 +43,20 @@ static func build_streams() -> Dictionary:
 	out["chime"] = _wav(_join([_tone(523.25, 0.14, 0.35, 9.0), _tone(659.25, 0.14, 0.35, 9.0), _tone(783.99, 0.55, 0.35, 5.0)]))
 	out["fail"] = _wav(_slide(420.0, 170.0, 0.55, 0.32))
 	out["rumble"] = _wav(_rumble(2.4, 0.5))
+	# countdown: a short beep for 3, 2, 1, then a higher, longer tone at lift-off
+	out["beep"] = _wav(_bell(740.0, 0.16, 0.30, 18.0))
+	out["go"] = _wav(_bell(1110.0, 0.45, 0.32, 6.0))
+	# picking a part: a very small, soft tick
+	out["select"] = _wav(_join([_tone(1400.0, 0.025, 0.16, 90.0), _tone(2100.0, 0.03, 0.10, 90.0)]))
+	# puzzle solved: quick rising notes (G4 C5 E5 G5), a held bell C6, and a light sparkle
+	var fan: PackedFloat32Array = _join([_bell(392.0, 0.09, 0.26, 12.0), _bell(523.25, 0.09, 0.26, 12.0),
+			_bell(659.25, 0.09, 0.26, 12.0), _bell(783.99, 0.09, 0.26, 12.0)])
+	var held: PackedFloat32Array = _bell(1046.5, 0.75, 0.30, 4.0)
+	var sparkle: PackedFloat32Array = _sparkle(0.75)
+	for i in range(held.size()):
+		held[i] += sparkle[i]
+	fan.append_array(held)
+	out["fanfare"] = _wav(fan)
 	return out
 
 
@@ -71,6 +85,37 @@ static func _tone(freq: float, seconds: float, volume: float, decay: float) -> P
 		var attack: float = minf(1.0, t / 0.004)       # 4 ms fade-in, so there is no pop
 		var release: float = minf(1.0, (seconds - t) / 0.01)  # and a 10 ms fade-out at the end
 		out[i] = sin(TAU * freq * t) * exp(-decay * t) * attack * maxf(0.0, release) * volume
+	return out
+
+
+## A bell-like note: the base tone plus softer overtones, so it rings instead of buzzing.
+static func _bell(freq: float, seconds: float, volume: float, decay: float) -> PackedFloat32Array:
+	var n: int = int(seconds * float(RATE))
+	var out: PackedFloat32Array = PackedFloat32Array()
+	out.resize(n)
+	for i in range(n):
+		var t: float = float(i) / float(RATE)
+		var attack: float = minf(1.0, t / 0.004)
+		var release: float = minf(1.0, (seconds - t) / 0.015)
+		var wave: float = sin(TAU * freq * t) + 0.35 * sin(TAU * freq * 2.0 * t) * exp(-decay * 1.5 * t) + 0.15 * sin(TAU * freq * 3.0 * t) * exp(-decay * 2.5 * t)
+		out[i] = wave / 1.5 * exp(-decay * t) * attack * maxf(0.0, release) * volume
+	return out
+
+
+## Tiny high "twinkles" scattered over the length, from a fixed pattern (same every time).
+static func _sparkle(seconds: float) -> PackedFloat32Array:
+	var n: int = int(seconds * float(RATE))
+	var out: PackedFloat32Array = PackedFloat32Array()
+	out.resize(n)
+	var notes: Array = [[0.02, 2637.0], [0.10, 3136.0], [0.19, 2793.0], [0.28, 3520.0], [0.38, 3136.0]]
+	for item in notes:
+		var start: int = int(float(item[0]) * float(RATE))
+		var freq: float = float(item[1])
+		for j in range(int(0.12 * float(RATE))):
+			if start + j >= n:
+				break
+			var t: float = float(j) / float(RATE)
+			out[start + j] += sin(TAU * freq * t) * exp(-30.0 * t) * 0.07
 	return out
 
 

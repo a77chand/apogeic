@@ -322,26 +322,48 @@ func _rocket(half_width: float, boosters: bool) -> void:
 
 # ---------------------------------------------------------------- backgrounds and logo
 
+## The launch scene. The bottom 720 px is the pad; anything above that (when the control is
+## taller) is more sky, fading smoothly from sunset to the colour of space, so when the camera
+## pulls away there is no seam anywhere.
 func _launch_pad() -> void:
-	var sky: PackedColorArray = PackedColorArray([Color(0.08, 0.10, 0.28), Color(0.08, 0.10, 0.28), Color(0.98, 0.55, 0.35), Color(0.98, 0.55, 0.35)])
-	draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, size.y * 0.88), Vector2(0, size.y * 0.88)]), sky)
-	for i in range(40):  # a few stars high in the sky
-		var sx: float = fmod(float(i) * 97.3, size.x)
-		var sy: float = fmod(float(i) * 53.7, size.y * 0.35)
-		draw_circle(Vector2(sx, sy), 1.0 + float(i % 3) * 0.5, Color(1, 1, 1, 0.6))
-	draw_circle(Vector2(size.x * 0.18, size.y * 0.84), size.y * 0.16, Color(1.0, 0.85, 0.55, 0.35))
-	_rect(0.0, 0.88, 1.0, 0.12, Color(0.20, 0.24, 0.30), false)
-	_rect(0.30, 0.88, 0.40, 0.03, METAL_DARK, false)
-	# launch tower
-	var tx: float = 0.18
-	draw_line(_p(tx, 0.88), _p(tx, 0.18), METAL_DARK, 6.0)
-	draw_line(_p(tx + 0.045, 0.88), _p(tx + 0.045, 0.18), METAL_DARK, 6.0)
-	for i in range(12):
-		var ty: float = 0.88 - float(i) * 0.05
-		draw_line(_p(tx, ty), _p(tx + 0.045, ty - 0.05), METAL, 2.0)
+	var h: float = 720.0
+	var top: float = maxf(0.0, size.y - h)
+	var horizon: float = top + h * 0.88
+	var space_col: Color = Color(0.03, 0.07, 0.18)
+	var high: Color = Color(0.07, 0.09, 0.26)
+	var mid: Color = Color(0.34, 0.20, 0.36)
+	var low: Color = Color(0.98, 0.55, 0.35)
+	_band(0.0, top + h * 0.10, space_col, high)
+	_band(top + h * 0.10, top + h * 0.50, high, mid)
+	_band(top + h * 0.50, horizon, mid, low)
+	var seed_value: int = 777
+	for i in range(int(size.y / 9.0)):   # stars, fading out towards the horizon
+		seed_value = (seed_value * 1103515245 + 12345) & 0x7fffffff
+		var sx: float = float(seed_value % 10000) / 10000.0 * size.x
+		seed_value = (seed_value * 1103515245 + 12345) & 0x7fffffff
+		var sy: float = float(seed_value % 10000) / 10000.0 * (top + h * 0.55)
+		var fade: float = clampf(1.0 - (sy - top) / (h * 0.55), 0.0, 1.0) if sy > top else 1.0
+		draw_circle(Vector2(sx, sy), 0.8 + float(i % 3) * 0.5, Color(1, 1, 1, 0.65 * fade))
+	draw_circle(Vector2(size.x * 0.18, top + h * 0.84), h * 0.16, Color(1.0, 0.85, 0.55, 0.35))
+	draw_rect(Rect2(0.0, horizon, size.x, size.y - horizon), Color(0.20, 0.24, 0.30))
+	draw_rect(Rect2(size.x * 0.30, horizon, size.x * 0.40, h * 0.03), METAL_DARK)
+	var tx: float = size.x * 0.18
+	var tw: float = size.x * 0.045
+	draw_line(Vector2(tx, horizon), Vector2(tx, top + h * 0.18), METAL_DARK, 6.0)
+	draw_line(Vector2(tx + tw, horizon), Vector2(tx + tw, top + h * 0.18), METAL_DARK, 6.0)
+	for i in range(14):
+		var ty: float = horizon - float(i) * h * 0.05
+		draw_line(Vector2(tx, ty), Vector2(tx + tw, ty - h * 0.05), METAL, 2.0)
 	for i in range(3):
-		draw_line(_p(tx + 0.045, 0.30 + float(i) * 0.12), _p(tx + 0.17, 0.30 + float(i) * 0.12), METAL_LIGHT, 4.0)
-	draw_circle(_p(tx + 0.02, 0.17), size.x * 0.007, ROCKET_RED)
+		var ay: float = top + h * (0.30 + float(i) * 0.12)
+		draw_line(Vector2(tx + tw, ay), Vector2(tx + size.x * 0.17, ay), METAL_LIGHT, 4.0)
+	draw_circle(Vector2(tx + tw * 0.45, top + h * 0.17), 6.0, ROCKET_RED)
+
+
+## A vertical colour gradient between two heights.
+func _band(y0: float, y1: float, c0: Color, c1: Color) -> void:
+	draw_polygon(PackedVector2Array([Vector2(0, y0), Vector2(size.x, y0), Vector2(size.x, y1), Vector2(0, y1)]),
+			PackedColorArray([c0, c0, c1, c1]))
 
 
 func _orbit_bg() -> void:
@@ -356,13 +378,31 @@ func _orbit_bg() -> void:
 
 
 func _logo() -> void:
-	var c: Vector2 = _p(0.18, 0.50)
+	var c: Vector2 = _p(0.17, 0.50)
 	_earth(c, size.y * 0.30)
+	draw_arc(c, size.y * 0.44, -0.9 * PI, 0.05 * PI, 40, ORANGE, 4.0)
+	draw_circle(c + Vector2(cos(0.05 * PI), sin(0.05 * PI)) * size.y * 0.44, size.y * 0.04, YELLOW)
 	var font: Font = ThemeDB.fallback_font
-	draw_string(font, _p(0.34, 0.46), "SPACE MISSION", HORIZONTAL_ALIGNMENT_LEFT, size.x * 0.64, int(size.y * 0.20), SOFT_WHITE)
-	draw_string(font, _p(0.34, 0.70), "DESIGNER", HORIZONTAL_ALIGNMENT_LEFT, size.x * 0.64, int(size.y * 0.24), CYAN)
-	draw_arc(_p(0.18, 0.50), size.y * 0.44, -0.9 * PI, 0.05 * PI, 40, ORANGE, 3.0)
-	draw_circle(_p(0.18 + 0.44 * size.y / size.x * cos(0.05 * PI), 0.50 + 0.44 * sin(0.05 * PI)), size.y * 0.035, YELLOW)
+	if ResourceLoader.exists("res://art/fonts/LilitaOne-Regular.ttf"):
+		font = load("res://art/fonts/LilitaOne-Regular.ttf")
+	var x: float = size.x * 0.33
+	var big: int = int(size.y * 0.30)
+	var small: int = int(size.y * 0.20)
+	# soft glow behind the words
+	for i in range(6):
+		draw_circle(_p(0.62, 0.50), size.y * (0.55 - 0.06 * float(i)), Color(0.25, 0.55, 1.0, 0.025))
+	_title_text(font, Vector2(x, size.y * 0.44), "SPACE MISSION", small, SOFT_WHITE, Color(0.55, 0.75, 1.0))
+	_title_text(font, Vector2(x, size.y * 0.80), "DESIGNER", big, Color(1.0, 0.82, 0.30), Color(1.0, 0.55, 0.15))
+
+
+## Chunky title text: a drop shadow, a thick dark outline, the main colour, and the lighter
+## colour nudged up a little on top, which reads as a bevelled highlight on the letters.
+func _title_text(font: Font, pos: Vector2, text: String, font_size: int, top_col: Color, bottom_col: Color) -> void:
+	var w: float = size.x * 0.66
+	draw_string_outline(font, pos + Vector2(0, 5), text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, 12, Color(0, 0, 0, 0.55))
+	draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, 10, OUTLINE)
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, bottom_col)
+	draw_string(font, pos + Vector2(0, -2), text, HORIZONTAL_ALIGNMENT_LEFT, w, font_size, Color(top_col, 0.55))
 
 
 # ---------------------------------------------------------------- small icons for part cards

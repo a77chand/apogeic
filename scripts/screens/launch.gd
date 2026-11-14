@@ -9,6 +9,8 @@ const Starfield = preload("res://scripts/ui/starfield.gd")
 
 const START_Y: float = 230.0     # where the rocket stands
 const TOP_Y: float = -520.0      # off the top of the screen: reached orbit
+const PAD_START: float = -720.0  # the drawn sky is 1440 px tall; its bottom half is on screen
+const PAD_DROP: float = 420.0    # how far the ground falls away as the camera pulls back
 
 var _done: bool = false
 var _tween: Tween = null
@@ -28,12 +30,8 @@ func _ready() -> void:
 	if ResourceLoader.exists("res://art/backgrounds/bg_launch_pad.png"):
 		_pad = UI.background("res://art/backgrounds/bg_launch_pad.png")
 	else:
-		_pad = Sprites.make("bg_launch_pad", Vector2(1280, 720))   # drawn sky, ground and tower
-	# more sky above the picture, so there is no seam when the ground drops away on the climb
-	var upper_sky: Control = Starfield.new()
-	upper_sky.position = Vector2(0, -720)
-	upper_sky.size = Vector2(1280, 720)
-	_pad.add_child(upper_sky)
+		_pad = Sprites.make("bg_launch_pad", Vector2(1280, 1440))   # drawn: one tall, seamless sky
+		_pad.position = Vector2(0, PAD_START)
 	add_child(_pad)
 	if ResourceLoader.exists("res://art/backgrounds/bg_earth_orbit.png"):
 		_orbit_bg = UI.background("res://art/backgrounds/bg_earth_orbit.png")
@@ -107,7 +105,7 @@ func _run_sequence() -> void:
 		_tween.tween_property(_rocket, "position:y", TOP_Y, 4.0).set_ease(Tween.EASE_IN)
 		# the camera pulls away: the rocket shrinks and the ground drops out of view
 		_tween.parallel().tween_property(_rocket, "scale", Vector2(0.55, 0.55), 4.0)
-		_tween.parallel().tween_property(_pad, "position:y", 420.0, 4.0).set_ease(Tween.EASE_IN)
+		_tween.parallel().tween_property(_pad, "position:y", _pad.position.y + PAD_DROP, 4.0).set_ease(Tween.EASE_IN)
 		_tween.tween_property(_orbit_bg, "modulate:a", 1.0, 1.0)
 		_tween.tween_callback(_open_cubesat)
 		_tween.tween_interval(2.0)
@@ -118,7 +116,7 @@ func _run_sequence() -> void:
 		_tween.tween_property(_rocket, "position:y", peak, rise).set_ease(Tween.EASE_IN)
 		var pull: float = _climb / 100.0
 		_tween.parallel().tween_property(_rocket, "scale", Vector2.ONE * (1.0 - 0.45 * pull), rise)
-		_tween.parallel().tween_property(_pad, "position:y", 420.0 * pull * 0.8, rise).set_ease(Tween.EASE_IN)
+		_tween.parallel().tween_property(_pad, "position:y", _pad.position.y + PAD_DROP * pull * 0.8, rise).set_ease(Tween.EASE_IN)
 		_tween.tween_callback(_flame_off)
 		_tween.tween_callback(_play.bind("fail"))
 		_tween.tween_callback(_say.bind(_failure_text()))
@@ -136,6 +134,8 @@ func _say(text: String) -> void:
 func _count_to(text: String) -> void:
 	if _count != null:
 		_count.text = text
+	if text != "":
+		GameState.play_sound("beep")   # 3, 2, 1
 
 
 func _play(id: String) -> void:
@@ -143,6 +143,7 @@ func _play(id: String) -> void:
 
 
 func _flame_on() -> void:
+	GameState.play_sound("go")
 	GameState.play_sound("rumble")
 	var flame: Node = _rocket.get_node_or_null("Flame")
 	if flame is AnimatedSprite2D:

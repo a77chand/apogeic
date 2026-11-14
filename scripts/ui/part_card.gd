@@ -95,6 +95,7 @@ func _gui_input(event: InputEvent) -> void:
 		var mb: InputEventMouseButton = event
 		# Fire on release, so starting a drag does not also count as a click.
 		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			GameState.play_sound("select")
 			clicked.emit(part_id)
 
 

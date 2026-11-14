@@ -183,7 +183,7 @@ func _on_lock() -> void:
 	_locked = true
 	_lock_btn.disabled = true
 	GameState.mark_puzzle_done(ID)
-	GameState.play_sound("chime")
+	GameState.play_sound("fanfare")
 	_message.text = str(_pz.get("lesson", ""))
 	_message.add_theme_color_override("font_color", UI.C_GREEN)
 	var timer: Timer = Timer.new()
