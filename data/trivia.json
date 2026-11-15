@@ -1,5 +1,5 @@
 {
- "_note": "Trivia for star dust. 40 questions in 4 levels of difficulty (10 each). A round asks 10, getting harder. Facts checked against NASA, ESA, ISRO and agency histories; photos are NASA images (see docs/CREDITS.md). answer is the index of the right choice.",
+ "_note": "Trivia for star dust. 40 questions in 4 levels of difficulty (10 each). A round asks 10, getting harder. Facts checked against NASA, ESA, ISRO and agency histories; photos are NASA images (see docs/CREDITS.md); art: draws a subject with no suitable photo (sputnik, dsky, mars_orbit, or rocket:<name> from rocket_art.gd). answer is the index of the right choice.",
  "per_round": [
   3,
   3,
@@ -25,8 +25,7 @@
    "answer": 1,
    "explain": "Neil Armstrong stepped onto the Moon on 20 July 1969 during Apollo 11. Buzz Aldrin followed him; Michael Collins stayed in orbit.",
    "image": "res://art/trivia/lunar_module_eagle.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q02",
@@ -42,8 +41,8 @@
    "answer": 2,
    "explain": "The USSR launched Sputnik 1 on 4 October 1957. It was a polished ball with four antennas that sent out a simple beep.",
    "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "anim": "drift",
+   "art": "sputnik"
   },
   {
    "id": "q03",
@@ -59,8 +58,8 @@
    "answer": 1,
    "explain": "Yuri Gagarin orbited the Earth once in Vostok 1 on 12 April 1961.",
    "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "anim": "drift",
+   "art": "rocket:Vostok-K"
   },
   {
    "id": "q04",
@@ -76,8 +75,7 @@
    "answer": 2,
    "explain": "This is a Saturn V, the rocket that launched the Apollo crews to the Moon. It is still one of the most powerful rockets ever flown.",
    "image": "res://art/trivia/saturn_v_launch.jpg",
-   "anim": "launch",
-   "scene": ""
+   "anim": "launch"
   },
   {
    "id": "q05",
@@ -93,8 +91,7 @@
    "answer": 0,
    "explain": "The International Space Station has had people living on board without a break since November 2000.",
    "image": "res://art/trivia/iss.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q06",
@@ -110,8 +107,7 @@
    "answer": 2,
    "explain": "Three: Neil Armstrong, Buzz Aldrin and Michael Collins. Two landed; Collins orbited the Moon in the command module.",
    "image": "res://art/trivia/lunar_module_eagle.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q07",
@@ -127,8 +123,7 @@
    "answer": 2,
    "explain": "Curiosity landed in Gale Crater on Mars in August 2012 and is still exploring.",
    "image": "res://art/trivia/curiosity.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q08",
@@ -144,8 +139,7 @@
    "answer": 1,
    "explain": "The Space Shuttle Discovery released Hubble into orbit in April 1990.",
    "image": "res://art/trivia/hubble_deploy.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q09",
@@ -160,9 +154,9 @@
    ],
    "answer": 1,
    "explain": "In low orbit the Earth hides the Sun for a big part of every orbit, and the solar panels make nothing in the dark.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "image": "res://art/trivia/orbital_sunset.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q10",
@@ -177,9 +171,9 @@
    ],
    "answer": 0,
    "explain": "A CubeSat is built from 10 cm cubes. 1U is one cube; a 3U CubeSat is three stacked together.",
-   "image": "",
-   "anim": "twinkle",
-   "scene": "cubesat"
+   "image": "res://art/trivia/cubesat_deploy.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q11",
@@ -195,8 +189,8 @@
    "answer": 1,
    "explain": "Aryabhata was built by India's space agency, ISRO, and launched on a Soviet rocket in April 1975.",
    "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "anim": "drift",
+   "art": "rocket:Kosmos-3M"
   },
   {
    "id": "q12",
@@ -212,8 +206,8 @@
    "answer": 2,
    "explain": "Margaret Hamilton led the software engineering team for the Apollo guidance computer at the MIT Instrumentation Laboratory. Katherine Johnson worked on trajectory calculations at NASA.",
    "image": "",
-   "anim": "twinkle",
-   "scene": "code"
+   "anim": "drift",
+   "art": "dsky"
   },
   {
    "id": "q13",
@@ -228,9 +222,9 @@
    ],
    "answer": 0,
    "explain": "John Glenn asked for Katherine Johnson to verify the computer's calculations before he flew Friendship 7 in February 1962.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "image": "res://art/trivia/katherine_johnson.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q14",
@@ -245,9 +239,9 @@
    ],
    "answer": 1,
    "explain": "Explorer 1's radiation counter found belts of charged particles trapped by Earth's magnetic field, now called the Van Allen belts.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "image": "res://art/trivia/explorer1.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q15",
@@ -263,8 +257,7 @@
    "answer": 2,
    "explain": "This is the International Space Station, photographed from the Space Shuttle Endeavour in 2011.",
    "image": "res://art/trivia/iss.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q16",
@@ -280,8 +273,7 @@
    "answer": 1,
    "explain": "The Saturn V launched the crewed Apollo missions to the Moon. Its last flight, in 1973, put the Skylab space station into orbit.",
    "image": "res://art/trivia/saturn_v_launch.jpg",
-   "anim": "launch",
-   "scene": "earth"
+   "anim": "launch"
   },
   {
    "id": "q17",
@@ -297,8 +289,7 @@
    "answer": 2,
    "explain": "This is Curiosity, in a selfie taken with the camera on its robotic arm. The arm is left out of the picture because it holds the camera.",
    "image": "res://art/trivia/curiosity.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q18",
@@ -312,10 +303,10 @@
     "A radio"
    ],
    "answer": 1,
-   "explain": "Hitting the air at many kilometres per second heats the capsule to thousands of degrees. The heat shield takes that heat.",
-   "image": "",
-   "anim": "launch",
-   "scene": "earth"
+   "explain": "Hitting the air at many kilometres per second heats the capsule to thousands of degrees. The heat shield takes that heat. The photo shows the heat shield for NASA's Orion capsule being built.",
+   "image": "res://art/trivia/orion_heat_shield.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q19",
@@ -330,9 +321,9 @@
    ],
    "answer": 1,
    "explain": "A launch shakes a spacecraft hard. Vibration tests find loose parts on the ground, not in orbit.",
-   "image": "",
-   "anim": "twinkle",
-   "scene": "cubesat"
+   "image": "res://art/trivia/insight_vibration.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q20",
@@ -347,9 +338,9 @@
    ],
    "answer": 1,
    "explain": "The storm heats the upper atmosphere, which swells and drags low satellites. In 2022 about 38 new Starlink satellites burned up this way.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "image": "res://art/trivia/aurora_iss.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q21",
@@ -365,8 +356,8 @@
    "answer": 1,
    "explain": "One team's software gave thruster data in pound-force seconds; another expected newton-seconds. The orbiter flew too low into Mars' atmosphere.",
    "image": "",
-   "anim": "orbit",
-   "scene": "mars"
+   "anim": "drift",
+   "art": "mars_orbit"
   },
   {
    "id": "q22",
@@ -382,8 +373,8 @@
    "answer": 1,
    "explain": "Sputnik 1 had no solar panels. Its batteries kept the radio going for about three weeks.",
    "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "anim": "drift",
+   "art": "sputnik"
   },
   {
    "id": "q23",
@@ -399,8 +390,8 @@
    "answer": 2,
    "explain": "Chandrayaan-1 launched on a PSLV, India's workhorse rocket, from Sriharikota in October 2008.",
    "image": "",
-   "anim": "launch",
-   "scene": "rocket"
+   "anim": "drift",
+   "art": "rocket:PSLV-XL"
   },
   {
    "id": "q24",
@@ -416,8 +407,7 @@
    "answer": 1,
    "explain": "These are four RS-25 engines, the same type that powered the Space Shuttle, firing during the SLS core stage test at Stennis in 2021.",
    "image": "res://art/trivia/rs25_green_run.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q25",
@@ -431,10 +421,10 @@
     "A rocket engine"
    ],
    "answer": 1,
-   "explain": "An oxygen tank in the service module exploded. The crew used the lunar module as a lifeboat and came home safely.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "moon"
+   "explain": "An oxygen tank in the service module exploded. The crew used the lunar module as a lifeboat and came home safely. The photo shows the damaged service module drifting away, taken by the crew.",
+   "image": "res://art/trivia/apollo13_service_module.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q26",
@@ -450,8 +440,7 @@
    "answer": 2,
    "explain": "This is the lunar module Eagle, coming back from the Moon's surface to meet the command module. The Earth is rising behind it.",
    "image": "res://art/trivia/lunar_module_eagle.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q27",
@@ -467,8 +456,7 @@
    "answer": 1,
    "explain": "The main mirror was ground very slightly to the wrong shape, so pictures were blurry. Astronauts fitted corrective optics in 1993.",
    "image": "res://art/trivia/hubble_deploy.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q28",
@@ -483,9 +471,9 @@
    ],
    "answer": 0,
    "explain": "The two MarCO CubeSats flew past Mars in 2018 and relayed data from the InSight lander as it landed.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "mars"
+   "image": "res://art/trivia/marco.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q29",
@@ -501,8 +489,7 @@
    "answer": 1,
    "explain": "Each Voyager carries a gold-plated record of sounds, music and pictures from Earth.",
    "image": "res://art/trivia/golden_record.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q30",
@@ -518,8 +505,7 @@
    "answer": 1,
    "explain": "The lunar module Eagle landed on 20 July 1969. Columbia was the command module that stayed in orbit.",
    "image": "res://art/trivia/lunar_module_eagle.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   },
   {
    "id": "q31",
@@ -535,8 +521,8 @@
    "answer": 1,
    "explain": "Valentina Tereshkova flew Vostok 6 in June 1963 and orbited the Earth 48 times.",
    "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "anim": "drift",
+   "art": "rocket:Vostok-K"
   },
   {
    "id": "q32",
@@ -551,9 +537,9 @@
    ],
    "answer": 1,
    "explain": "An O-ring seal in a solid rocket booster failed after a very cold night, letting hot gas escape.",
-   "image": "",
-   "anim": "launch",
-   "scene": "rocket"
+   "image": "res://art/trivia/challenger_launch.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q33",
@@ -568,9 +554,9 @@
    ],
    "answer": 1,
    "explain": "A piece of insulating foam hit the left wing during launch and damaged its heat protection. The shuttle broke up on its way home.",
-   "image": "",
-   "anim": "launch",
-   "scene": "rocket"
+   "image": "res://art/trivia/columbia_launch.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q34",
@@ -585,9 +571,9 @@
    ],
    "answer": 1,
    "explain": "The Soviet Luna 9 landed softly in February 1966, four months before NASA's Surveyor 1.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "moon"
+   "image": "res://art/trivia/moon_crater.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q35",
@@ -602,9 +588,9 @@
    ],
    "answer": 2,
    "explain": "India's Chandrayaan-3 landed near the south pole in August 2023.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "moon"
+   "image": "res://art/trivia/moon_crater.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q36",
@@ -619,9 +605,9 @@
    ],
    "answer": 1,
    "explain": "Sojourner drove on Mars in 1997 with the Mars Pathfinder lander. Lunokhod 1 drove earlier, in 1970, but on the Moon, which is not a planet.",
-   "image": "",
+   "image": "res://art/trivia/sojourner.jpg",
    "anim": "drift",
-   "scene": "mars"
+   "art": ""
   },
   {
    "id": "q37",
@@ -637,8 +623,8 @@
    "answer": 1,
    "explain": "Guidance software reused from Ariane 4 tried to store a number too big for its format. Both inertial reference units shut down and the rocket broke up.",
    "image": "",
-   "anim": "launch",
-   "scene": "rocket"
+   "anim": "drift",
+   "art": "rocket:Ariane 5"
   },
   {
    "id": "q38",
@@ -652,10 +638,10 @@
     "Peggy Whitson"
    ],
    "answer": 1,
-   "explain": "Sally Ride flew on the Space Shuttle Challenger in June 1983.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "earth"
+   "explain": "Sally Ride flew on the Space Shuttle Challenger in June 1983. The photo is the STS-7 crew; Sally Ride is front left.",
+   "image": "res://art/trivia/sts7_crew.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q39",
@@ -670,9 +656,9 @@
    ],
    "answer": 0,
    "explain": "Apollo 8 orbited the Moon ten times at Christmas 1968 and took the famous Earthrise photo.",
-   "image": "",
-   "anim": "orbit",
-   "scene": "moon"
+   "image": "res://art/trivia/earthrise.jpg",
+   "anim": "drift",
+   "art": ""
   },
   {
    "id": "q40",
@@ -688,8 +674,7 @@
    "answer": 1,
    "explain": "About 28,000 km/h, so it goes round the Earth roughly every 90 minutes.",
    "image": "res://art/trivia/iss.jpg",
-   "anim": "drift",
-   "scene": "earth"
+   "anim": "drift"
   }
  ]
 }
