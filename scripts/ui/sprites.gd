@@ -33,8 +33,33 @@ const KINDS: Array = [
 	"rocket_small", "rocket_medium", "rocket_heavy", "bg_launch_pad", "bg_earth_orbit",
 	"rocket_rideshare", "rocket_launcher", "rocket_cargo",
 	"part_solar_small", "part_solar_large", "part_battery", "part_camera", "part_spectrometer",
-	"part_antenna_small", "part_antenna_large", "icon_health", "ui_logo",
+	"part_antenna_small", "part_antenna_large", "icon_health", "ui_logo", "icon_time",
 ]
+
+## Craft size ("1u", "3u", "6u") for kind "cubesat_live": its body is art/modules/cubesat_<size>.png.
+var craft: String = ""
+## How wide each craft's body is drawn, as a share of the picture width.
+const BODY_WIDTH: Dictionary = {"1u": 0.24, "3u": 0.44, "6u": 0.36}
+var _art_cache: Dictionary = {}
+
+
+## The team's drawing at `path`, or null if the file is not there.
+func _art(path: String) -> Texture2D:
+	if not _art_cache.has(path):
+		_art_cache[path] = load(path) if ResourceLoader.exists(path) else null
+	return _art_cache[path]
+
+
+## Draws a texture into a box given in fractions of the picture, keeping its shape.
+## anchor_bottom: the picture's bottom edge sits on the box's bottom (for things standing on top).
+func _art_in(tex: Texture2D, u: float, v: float, w: float, h: float, anchor_bottom: bool = false) -> void:
+	var box: Rect2 = Rect2(_p(u, v), Vector2(size.x * w, size.y * h))
+	var k: float = minf(box.size.x / float(tex.get_width()), box.size.y / float(tex.get_height()))
+	var sz: Vector2 = Vector2(tex.get_width(), tex.get_height()) * k
+	var pos: Vector2 = box.get_center() - sz * 0.5
+	if anchor_bottom:
+		pos.y = box.end.y - sz.y
+	draw_texture_rect(tex, Rect2(pos, sz), false)
 
 var kind: String = ""
 ## Radians per second the Earth turns (0 = still). The ops screen turns it on.
@@ -240,10 +265,22 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 	var top: float = 0.5 - bh / 2.0
 	var bx: float = 0.34
 	var bw: float = 0.32
+	# the team's CubeSat drawing for this craft size, if there is one
+	var tex: Texture2D = null
+	if craft != "":
+		tex = _art("res://art/modules/cubesat_%s.png" % craft)
+	if tex != null and size.x > 0.0 and size.y > 0.0:
+		bw = float(BODY_WIDTH.get(craft, 0.40))
+		bh = bw * size.x / (float(tex.get_width()) / float(tex.get_height())) / size.y
+		if bh > 0.56:
+			bw *= 0.56 / bh
+			bh = 0.56
+		bx = 0.5 - bw / 2.0
+		top = 0.5 - bh / 2.0 + 0.06   # a little low, to leave room for an antenna on top
 	var large: bool = fitted.has("solar_large")
 	var has_panels: bool = large or fitted.has("solar_small")
 	if has_panels:
-		var pw: float = (0.27 if large else 0.17) * fold
+		var pw: float = minf(0.27 if large else 0.17, bx - 0.02) * fold
 		var ph: float = (bh * 0.9 if large else bh * 0.7)
 		var py: float = 0.5 - ph / 2.0
 		for side in [-1, 1]:
@@ -257,16 +294,19 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 				var gx: float = x0 + pw * float(i) / float(cols)
 				draw_line(_p(gx, py), _p(gx, py + ph), SOLAR_LIGHT, 1.0)
 			draw_line(_p(x0, py + ph * 0.5), _p(x0 + pw, py + ph * 0.5), SOLAR_LIGHT, 1.0)
-	# body: gold foil with metal frame and cube divisions
-	_rect(bx, top, bw, bh, GOLD)
-	var cubes: int = maxi(1, int(round(bh / 0.17)))
-	for i in range(1, cubes):
-		var gy: float = top + bh * float(i) / float(cubes)
-		draw_line(_p(bx, gy), _p(bx + bw, gy), GOLD_DARK, 2.0)
-	_poly([Vector2(bx, top), Vector2(bx + bw * 0.7, top), Vector2(bx, top + bh * 0.55)], Color(1, 1, 1, 0.20), false)
-	_rect(bx, top + bh * 0.84, bw, bh * 0.16, Color(0, 0, 0, 0.20), false)
-	_rect(bx, top, 0.02, bh, METAL, false)
-	_rect(bx + bw - 0.02, top, 0.02, bh, METAL, false)
+	if tex != null:
+		draw_texture_rect(tex, Rect2(_p(bx, top), Vector2(size.x * bw, size.y * bh)), false)
+	else:
+		# body: gold foil with metal frame and cube divisions
+		_rect(bx, top, bw, bh, GOLD)
+		var cubes: int = maxi(1, int(round(bh / 0.17)))
+		for i in range(1, cubes):
+			var gy: float = top + bh * float(i) / float(cubes)
+			draw_line(_p(bx, gy), _p(bx + bw, gy), GOLD_DARK, 2.0)
+		_poly([Vector2(bx, top), Vector2(bx + bw * 0.7, top), Vector2(bx, top + bh * 0.55)], Color(1, 1, 1, 0.20), false)
+		_rect(bx, top + bh * 0.84, bw, bh * 0.16, Color(0, 0, 0, 0.20), false)
+		_rect(bx, top, 0.02, bh, METAL, false)
+		_rect(bx + bw - 0.02, top, 0.02, bh, METAL, false)
 	var cx: float = bx + bw / 2.0
 	var cy: float = 0.5
 	if fitted.has("camera_std"):
@@ -285,19 +325,36 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 	if fitted.has("shielding"):
 		_rect(bx - 0.012, top + 0.03, 0.012, bh - 0.06, METAL_DARK, false)
 		_rect(bx + bw, top + 0.03, 0.012, bh - 0.06, METAL_DARK, false)
+	# the team's antenna drawings stand on top of the body (code shapes if a file is missing)
+	var uhf: Texture2D = _art("res://art/modules/part_antenna_uhf.png")
+	var sband: Texture2D = _art("res://art/modules/part_antenna_sband.png")
+	var dish: Texture2D = _art("res://art/modules/part_antenna_large.png")
+	var station: Texture2D = _art("res://art/modules/ground_station.png")
 	if fitted.has("radio_uhf"):
-		draw_line(_p(cx, top), _p(cx, top - 0.20), METAL_LIGHT, 3.0)
-		draw_circle(_p(cx, top - 0.21), size.y * 0.02, CYAN)
+		if uhf != null:
+			_art_in(uhf, cx - 0.05, top - 0.24, 0.10, 0.25, true)
+		else:
+			draw_line(_p(cx, top), _p(cx, top - 0.20), METAL_LIGHT, 3.0)
+			draw_circle(_p(cx, top - 0.21), size.y * 0.02, CYAN)
 	if fitted.has("radio_sband"):
-		_rect(cx - 0.07, top - 0.045, 0.14, 0.045, PURPLE)
-		for i in range(1, 3):
-			draw_arc(_p(cx, top - 0.05), size.y * 0.07 * float(i), -0.85 * PI, -0.15 * PI, 12, PURPLE, 2.0)
+		if sband != null:
+			_art_in(sband, cx - 0.05, top - 0.24, 0.10, 0.25, true)
+		else:
+			_rect(cx - 0.07, top - 0.045, 0.14, 0.045, PURPLE)
+			for i in range(1, 3):
+				draw_arc(_p(cx, top - 0.05), size.y * 0.07 * float(i), -0.85 * PI, -0.15 * PI, 12, PURPLE, 2.0)
 	if fitted.has("antenna_big"):
-		draw_line(_p(bx + bw - 0.04, top), _p(bx + bw + 0.02, top - 0.14), METAL_DARK, 3.0)
-		_poly([Vector2(bx + bw - 0.04, top - 0.24), Vector2(bx + bw + 0.12, top - 0.20), Vector2(bx + bw + 0.02, top - 0.08)], METAL_LIGHT)
+		if dish != null:
+			_art_in(dish, bx + bw - 0.12, top - 0.27, 0.13, 0.28, true)
+		else:
+			draw_line(_p(bx + bw - 0.04, top), _p(bx + bw + 0.02, top - 0.14), METAL_DARK, 3.0)
+			_poly([Vector2(bx + bw - 0.04, top - 0.24), Vector2(bx + bw + 0.12, top - 0.20), Vector2(bx + bw + 0.02, top - 0.08)], METAL_LIGHT)
 	if fitted.has("ground2"):
-		_rect(bx + 0.02, top + bh + 0.04, 0.10, 0.07, METAL, false)
-		draw_arc(_p(bx + 0.07, top + bh + 0.04), size.y * 0.06, PI, TAU, 10, ORANGE, 3.0)
+		if station != null:
+			_art_in(station, bx - 0.04, top + bh + 0.02, 0.16, 0.16)
+		else:
+			_rect(bx + 0.02, top + bh + 0.04, 0.10, 0.07, METAL, false)
+			draw_arc(_p(bx + 0.07, top + bh + 0.04), size.y * 0.06, PI, TAU, 10, ORANGE, 3.0)
 
 
 # ---------------------------------------------------------------- rockets
@@ -497,6 +554,18 @@ func _part_icon(name_key: String) -> void:
 			draw_circle(_p(0.5, 0.06), size.x * 0.05, ORANGE)
 			draw_line(_p(0.5, 0.58), _p(0.5, 0.84), METAL_DARK, 5.0)
 			_rect(0.30, 0.82, 0.40, 0.08, METAL_DARK, false)
+		"icon_time":
+			# a clock face
+			var r: float = minf(size.x, size.y)
+			var c: Vector2 = _p(0.5, 0.5)
+			draw_circle(c, r * 0.42, SOFT_WHITE)
+			draw_arc(c, r * 0.42, 0.0, TAU, 40, Color(0.6, 0.6, 0.6), maxf(1.5, r * 0.07))
+			for i in 12:
+				var a: float = TAU * float(i) / 12.0
+				draw_line(c + Vector2(cos(a), sin(a)) * r * 0.32, c + Vector2(cos(a), sin(a)) * r * 0.38, METAL_DARK, maxf(1.0, r * 0.03))
+			draw_line(c, c + Vector2(0.0, -r * 0.27), OUTLINE, maxf(1.5, r * 0.06))
+			draw_line(c, c + Vector2(r * 0.20, r * 0.08), ROCKET_RED, maxf(1.5, r * 0.05))
+			draw_circle(c, r * 0.04, OUTLINE)
 		"icon_health":
 			_poly([Vector2(0.5, 0.10), Vector2(0.86, 0.24), Vector2(0.80, 0.62), Vector2(0.5, 0.90), Vector2(0.20, 0.62), Vector2(0.14, 0.24)], TEAL)
 			draw_line(_p(0.5, 0.28), _p(0.5, 0.66), SOFT_WHITE, 4.0)

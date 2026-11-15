@@ -48,6 +48,13 @@ static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 	var base_game: Dictionary = by_id(cfg, BASE_ID).get("game", {})
 	var base_limit: float = float(base_game.get("mass_limit_kg", 1.0))
 	var limit: float = float(game.get("mass_limit_kg", base_limit))
+	# a mission can set its own numbers per size (Earth Imager uses the team's values sheet):
+	# the mass limit, and the most power the craft can make (panels are capped at it)
+	var own: Dictionary = (level.get("craft_values", {}) as Dictionary).get(id, {})
+	if not own.is_empty():
+		limit = float(own.get("mass_kg", limit))
+		if own.has("power_w"):
+			out["power_cap_w"] = float(own["power_w"])
 	var scale: float = limit / maxf(0.001, base_limit)  # the bus structure grows and shrinks with the craft
 	var limits: Dictionary = out["limits"]
 	limits["mass_kg"] = limit

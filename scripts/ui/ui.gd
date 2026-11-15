@@ -579,6 +579,49 @@ static func set_meter(bar: ProgressBar, percent: float, status: String) -> void:
 	bar.add_theme_stylebox_override("fill", box(color, color, 8, 0, 0.0))
 
 
+const BANNER_OK: String = "res://art/ui/mission_completed.png"
+const BANNER_FAIL: String = "res://art/ui/mission_failed.png"
+
+
+## The team's MISSION COMPLETED / MISSION FAILED drawing, sized to `width` (null if missing).
+static func result_art(ok: bool, width: float) -> Control:
+	var path: String = BANNER_OK if ok else BANNER_FAIL
+	if not ResourceLoader.exists(path):
+		return null
+	var tex: Texture2D = load(path)
+	var t: TextureRect = TextureRect.new()
+	t.texture = tex
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.custom_minimum_size = Vector2(width, width * float(tex.get_height()) / float(tex.get_width()))
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+## Pops the MISSION COMPLETED / FAILED drawing over the middle of the screen for a moment.
+static func result_banner(host: Node, ok: bool, seconds: float = 1.6) -> void:
+	var art: Control = result_art(ok, 900.0)
+	if art == null:
+		return
+	var strip: ColorRect = ColorRect.new()
+	strip.color = Color(0, 0, 0, 0.7)
+	strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	strip.z_index = 90
+	host.add_child(strip)
+	strip.position = Vector2(0, 300)
+	strip.size = Vector2(1280, 120)
+	strip.add_child(art)
+	art.size = art.custom_minimum_size
+	art.position = Vector2((1280.0 - art.size.x) * 0.5, (120.0 - art.size.y) * 0.5)
+	art.pivot_offset = art.size * 0.5
+	art.scale = Vector2(1.3, 1.3)
+	var tw: Tween = strip.create_tween()
+	tw.tween_property(art, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(seconds)
+	tw.tween_property(strip, "modulate:a", 0.0, 0.3)
+	tw.tween_callback(strip.queue_free)
+
+
 ## Shows the picture at path. If the file is not there yet, shows a labelled box
 ## of the same size, so missing art never breaks a screen.
 static func picture(path: String, size: Vector2, fallback_text: String = "") -> Control:

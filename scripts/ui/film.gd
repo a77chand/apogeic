@@ -29,6 +29,19 @@ var _continue: Button = null
 var _done: bool = false
 var _c: Control = null   # the stage: the scene is drawn here, clipped to its frame
 
+## The team's drawings. Each one falls back to the code drawing if its file is missing.
+const ROCKET_FRAMES: int = 19
+const ROCKET_PATH: String = "res://art/animations/rocket/rocket_%02d.png"
+## Where the rocket sits inside each frame (pixels): the middle of the body and the fin tips.
+const ROCKET_ANCHOR: Vector2 = Vector2(118.0, 176.0)
+const ROCKET_SCALE: float = 0.85
+var _rocket_frames: Array = []
+var _sun_tex: Texture2D = null
+var _earth_tex: Texture2D = null
+var _station_tex: Texture2D = null
+var _banner_ok: Texture2D = null
+var _banner_fail: Texture2D = null
+
 
 static func play(host: Node, film_kind: String, caption: Array) -> Control:
 	var f: Control = Self.new()
@@ -41,6 +54,7 @@ static func play(host: Node, film_kind: String, caption: Array) -> Control:
 
 func _ready() -> void:
 	z_index = 100   # always above the screen, including raised cards
+	_load_art()
 	_c = Control.new()
 	_c.clip_contents = true
 	_c.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -71,6 +85,33 @@ func _ready() -> void:
 	get_tree().create_timer(3.8).timeout.connect(func() -> void:
 		if is_inside_tree():
 			GameState.play_sound(sound))
+
+
+func _load_art() -> void:
+	for i in range(1, ROCKET_FRAMES + 1):
+		var path: String = ROCKET_PATH % i
+		if not ResourceLoader.exists(path):
+			_rocket_frames.clear()
+			break
+		_rocket_frames.append(load(path))
+	_sun_tex = _tex("res://art/backgrounds/sun.png")
+	_earth_tex = _tex("res://art/backgrounds/earth_dark.png")
+	_station_tex = _tex("res://art/modules/ground_station.png")
+	_banner_ok = _tex("res://art/ui/mission_completed.png")
+	_banner_fail = _tex("res://art/ui/mission_failed.png")
+
+
+func _tex(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path)
+	return null
+
+
+## A texture drawn into a box, keeping its shape, centred on `centre`.
+func _draw_fit(tex: Texture2D, centre: Vector2, box: Vector2, tint: Color = Color(1, 1, 1)) -> void:
+	var k: float = minf(box.x / float(tex.get_width()), box.y / float(tex.get_height()))
+	var sz: Vector2 = Vector2(tex.get_width(), tex.get_height()) * k
+	_c.draw_texture_rect(tex, Rect2(centre - sz * 0.5, sz), false, tint)
 
 
 func _exit_tree() -> void:
@@ -131,7 +172,19 @@ func _draw_stage() -> void:
 
 # ---------------------------------------------------------------- pieces
 
-func _rocket(base: Vector2, angle: float, flame: bool) -> void:
+## The rocket standing on `base` (the fin tips). `lit_for` is how long the engine has been
+## burning: the team's frames go from ignition smoke to a full flame, then the last four loop.
+func _rocket(base: Vector2, angle: float, flame: bool, lit_for: float = 10.0) -> void:
+	if not _rocket_frames.is_empty():
+		var idx: int = 0
+		if flame:
+			var f: int = int(maxf(0.0, lit_for) * 8.0)
+			idx = f if f < 15 else 15 + (f - 15) % 4
+		var tex: Texture2D = _rocket_frames[clampi(idx, 0, _rocket_frames.size() - 1)]
+		_c.draw_set_transform(base, angle, Vector2.ONE * ROCKET_SCALE)
+		_c.draw_texture(tex, -ROCKET_ANCHOR)
+		_c.draw_set_transform(Vector2.ZERO)
+		return
 	_c.draw_set_transform(base, angle)
 	var body: Color = Color(0.92, 0.93, 0.96)
 	_c.draw_rect(Rect2(-14, -120, 28, 110), body)
@@ -170,6 +223,17 @@ func _big_text(text: String, color: Color, at: float) -> void:
 	if _t < at:
 		return
 	var k: float = clampf((_t - at) * 3.0, 0.0, 1.0)
+	var banner: Texture2D = _banner_ok if color == UI.C_GREEN else _banner_fail
+	if banner != null:
+		# the team's MISSION COMPLETED / MISSION FAILED drawing, popping in, with what happened under it
+		var mid: Vector2 = Vector2(SCREEN.get_center().x, SCREEN.position.y + 175.0)
+		var grow: float = lerpf(1.25, 1.0, k)
+		_c.draw_rect(Rect2(SCREEN.position.x + 40.0, mid.y - 52.0, SCREEN.size.x - 80.0, 104.0), Color(0, 0, 0, 0.62 * k))
+		_draw_fit(banner, mid + Vector2(0, -12), Vector2(780.0, 60.0) * grow, Color(1, 1, 1, k))
+		var small: Font = UI.pixel_font(false)
+		var tw: float = small.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
+		_c.draw_string(small, Vector2(mid.x - tw * 0.5, mid.y + 38.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(color, k))
+		return
 	var font: Font = UI.pixel_font()
 	var fs: int = 44
 	var w: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
@@ -202,9 +266,10 @@ func _launch(ok: bool) -> void:
 		var rad: float = 20.0 + minf(_t, 3.0) * 12.0 + float(i % 3) * 8.0
 		_c.draw_circle(Vector2(r.get_center().x + cos(a) * rad * 1.8, ground_y - 6.0 - absf(sin(a)) * 10.0), rad * 0.5, Color(0.8, 0.8, 0.85, 0.18))
 	if ok or _t < 4.0:
-		_rocket(base, angle, true)
+		_rocket(base, angle, true, _t)
 	if not ok:
-		_gauge(r.position + Vector2(30, 70), "SPEED NEEDED FOR ORBIT", minf(100.0, _t * 9.0), 60.0)
+		# the speed stops growing the moment the rocket breaks up (t = 4 s)
+		_gauge(r.position + Vector2(30, 70), "SPEED NEEDED FOR ORBIT", minf(100.0, minf(_t, 4.0) * 9.0), 60.0)
 		_gauge(r.position + Vector2(30, 120), "MASS LIMIT USED", 118.0, -1.0, 100.0)
 		if _t > 2.6 and _t < 4.0:
 			_c.draw_string(ThemeDB.fallback_font, base + Vector2(40, -80), "MAX-Q: too slow, too heavy", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UI.C_RED)
@@ -226,11 +291,19 @@ func _power(ok: bool) -> void:
 	var earth: Vector2 = Vector2(r.get_center().x, r.end.y + 40.0)
 	var er: float = 230.0
 	# the sun on the right, the shadow on the left
-	_c.draw_circle(Vector2(r.end.x - 40, r.position.y + 70), 40.0, Color(1, 0.85, 0.4))
-	_c.draw_circle(Vector2(r.end.x - 40, r.position.y + 70), 60.0, Color(1, 0.85, 0.4, 0.15))
-	_c.draw_circle(earth, er, Color(0.14, 0.34, 0.66))
-	_c.draw_circle(earth + Vector2(-60, -40), er * 0.9, Color(0.18, 0.42, 0.78))
-	_c.draw_rect(Rect2(r.position.x, r.position.y, r.size.x * 0.45, r.size.y), Color(0, 0, 0, 0.45))
+	if _sun_tex != null:
+		var pulse: float = 1.0 + sin(_t * 2.0) * 0.03
+		_draw_fit(_sun_tex, Vector2(r.end.x - 70, r.position.y + 80), Vector2(170, 150) * pulse)
+	else:
+		_c.draw_circle(Vector2(r.end.x - 40, r.position.y + 70), 40.0, Color(1, 0.85, 0.4))
+		_c.draw_circle(Vector2(r.end.x - 40, r.position.y + 70), 60.0, Color(1, 0.85, 0.4, 0.15))
+	if _earth_tex != null:
+		# the team's Earth already has its night side on the left
+		_draw_fit(_earth_tex, earth, Vector2(er, er) * 2.08)
+	else:
+		_c.draw_circle(earth, er, Color(0.14, 0.34, 0.66))
+		_c.draw_circle(earth + Vector2(-60, -40), er * 0.9, Color(0.18, 0.42, 0.78))
+	_c.draw_rect(Rect2(r.position.x, r.position.y, r.size.x * 0.45, r.size.y), Color(0, 0, 0, 0.35))
 	_c.draw_string(ThemeDB.fallback_font, r.position + Vector2(30, r.size.y - 60), "EARTH'S SHADOW", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1, 1, 1, 0.6))
 	# the satellite moves right to left, into the shadow
 	var u: float = clampf(_t / 5.5, 0.0, 1.0)
@@ -258,8 +331,11 @@ func _data() -> void:
 	var sat: Vector2 = Vector2(r.position.x + 200, r.position.y + 140)
 	var station: Vector2 = Vector2(r.end.x - 200, r.end.y - 60)
 	_satellite(sat, 0.0, true)
-	_c.draw_rect(Rect2(station + Vector2(-20, -10), Vector2(40, 30)), Color(0.5, 0.52, 0.6))
-	_c.draw_arc(station + Vector2(0, -24), 24.0, PI, TAU, 16, Color(0.8, 0.82, 0.9), 4.0)
+	if _station_tex != null:
+		_draw_fit(_station_tex, station + Vector2(0, -4), Vector2(130, 90))
+	else:
+		_c.draw_rect(Rect2(station + Vector2(-20, -10), Vector2(40, 30)), Color(0.5, 0.52, 0.6))
+		_c.draw_arc(station + Vector2(0, -24), 24.0, PI, TAU, 16, Color(0.8, 0.82, 0.9), 4.0)
 	_c.draw_line(sat, station + Vector2(0, -24), Color(UI.C_ACCENT, 0.25), 6.0)
 	# photos come in fast, but only a few fit down the radio link
 	var made: int = int(_t * 6.0)
@@ -296,9 +372,9 @@ func _late() -> void:
 	var ground_y: float = r.end.y - 40.0
 	_c.draw_rect(Rect2(r.position.x, ground_y, r.size.x, 40), Color(0.12, 0.14, 0.18))
 	var day: int = int(clampf(_t / 4.0, 0.0, 1.0) * 30.0) + 160
-	_c.draw_string(UI.pixel_font(), r.position + Vector2(40, 80), "DAY %d" % day, HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color(1, 1, 1))
+	_c.draw_string(UI.display_font(), r.position + Vector2(40, 80), "DAY %d" % day, HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color(1, 1, 1))
 	var climb: float = pow(maxf(0.0, _t - 3.0), 2.0) * 45.0
-	_rocket(Vector2(r.get_center().x + 140, ground_y - climb), 0.0, _t > 2.8)
+	_rocket(Vector2(r.get_center().x + 140, ground_y - climb), 0.0, _t > 2.8, _t - 2.8)
 	# your satellite, still in its crate on a truck
 	var tx: float = r.position.x + 120.0 + minf(_t, 5.0) * 30.0
 	_c.draw_rect(Rect2(tx, ground_y - 50, 120, 36), Color(0.75, 0.6, 0.35))

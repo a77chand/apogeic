@@ -23,6 +23,13 @@ var _battery_label: Label = null
 var _status: Label = null
 var _driving: float = -1.0   # step being shown while driving, -1 = planning
 var _result: Dictionary = {}
+var _tabs: Control = null
+var _next_btn: Button = null
+
+
+## The challenge number shown here: route 0 is challenge 2 (Route), route 1 is challenge 3 (Shadows).
+func _challenge() -> int:
+	return GameState.truck_route + 2
 
 
 func _ready() -> void:
@@ -30,7 +37,8 @@ func _ready() -> void:
 	var routes: Array = _cfg.get("routes", [])
 	_route = routes[clampi(GameState.truck_route, 0, routes.size() - 1)]
 	_path = [TruckSim.route_find(_route, "S")]
-	add_child(TruckTabs.bar(_cfg, GameState.truck_route + 1))
+	_tabs = TruckTabs.bar(_cfg, _challenge())
+	add_child(_tabs)
 	_build_intro()
 	_build_map()
 	_build_side()
@@ -243,15 +251,29 @@ func _on_drive() -> void:
 			return
 	if bool(_result.get("ok", false)):
 		GameState.play_sound("fanfare")
-		GameState.mark_truck_done(GameState.truck_route + 1)
+		GameState.mark_truck_done(_challenge())
 		_status.text = "Arrived safely! " + str(_route.get("lesson", ""))
 		_status.add_theme_color_override("font_color", UI.C_GREEN)
+		# rebuild the tabs so the next challenge opens straight away, and offer to go there
+		if _tabs != null and is_instance_valid(_tabs):
+			_tabs.queue_free()
+		_tabs = TruckTabs.bar(_cfg, _challenge())
+		add_child(_tabs)
+		var routes: Array = _cfg.get("routes", [])
+		if GameState.truck_route + 1 < routes.size() and _next_btn == null:
+			_next_btn = UI.button("Next: %s  >" % str(TruckTabs.NAMES[_challenge()]), _on_next, 260.0, true)
+			_place(_next_btn, Vector2(620, 650), Vector2(260, 52))
 	else:
 		GameState.play_sound("fail")
 		_status.text = (str(_result.get("fail", "")) if str(_result.get("fail", "")) != "" else "The route stops before the dig site.") + " Change the plan and try again."
 		_status.add_theme_color_override("font_color", UI.C_RED)
 	_driving = -1.0
 	_map.queue_redraw()
+
+
+func _on_next() -> void:
+	GameState.truck_route += 1
+	GameState.go("truck_route")
 
 
 func _on_back() -> void:

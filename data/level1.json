@@ -32,6 +32,12 @@
     "small_max_fraction": 0.6,
     "medium_max_fraction": 0.9
   },
+  "craft_values": {
+    "_note": "Earth Imager only: mass limit and most power the craft can make, per size, from the team's values sheet (Values.pdf). Data rate (19.6 / 125 / 125 kbps) is recorded but not used yet.",
+    "1u": {"mass_kg": 1.33, "power_w": 2.5, "data_kbps": 19.6},
+    "3u": {"mass_kg": 4.0, "power_w": 20.0, "data_kbps": 125.0},
+    "6u": {"mass_kg": 8.0, "power_w": 57.6, "data_kbps": 125.0}
+  },
   "limits": {
     "mass_kg": 4.0,
     "budget_k": 1000,

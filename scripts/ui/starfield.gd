@@ -126,8 +126,21 @@ func _build_ringed_planet(c: Vector2, r: float) -> Array:
 	return out
 
 
-## A small, rusty moon low in the corner.
+const MOON_ART: String = "res://art/backgrounds/moon.png"
+var _moon_tex: Texture2D = null
+
+
+## The team's Moon drawing low in the corner (a small code-drawn moon if the file is missing).
+## It bobs very slowly so it feels alive.
 func _moon(c: Vector2, r: float) -> void:
+	if _moon_tex == null and ResourceLoader.exists(MOON_ART):
+		_moon_tex = load(MOON_ART)
+	if _moon_tex != null:
+		var h: float = r * 3.2
+		var w: float = h * float(_moon_tex.get_width()) / float(_moon_tex.get_height())
+		var bob: Vector2 = Vector2(0.0, sin(_time * 0.6) * r * 0.12)
+		draw_texture_rect(_moon_tex, Rect2(c - Vector2(w, h) * 0.5 + bob, Vector2(w, h)), false)
+		return
 	draw_circle(c, r, Color(0.62, 0.40, 0.32))
 	draw_circle(c + Vector2(r * 0.25, -r * 0.20), r * 0.22, Color(0.45, 0.28, 0.24))
 	draw_circle(c + Vector2(-r * 0.30, r * 0.30), r * 0.15, Color(0.45, 0.28, 0.24))
