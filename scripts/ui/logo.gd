@@ -98,17 +98,20 @@ func _draw_planet() -> void:
 	var c: Vector2 = planet_centre
 	var r: float = planet_radius
 	var light: Vector2 = Vector2(-0.55, -0.83).normalized()
-	var shades: Array = [Color(0.18, 0.11, 0.32), Color(0.30, 0.20, 0.48), Color(0.44, 0.32, 0.64), Color(0.58, 0.46, 0.78), Color(0.70, 0.60, 0.88), Color(0.80, 0.73, 0.94)]
+	var shades: Array = [Color(0.30, 0.14, 0.58), Color(0.44, 0.24, 0.78), Color(0.58, 0.38, 0.92), Color(0.72, 0.54, 1.0), Color(0.84, 0.70, 1.0), Color(0.93, 0.85, 1.0)]
 	var spin: float = _t * 0.9
+	# the window can be taller or wider than 1280 x 720 (the screen stretches to fill it),
+	# so draw to the edge of what is really visible, not just the design size
+	var view: Vector2 = get_viewport_rect().size
 	var top_row: int = int(floor((maxf(0.0, c.y - r) - c.y) / PX))
-	var bottom_row: int = int(ceil((size.y - c.y) / PX))
+	var bottom_row: int = int(ceil((maxf(size.y, view.y) - c.y) / PX))
 	for gy in range(top_row, bottom_row + 1):
 		var dy: float = float(gy) * PX
 		if absf(dy) > r:
 			continue
 		var half: float = sqrt(r * r - dy * dy)
 		var gx0: int = int(floor(maxf(-half, -c.x) / PX))
-		var gx1: int = int(ceil(minf(half, size.x - c.x) / PX))
+		var gx1: int = int(ceil(minf(half, maxf(size.x, view.x) - c.x) / PX))
 		for gx in range(gx0, gx1 + 1):
 			var d: Vector2 = Vector2(float(gx) * PX, dy)
 			if d.length() > r:
@@ -132,10 +135,11 @@ func _draw_planet() -> void:
 			var idx: int = clampi(int(level), 0, shades.size() - 1)
 			draw_rect(Rect2(c + d, Vector2(PX, PX)), shades[idx])
 	# the glowing rim of atmosphere along the top
-	for i in range(6):
-		var a: float = 0.55 - 0.09 * float(i)
-		draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 2.0 + float(i) * 3.5, PI * 1.0, PI * 1.85, 96, Color(0.82, 0.78, 1.0, maxf(0.05, a)), 3.0)
-	draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 1.0, PI * 1.08, PI * 1.62, 96, Color(0.95, 0.95, 1.0, 0.9), 2.0)
+	for i in range(9):
+		var a: float = 0.6 - 0.065 * float(i)
+		var glow: Color = Color(0.70, 0.88, 1.0).lerp(Color(0.72, 0.50, 1.0), float(i) / 8.0)
+		draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 2.0 + float(i) * 4.0, PI * 1.0, PI * 1.9, 128, Color(glow, maxf(0.04, a)), 4.0)
+	draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 1.0, PI * 1.05, PI * 1.7, 128, Color(0.92, 0.98, 1.0, 0.95), 3.0)
 	# a small satellite crossing above the horizon, hidden while it is behind the planet
 	var oc: Vector2 = c + Vector2(0.0, -r * 0.92)
 	var rx: float = r * 0.85

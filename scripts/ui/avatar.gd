@@ -163,15 +163,15 @@ func _details(kind: String) -> void:
 			_box(114, 12, 146, 18, red)
 		"apollo":
 			# white suit, red commander stripes on the arms and legs, blue chest patch
-			_box(78, 112, 92, 118, red)
-			_box(162, 112, 176, 118, red)
+			_box(74, 112, 90, 118, red)
+			_box(164, 112, 181, 118, red)
 			_box(98, 182, 124, 188, red)
 			_box(132, 182, 158, 188, red)
 			_box(136, 92, 152, 106, blue)
 		"sokol":
 			# white with blue cuffs, a blue zip line and blue boots
-			_box(76, 134, 94, 142, blue)
-			_box(160, 134, 178, 142, blue)
+			_box(78, 140, 92, 147, blue)
+			_box(164, 140, 178, 147, blue)
 			_box(110, 84, 113, 158, blue)
 			_boots(Color(0.20, 0.32, 0.62), Color(0.55, 0.70, 0.95))
 		"aces":
@@ -188,8 +188,8 @@ func _details(kind: String) -> void:
 		"feitian":
 			# white with a red band across the chest and blue gloves
 			_box(84, 102, 170, 110, red)
-			_box(74, 140, 94, 152, blue)
-			_box(160, 140, 180, 152, blue)
+			_box(78, 140, 92, 150, blue)
+			_box(164, 140, 178, 150, blue)
 		"axemu":
 			# dark suit with orange and blue trim
 			_box(84, 98, 170, 102, orange)
@@ -201,9 +201,10 @@ func _details(kind: String) -> void:
 ## Two separate boots over the picture's feet, each with a band of trim at the ankle and
 ## a darker sole, so they read as part of the suit (not a bar across both legs).
 func _boots(fill: Color, trim: Color) -> void:
-	for x in [[94.0, 125.0], [131.0, 162.0]]:
-		var top: Vector2 = _t(float(x[0]), 214)
-		var bottom: Vector2 = _t(float(x[1]), 242)
+	# measured from the picture: the feet are rows 222-252, left 90-127, right 132-171
+	for x in [[90.0, 127.0], [132.0, 171.0]]:
+		var top: Vector2 = _t(float(x[0]), 222)
+		var bottom: Vector2 = _t(float(x[1]), 252)
 		var r: Rect2 = Rect2(top, bottom - top)
 		var rr: float = r.size.x * 0.22
 		draw_rect(Rect2(r.position + Vector2(0, rr), r.size - Vector2(0, rr)), fill)

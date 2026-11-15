@@ -61,24 +61,69 @@ func _galaxy_band() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 
-## A distant gas giant with a tilted ring. The back of the ring is drawn first, then the
-## planet, then the front of the ring, so the ring wraps around it.
+## A distant gas giant with a tilted ring, in the same pixel style as the title planet:
+## warm coral and gold bands, lit from the upper left, and a pale cyan ring that passes
+## behind the planet and in front of it. Square "pixels" of PIXEL size.
+const PIXEL: float = 5.0
+
+
+var _planet_cells: Array = []     # [Rect2, Color] for each pixel, worked out once per size
+var _planet_key: Vector3 = Vector3.ZERO
+
+
 func _ringed_planet(c: Vector2, r: float) -> void:
-	var ring: Color = Color(0.85, 0.78, 0.62, 0.55)
-	draw_set_transform(c, -0.32, Vector2(1.0, 0.28))
-	draw_arc(Vector2.ZERO, r * 1.85, PI, TAU, 48, ring, r * 0.18)
-	draw_set_transform(Vector2.ZERO)
-	draw_circle(c, r * 1.25, Color(0.85, 0.55, 0.40, 0.06))                # haze
-	draw_circle(c, r, Color(0.78, 0.50, 0.38))
-	for k in range(3):                                                  # cloud bands
-		var y: float = (float(k) - 1.0) * r * 0.45
-		var half: float = sqrt(maxf(0.0, r * r - y * y)) * 0.96
-		draw_line(c + Vector2(-half, y), c + Vector2(half, y), Color(0.95, 0.72, 0.52, 0.55), r * 0.16)
-	draw_circle(c + Vector2(-r * 0.30, -r * 0.30), r * 0.55, Color(1, 1, 1, 0.08))   # lit side
-	draw_arc(c, r * 0.85, -0.15 * PI, 0.85 * PI, 24, Color(0.05, 0.02, 0.10, 0.35), r * 0.32)  # shadow side
-	draw_set_transform(c, -0.32, Vector2(1.0, 0.28))
-	draw_arc(Vector2.ZERO, r * 1.85, 0.0, PI, 48, ring, r * 0.18)
-	draw_set_transform(Vector2.ZERO)
+	var key: Vector3 = Vector3(c.x, c.y, r)
+	if key != _planet_key:
+		_planet_key = key
+		_planet_cells = _build_ringed_planet(c, r)
+	for item in _planet_cells:
+		var cell: Array = item
+		draw_rect(cell[0], cell[1])
+
+
+func _build_ringed_planet(c: Vector2, r: float) -> Array:
+	var out: Array = []
+	var bands: Array = [Color(0.98, 0.62, 0.42), Color(1.0, 0.78, 0.50), Color(0.93, 0.45, 0.45), Color(1.0, 0.86, 0.62), Color(0.96, 0.55, 0.38)]
+	var light: Vector2 = Vector2(-0.6, -0.8)
+	var tilt: float = -0.32
+	var ring_in: float = 1.35
+	var ring_out: float = 1.95
+	var n: int = int(ceil(r * ring_out / PIXEL)) + 1
+	# the far half of the ring first, then the planet, then the near half
+	for pass_i in range(3):
+		for gy in range(-n, n + 1):
+			for gx in range(-n, n + 1):
+				var d: Vector2 = Vector2(gx, gy) * PIXEL
+				var cell: Rect2 = Rect2(c + d - Vector2(PIXEL, PIXEL) * 0.5, Vector2(PIXEL, PIXEL))
+				var on_planet: bool = d.length() <= r
+				if pass_i == 1:
+					if not on_planet:
+						continue
+					var nz: Vector2 = d / r
+					var z: float = sqrt(maxf(0.0, 1.0 - nz.length_squared()))
+					var lit: float = clampf(nz.dot(light.normalized()) * 0.8 + z * 0.5, -1.0, 1.0)
+					var band: Color = bands[posmod(int(floor((d.y + d.x * 0.25) / (r * 0.34))), bands.size())]
+					var col: Color = band.darkened(clampf(0.45 - lit * 0.45, 0.0, 0.7))
+					if lit > 0.75:
+						col = col.lightened(0.18)
+					out.append([cell, col])
+					continue
+				# the ring: an ellipse band, squashed and tilted
+				var q: Vector2 = d.rotated(-tilt)
+				var e: float = Vector2(q.x / r, q.y / (r * 0.30)).length()
+				if e < ring_in or e > ring_out:
+					continue
+				var front: bool = q.y > 0.0
+				if (pass_i == 0 and front) or (pass_i == 2 and not front):
+					continue
+				if pass_i == 0 and on_planet:
+					continue
+				var k: float = (e - ring_in) / (ring_out - ring_in)
+				var ring_col: Color = Color(0.62, 0.92, 1.0).lerp(Color(0.95, 0.82, 1.0), k)
+				if absf(k - 0.55) < 0.08:
+					ring_col = ring_col.darkened(0.35)   # the gap in the ring
+				out.append([cell, Color(ring_col, 0.9 if front else 0.6)])
+	return out
 
 
 ## A small, rusty moon low in the corner.

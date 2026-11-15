@@ -9,7 +9,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Confirm = preload("res://scripts/ui/confirm.gd")
 const Sources = preload("res://scripts/ui/sources.gd")
 
-const TAB_RECT: Rect2 = Rect2(0, 300, 26, 96)
+const TAB_RECT: Rect2 = Rect2(0, 180, 26, 96)
 
 var _tab: Button = null
 var _layer: Control = null        # the open panel and its dim background, or null

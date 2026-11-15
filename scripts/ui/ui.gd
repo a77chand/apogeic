@@ -159,8 +159,10 @@ static func sparkle_icon(size: float = 22.0, color: Color = Color(0.80, 0.72, 1.
 	c.custom_minimum_size = Vector2(size, size)
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.draw.connect(func() -> void:
-		_draw_sparkle(c, Vector2(size * 0.42, size * 0.56), size * 0.42, color)
-		_draw_sparkle(c, Vector2(size * 0.86, size * 0.18), size * 0.13, color))
+		_draw_sparkle(c, Vector2(size * 0.42, size * 0.58), size * 0.40, Color(color, 0.25))
+		_draw_sparkle(c, Vector2(size * 0.42, size * 0.58), size * 0.34, color)
+		_draw_sparkle(c, Vector2(size * 0.42, size * 0.58), size * 0.12, Color(1, 1, 1))
+		_draw_sparkle(c, Vector2(size * 0.85, size * 0.17), size * 0.14, color))
 	return c
 
 
@@ -177,7 +179,7 @@ static func _draw_sparkle(ci: CanvasItem, m: Vector2, r: float, color: Color) ->
 			var t: float = float(i) / float(steps)
 			# a curve that bows in towards the centre between two points
 			var p: Vector2 = tip0.lerp(tip1, t)
-			pts.append(p.lerp(m, sin(t * PI) * 0.78))
+			pts.append(p.lerp(m, sin(t * PI) * 0.52))
 	ci.draw_colored_polygon(pts, color)
 
 
