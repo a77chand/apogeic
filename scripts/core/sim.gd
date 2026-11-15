@@ -75,6 +75,8 @@ static func evaluate_design(level: Dictionary, parts: Dictionary, design: Dictio
 			has_radio = true
 	if not has_radio:
 		send = 0.0  # antennas and ground stations do nothing without a radio
+	if level.has("power_cap_w"):
+		gen = minf(gen, float(level["power_cap_w"]))   # a small craft cannot make more than its size allows
 	make *= float(sched.get("make_mult", 1.0))
 	send *= float(sched.get("send_mult", 1.0))
 

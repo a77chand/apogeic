@@ -153,6 +153,7 @@ func _add_satellite(col: VBoxContainer) -> void:
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(caption)
 	var sat: Control = Sprites.live_satellite(Vector2(500, 166))
+	sat.set("craft", GameState.craft_id)
 	sat.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(sat)
 	sat.call("set_parts", fitted)

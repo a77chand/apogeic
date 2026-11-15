@@ -18,6 +18,7 @@ var _limit_rows: Dictionary = {}    # "mass"/"power"/"cost" -> {"bar", "text"}
 var _verdict: Label = null
 var _causes: VBoxContainer = null
 var _popup: Control = null
+var _tabs: Control = null
 
 
 func _ready() -> void:
@@ -40,7 +41,10 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 
 
 func _build_top_bar() -> void:
-	add_child(TruckTabs.bar(_cfg, 1))
+	if _tabs != null and is_instance_valid(_tabs):
+		_tabs.queue_free()
+	_tabs = TruckTabs.bar(_cfg, 1)
+	add_child(_tabs)
 
 
 func _build_sensors() -> void:
@@ -199,6 +203,7 @@ func _run_drive(sensors: Array) -> void:
 	if all_safe and sensors == selected and bool(TruckSim.evaluate(_cfg, selected).get("passed", false)):
 		GameState.play_sound("fanfare")
 		GameState.mark_truck_done(1)
+		_build_top_bar()   # open the Route tab straight away
 		_verdict.text = "Drive test passed! Challenge 2 is open: plan the route."
 		_verdict.add_theme_color_override("font_color", UI.C_GREEN)
 

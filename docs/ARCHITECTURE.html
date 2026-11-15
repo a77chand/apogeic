@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Apogeic 11: Architecture</title>
+<style>
+  @page { size: A4; margin: 14mm 14mm 16mm 14mm; }
+  :root { --ink: #14213d; --muted: #5b6475; --line: #d5dbe6; --accent: #1f7a8c; --soft: #eef3f8; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.42; margin: 0; background: #fff; }
+  h1 { font-size: 24pt; margin: 0 0 2mm; letter-spacing: 0.5px; }
+  h2 { font-size: 14.5pt; margin: 7mm 0 2.5mm; padding-bottom: 1.5mm; border-bottom: 2px solid var(--accent); color: var(--accent); }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 4mm 0 1.5mm; }
+  p { margin: 1.5mm 0; }
+  ul { margin: 1mm 0 2mm 2mm; padding-left: 4mm; list-style: none; }
+  ul li { position: relative; }
+  ul li::before { content: ""; position: absolute; left: -3.6mm; top: 2.1mm; width: 1.5mm; height: 1.5mm; border-radius: 50%; background: var(--accent); }
+  ul ul li::before { background: transparent; border: 1px solid var(--accent); }
+  ul.toc { list-style: none; padding-left: 0; margin-left: 0; }
+  ul.toc li::before { display: none; }
+  li { margin: 0.6mm 0; }
+  .sub { color: var(--muted); font-size: 11pt; margin-bottom: 4mm; }
+  .cover { border-left: 6px solid var(--accent); padding: 2mm 0 2mm 5mm; margin-bottom: 4mm; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; font-size: 9.5pt; }
+  th, td { border: 1px solid var(--line); padding: 1.4mm 2mm; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  code { font-family: Consolas, monospace; font-size: 9pt; background: var(--soft); padding: 0 1mm; border-radius: 2px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .box { border: 1px solid var(--line); border-radius: 3mm; padding: 2.5mm 3.5mm; background: #fbfcfe; }
+  .page { page-break-before: always; }
+  svg text { font-family: "Segoe UI", Arial, sans-serif; }
+  .note { color: var(--muted); font-size: 9pt; }
+  .toc li { margin: 0.3mm 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Apogeic 11</h1>
+  <div class="sub">Code architecture, game workflow and mechanics · NASA Space Apps 2026 · Godot 4.7 (GDScript), exported to the web</div>
+</div>
+
+<p>Apogeic 11 teaches how real space missions are designed by letting the player make the trade-offs themselves: mass against power, data against money, speed against safety. The player trains on four puzzles, then flies twenty missions based on real spaceflights, and can take on a NASA problem about robots that must see in the long shadows at the Moon's south pole.</p>
+
+<ul class="toc">
+  <li><b>1.</b> Game workflow (flowchart)</li>
+  <li><b>2.</b> Code architecture (layers and data flow)</li>
+  <li><b>3.</b> Folders and screens</li>
+  <li><b>4.</b> Mechanics: the rules the game runs on</li>
+  <li><b>5.</b> Progress, rewards and saving</li>
+  <li><b>6.</b> Art, sound and fallbacks</li>
+  <li><b>7.</b> Testing and how to extend the game</li>
+</ul>
+
+<h2>1. Game workflow</h2>
+<p>The main path runs left to right and top to bottom. Dashed arrows are loops: the player goes back to improve the design. Side activities (left, purple) can be opened from the title screen at any time.</p>
+
+<svg viewBox="0 0 760 520" width="100%" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f7a8c"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker>
+  </defs>
+  <style>
+    .n { fill: #eef6f8; stroke: #1f7a8c; stroke-width: 1.6; }
+    .m { fill: #fff7ed; stroke: #c2410c; stroke-width: 1.6; }
+    .s { fill: #f3f0fb; stroke: #6d5bd0; stroke-width: 1.4; }
+    .t { font-size: 12px; font-weight: 700; fill: #14213d; }
+    .d { font-size: 9.5px; fill: #5b6475; }
+    .l { stroke: #1f7a8c; stroke-width: 1.6; fill: none; }
+    .lo { stroke: #c2410c; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+  </style>
+  <!-- row 1: start and training -->
+  <rect class="n" x="10" y="14" width="120" height="50" rx="8"/><text class="t" x="70" y="35" text-anchor="middle">Title</text><text class="d" x="70" y="51" text-anchor="middle">Play · Skip · How to play</text>
+  <rect class="n" x="160" y="14" width="120" height="50" rx="8"/><text class="t" x="220" y="35" text-anchor="middle">Profile</text><text class="d" x="220" y="51" text-anchor="middle">name, suit, patch</text>
+  <rect class="n" x="310" y="14" width="130" height="50" rx="8"/><text class="t" x="375" y="35" text-anchor="middle">Training ladder</text><text class="d" x="375" y="51" text-anchor="middle">4 puzzles in order</text>
+  <path class="l" d="M130,39 H158" marker-end="url(#ar)"/><path class="l" d="M280,39 H308" marker-end="url(#ar)"/>
+  <!-- puzzles -->
+  <g>
+    <rect class="n" x="20" y="96" width="95" height="44" rx="7"/><text class="t" x="67" y="115" text-anchor="middle">P1 Mass</text><text class="d" x="67" y="130" text-anchor="middle">pack the rocket</text>
+    <rect class="n" x="130" y="96" width="95" height="44" rx="7"/><text class="t" x="177" y="115" text-anchor="middle">P2 Power</text><text class="d" x="177" y="130" text-anchor="middle">survive eclipse</text>
+    <rect class="n" x="240" y="96" width="95" height="44" rx="7"/><text class="t" x="287" y="115" text-anchor="middle">P3 Data link</text><text class="d" x="287" y="130" text-anchor="middle">fix the bottleneck</text>
+    <rect class="n" x="350" y="96" width="105" height="44" rx="7"/><text class="t" x="402" y="115" text-anchor="middle">P4 Budget+time</text><text class="d" x="402" y="130" text-anchor="middle">plan the year</text>
+    <path class="l" d="M115,118 H128" marker-end="url(#ar)"/><path class="l" d="M225,118 H238" marker-end="url(#ar)"/><path class="l" d="M335,118 H348" marker-end="url(#ar)"/>
+    <path class="l" d="M375,64 V80 H67 V94" marker-end="url(#ar)"/>
+  </g>
+  <!-- missions row -->
+  <rect class="m" x="480" y="96" width="130" height="44" rx="7"/><text class="t" x="545" y="115" text-anchor="middle">Mission select</text><text class="d" x="545" y="130" text-anchor="middle">20 real missions</text>
+  <path class="l" d="M455,118 H478" marker-end="url(#ar)"/>
+  <path class="l" d="M70,64 V72 H560 V94" marker-end="url(#ar)" stroke-dasharray="2 3"/>
+  <text class="d" x="470" y="69">Skip to missions</text>
+  <!-- the mission loop, down the page -->
+  <rect class="m" x="480" y="168" width="130" height="44" rx="7"/><text class="t" x="545" y="187" text-anchor="middle">Briefing</text><text class="d" x="545" y="202" text-anchor="middle">goal, limits, 1U/3U/6U</text>
+  <rect class="m" x="480" y="240" width="130" height="44" rx="7"/><text class="t" x="545" y="259" text-anchor="middle">Workshop</text><text class="d" x="545" y="274" text-anchor="middle">fit parts, clock runs</text>
+  <rect class="m" x="480" y="312" width="130" height="44" rx="7"/><text class="t" x="545" y="331" text-anchor="middle">Test lab</text><text class="d" x="545" y="346" text-anchor="middle">checks, events, flaws</text>
+  <rect class="m" x="480" y="384" width="130" height="44" rx="7"/><text class="t" x="545" y="403" text-anchor="middle">Launch</text><text class="d" x="545" y="418" text-anchor="middle">orbit or failure stage</text>
+  <rect class="m" x="300" y="384" width="130" height="44" rx="7"/><text class="t" x="365" y="403" text-anchor="middle">Operations</text><text class="d" x="365" y="418" text-anchor="middle">week by week, events</text>
+  <rect class="m" x="120" y="384" width="130" height="44" rx="7"/><text class="t" x="185" y="403" text-anchor="middle">Report</text><text class="d" x="185" y="418" text-anchor="middle">0–3 stars, causes</text>
+  <path class="l" d="M545,140 V166" marker-end="url(#ar)"/><path class="l" d="M545,212 V238" marker-end="url(#ar)"/>
+  <path class="l" d="M545,284 V310" marker-end="url(#ar)"/><path class="l" d="M545,356 V382" marker-end="url(#ar)"/>
+  <path class="l" d="M480,406 H432" marker-end="url(#ar)"/><path class="l" d="M300,406 H252" marker-end="url(#ar)"/>
+  <!-- loops -->
+  <path class="lo" d="M610,334 H650 V262 H612" marker-end="url(#ag)"/><text class="d" x="655" y="300" fill="#c2410c">fix, retest</text>
+  <path class="lo" d="M185,384 V366 H462 V276 H478" marker-end="url(#ag)"/><text class="d" x="262" y="360" fill="#c2410c">Fix my satellite (keeps parts)</text>
+  <path class="lo" d="M185,428 V460 H728 V118 H612" marker-end="url(#ag)"/><text class="d" x="420" y="474" fill="#c2410c">Next mission (stars open the next stage)</text>
+  <path class="lo" d="M480,262 H460 V196 H478" marker-end="url(#ag)"/><text class="d" x="372" y="230" fill="#c2410c">Back (asks first)</text>
+  <!-- side activities -->
+  <rect class="s" x="10" y="176" width="200" height="34" rx="7"/><text class="t" x="110" y="198" text-anchor="middle">NASA problem: can the truck see?</text>
+  <text class="d" x="14" y="226">1 Sensors → 2 Route → 3 Shadows</text>
+  <rect class="s" x="10" y="240" width="95" height="30" rx="7"/><text class="t" x="57" y="260" text-anchor="middle">Trivia</text>
+  <rect class="s" x="115" y="240" width="95" height="30" rx="7"/><text class="t" x="162" y="260" text-anchor="middle">Logbook</text>
+  <rect class="s" x="10" y="282" width="200" height="30" rx="7"/><text class="t" x="110" y="302" text-anchor="middle">Judge demo (all open)</text>
+  <text class="d" x="14" y="330">Side menu on every screen: sound, music,</text>
+  <text class="d" x="14" y="342">text size, Home, sources, tips, reset, quit.</text>
+</svg>
+
+<div class="page"></div>
+<h2>2. Code architecture</h2>
+<p>The game is built entirely in code (no hand-made scenes besides <code>main.tscn</code>). It is split into layers. Each layer only talks to the layer below it, so the rules can be tested without any screen.</p>
+
+<svg viewBox="0 0 760 400" width="100%" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .b { stroke-width: 1.6; rx: 8; }
+    .h { font-size: 13px; font-weight: 700; fill: #14213d; }
+    .x { font-size: 10px; fill: #3d4657; }
+    .a { stroke: #5b6475; stroke-width: 1.4; fill: none; }
+  </style>
+  <defs><marker id="k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6475"/></marker></defs>
+  <rect class="b" x="10" y="8" width="740" height="58" fill="#e8f1fb" stroke="#2f6db5"/>
+  <text class="h" x="24" y="30">Shell · scripts/main.gd</text>
+  <text class="x" x="24" y="48">Screen switcher (GameState.go(id) → SCREENS table), 1280×720 holder scaled to any window, F11 fullscreen,</text>
+  <text class="x" x="24" y="61">side menu overlay (menu.gd), background music (music.gd) and sound effects (sfx.gd). A missing screen shows a stub.</text>
+  <path class="a" d="M380,66 V82" marker-end="url(#k)"/>
+  <rect class="b" x="10" y="84" width="740" height="58" fill="#eef8f1" stroke="#2e8b57"/>
+  <text class="h" x="24" y="106">Screens · scripts/screens/*.gd (20)</text>
+  <text class="x" x="24" y="124">One script per screen. Each builds its own layout in _ready(), reads and writes GameState, and asks the core for</text>
+  <text class="x" x="24" y="137">results. Screens never hold rules: they draw what Sim returns.</text>
+  <path class="a" d="M200,142 V158" marker-end="url(#k)"/><path class="a" d="M560,142 V158" marker-end="url(#k)"/>
+  <rect class="b" x="10" y="160" width="360" height="86" fill="#f6f2fd" stroke="#6d5bd0"/>
+  <text class="h" x="24" y="182">UI widgets · scripts/ui/</text>
+  <text class="x" x="24" y="200">ui.gd: labels, buttons, panels, meters, bullets, pictures</text>
+  <text class="x" x="24" y="214">film.gd: the short simulations after puzzles</text>
+  <text class="x" x="24" y="228">sprites.gd: code drawings used until art arrives</text>
+  <text class="x" x="24" y="242">event_card, part_card, charts, starfield, confirm …</text>
+  <rect class="b" x="390" y="160" width="360" height="86" fill="#fff7ed" stroke="#c2410c"/>
+  <text class="h" x="404" y="182">GameState · scripts/autoload/game_state.gd</text>
+  <text class="x" x="404" y="200">The one global: current mission, craft size, design,</text>
+  <text class="x" x="404" y="214">schedule, ops state, progress, lives, star dust,</text>
+  <text class="x" x="404" y="228">settings. Saves to user://save.json.</text>
+  <text class="x" x="404" y="242">go(id) changes screen; evaluate() runs Sim.</text>
+  <path class="a" d="M570,246 V262" marker-end="url(#k)"/>
+  <rect class="b" x="10" y="264" width="740" height="62" fill="#fdf2f2" stroke="#b42318"/>
+  <text class="h" x="24" y="286">Core rules · scripts/core/ (pure static functions, no screen code)</text>
+  <text class="x" x="24" y="304">sim.gd: evaluate a design, check R1–R6, readiness, launch outcome, one week of operations, stars, puzzle rules</text>
+  <text class="x" x="24" y="318">craft.gd: 1U/3U/6U numbers · truck_sim.gd: sensors and routes · data.gd: loads JSON · trivia_pick.gd: no-repeat questions</text>
+  <path class="a" d="M380,326 V342" marker-end="url(#k)"/>
+  <rect class="b" x="10" y="344" width="360" height="48" fill="#f4f6f9" stroke="#5b6475"/>
+  <text class="h" x="24" y="364">Data · data/*.json</text>
+  <text class="x" x="24" y="381">20 levels, parts, puzzles, events, craft, truck, trivia, sources</text>
+  <rect class="b" x="390" y="344" width="360" height="48" fill="#f4f6f9" stroke="#5b6475"/>
+  <text class="h" x="404" y="364">Art and sound · art/, audio/</text>
+  <text class="x" x="404" y="381">Team drawings (PNG); sounds and music made in code</text>
+</svg>
+
+<h3>How one action flows through the layers</h3>
+<ul>
+  <li><b>The player fits a part</b> in the workshop: <code>workshop.gd</code> calls <code>GameState.set_slot()</code>.</li>
+  <li><b>GameState</b> updates <code>design</code> and emits <code>design_changed</code>.</li>
+  <li><b>The workshop refreshes:</b> <code>GameState.evaluate()</code> → <code>Sim.evaluate_design()</code> gives mass, power, battery, data, cost and launch day; <code>Sim.check_requirements()</code> turns that into the six checks.</li>
+  <li><b>The screen draws</b> the six meters and the readiness percentage from those results. No numbers are worked out in the screen itself.</li>
+</ul>
+
+<h2>3. Folders and screens</h2>
+<table>
+  <tr><th style="width:24%">Folder</th><th>What is in it</th></tr>
+  <tr><td><code>scripts/screens/</code></td><td>One script per screen (table below).</td></tr>
+  <tr><td><code>scripts/ui/</code></td><td>Reusable widgets and drawings: ui.gd, film.gd, sprites.gd, menu.gd, music.gd, sfx.gd, event_card.gd, part_card.gd, data_pipe.gd, plan_timeline.gd, rocket_stack.gd, starfield.gd, truck_tabs.gd …</td></tr>
+  <tr><td><code>scripts/core/</code></td><td>The rules: sim.gd, craft.gd, truck_sim.gd, data.gd, trivia_pick.gd.</td></tr>
+  <tr><td><code>scripts/autoload/</code></td><td>game_state.gd, the single global.</td></tr>
+  <tr><td><code>data/</code></td><td>All numbers and text: level1–20.json, parts, puzzles, events, craft, truck, trivia, tutorial, sources.</td></tr>
+  <tr><td><code>art/</code></td><td>Team drawings: icons/, modules/ (parts, CubeSats, ground station), backgrounds/ (Moon, Sun, Earth), animations/rocket/ (19 frames), ui/ (Mission Completed / Failed).</td></tr>
+  <tr><td><code>tests/</code>, <code>tools/</code></td><td>Headless test suites; make_missions.py builds the mission files.</td></tr>
+  <tr><td><code>docs/</code></td><td>Spec, credits, sources, submission summary, this document.</td></tr>
+</table>
+
+<table>
+  <tr><th style="width:18%">Screen id</th><th>What the player does there</th></tr>
+  <tr><td>title</td><td>Play, Skip to missions, How to play, Training, the NASA problem, quick settings, progress.</td></tr>
+  <tr><td>profile</td><td>Name, title, suit and patch colour for the astronaut badge.</td></tr>
+  <tr><td>guide</td><td>How to play: the waterfall flowchart of the seven steps and the golden rules.</td></tr>
+  <tr><td>ladder</td><td>The four training puzzles in order; each opens when the one before is done.</td></tr>
+  <tr><td>puzzle_mass · _power · _link · _time</td><td>The four training puzzles (section 4.1).</td></tr>
+  <tr><td>missions</td><td>Choose one of 20 missions; stages open with stars.</td></tr>
+  <tr><td>briefing</td><td>Goal, limits, the rocket and why it fits, CubeSat size choice.</td></tr>
+  <tr><td>workshop</td><td>Fit parts, watch six live checks, the clock runs; Back asks before losing progress.</td></tr>
+  <tr><td>test_lab</td><td>Every requirement checked; test events can reveal flaws to fix or risk.</td></tr>
+  <tr><td>launch</td><td>The launch, animated; failure shows the stage, an error code and the reasons.</td></tr>
+  <tr><td>ops</td><td>Operations week by week: data, battery, fuel, events with a timer.</td></tr>
+  <tr><td>report</td><td>Stars, the cause chain, the mission chart, retry or move on.</td></tr>
+  <tr><td>truck · truck_route</td><td>The NASA problem: sensors, then route, then moving shadows.</td></tr>
+  <tr><td>trivia · logbook · demo</td><td>Star-dust trivia, lessons learned, and the judge tour.</td></tr>
+</table>
+
+<div class="page"></div>
+<h2>4. Mechanics</h2>
+
+<h3>4.1 Training puzzles</h3>
+<div class="grid2">
+  <div class="box"><b>P1 Mass.</b> Pack a photo satellite into a 3.6 kg rocket slot. Mass, money ($380k), power and data rate must all work at once; only one set of parts fits. The rocket's open payload bay shows each part as a block. Launching too heavy plays the break-up film.</div>
+  <div class="box"><b>P2 Power.</b> Size panels and battery so the battery stays above 10% through a 35-minute eclipse and refills before the next one, within 0.7 kg. The film plays as soon as the puzzle opens.</div>
+  <div class="box"><b>P3 Data link.</b> The camera makes more than the radio can send. Nine ideas: some work, some are traps, some only work together. The pipe shows the bottleneck. Spare mass, money and power limit the answer; the cleverest one is free.</div>
+  <div class="box"><b>P4 Budget and time.</b> Plan build, test and licence on a timeline so the satellite is ready for launch day without running out of money, then play the year with surprises.</div>
+</div>
+
+<h3>4.2 The six checks (requirements)</h3>
+<table>
+  <tr><th>Id</th><th>Check</th><th>Hard?</th><th>If it fails</th></tr>
+  <tr><td>R1</td><td>Total mass at most the rocket slot (1.33 / 4 / 8 kg by CubeSat size)</td><td>Yes</td><td>The rocket refuses the satellite.</td></tr>
+  <tr><td>R2</td><td>Deliver at least the weekly data goal</td><td>No</td><td>Fewer photos reach the ground.</td></tr>
+  <tr><td>R3</td><td>Keep at least 10% spare power</td><td>No</td><td>The battery drains a little every week.</td></tr>
+  <tr><td>R4</td><td>Keep at least 10% of the budget in reserve</td><td>No</td><td>A surprise cost can cancel the mission.</td></tr>
+  <tr><td>R5</td><td>Battery stays above 10% in eclipse</td><td>No</td><td>Brown-outs lose data; with no battery the satellite dies.</td></tr>
+  <tr><td>R6</td><td>Ready to launch by the deadline day</td><td>No</td><td>The launch slot is missed and rebooking costs money.</td></tr>
+</table>
+<p><b>Readiness</b> is the share of checks that pass. The rocket needs at least the level's minimum (80% in Earth Imager) to fly.</p>
+
+<h3>4.3 Workshop</h3>
+<ul>
+  <li><b>Design values</b> (Sim.evaluate_design): mass = bus + parts; power made by panels (capped by the craft in Earth Imager: 1U 2.5 W, 3U 20 W, 6U 57.6 W); power used by bus and parts; battery need = power used × eclipse minutes; data delivered = the smaller of made and sent.</li>
+  <li><b>The clock:</b> one day passes every few seconds. Every day adds staff cost, and launch day = build day + post-build days + retests, never earlier than the licence.</li>
+  <li><b>Pressure:</b> removing or swapping a fitted part costs rework days and money; a HURRY warning flashes when the launch date nears the deadline.</li>
+  <li><b>Back</b> asks "Progress will be lost for this round" before returning to the briefing; "Bring back my last parts" can restore the design.</li>
+</ul>
+
+<h3>4.4 Test lab and launch</h3>
+<ul>
+  <li><b>Test events</b> (vibration, thermal, software …) give a choice under a timer. Leaving a problem unfixed records a <i>flaw</i>.</li>
+  <li><b>Launch outcome</b> is decided by the player's choices, never by chance (Sim.launch_outcome):
+    <ul>
+      <li><b>On the pad:</b> readiness below the minimum, so the launch is called off.</li>
+      <li><b>Max-Q</b> (35% of the climb): heavy craft (above 80% of the limit) with a flaw, or a cracked antenna mount with the big antenna fitted.</li>
+      <li><b>Second stage</b> (65%): above 95% of the mass limit with a check still failing.</li>
+      <li><b>Separation</b> (100%): two or more flaws, or large panels with a flaw.</li>
+    </ul>
+  </li>
+  <li>The rocket fails at the earliest stage that has a problem; the error code shown is random, the reasons are not.</li>
+</ul>
+
+<h3>4.5 Operations (one week at a time)</h3>
+<ul>
+  <li><b>Data:</b> made → stored → sent (radio limit); anything above on-board storage is lost. Low-res photos make less; an extra ground pass sends more for a fee and a cooldown.</li>
+  <li><b>Battery:</b> safe mode recharges; negative spare power drains it; a weak battery causes brown-outs that lose a share of the data.</li>
+  <li><b>Fuel</b> burns every week, faster for heavier craft. Events (solar storm, space junk …) appear at set weeks with a timer.</li>
+  <li><b>The mission ends</b> when the weeks run out (complete), or early: battery empty, out of money, out of fuel, or orbit decay.</li>
+</ul>
+
+<h3>4.6 Stars and grade</h3>
+<ul>
+  <li>★ <b>Goal reached:</b> delivered data ≥ the mission goal.</li>
+  <li>★ <b>All checks passed</b> at launch.</li>
+  <li>★ <b>Finished with reserve:</b> completed with at least 10% of the budget left.</li>
+  <li><b>Grade:</b> success (goal met), partial (60% of the goal or more), failed (less).</li>
+</ul>
+
+<h3>4.7 NASA problem: can the truck see?</h3>
+<ul>
+  <li><b>1 Sensors:</b> choose sensors within mass, power and cost limits; a drive test shows which ground conditions each one sees.</li>
+  <li><b>2 Route:</b> click squares to plan a path for a solar-powered scout rover; shadows drain the battery, dust hides rocks, ridges block the way.</li>
+  <li><b>3 Shadows:</b> the same, but the Sun moves each step so shadows sweep across the map; waiting in sunlight recharges. Each challenge opens when the one before is done.</li>
+</ul>
+
+<h2>5. Progress, rewards and saving</h2>
+<ul>
+  <li><b>Missions</b> come in stages of 7. A stage opens when the stage before has 17 of its 21 stars. Missions open only after the four puzzles.</li>
+  <li><b>Lives:</b> 5. A 0-star mission costs one; one comes back every 30 minutes, or can be bought for 1,500 star dust.</li>
+  <li><b>Star dust:</b> 500 the first time a mission gets 3 stars; 50 per right trivia answer (up to 3 rounds a day, 10 minutes apart).</li>
+  <li><b>Saved</b> to <code>user://save.json</code>: puzzles and missions done, stars, lives, star dust, profile, settings (sound, music, text size, tips), truck and trivia progress.</li>
+</ul>
+
+<h2>6. Art, sound and fallbacks</h2>
+<ul>
+  <li><b>Missing art never breaks a screen:</b> <code>UI.picture()</code> shows the team's PNG if it exists, otherwise a code drawing from <code>sprites.gd</code>, otherwise a labelled box.</li>
+  <li><b>Team drawings in use:</b> part icons, the six check icons, the three CubeSat bodies, UHF and S-band antennas, the dish, the ground station, Moon, Sun and night-side Earth, the 19-frame rocket animation, and the Mission Completed / Failed titles.</li>
+  <li><b>Sound effects and music</b> are generated in code (no audio files), each with its own volume and mute.</li>
+</ul>
+
+<h2>7. Testing and extending</h2>
+<ul>
+  <li><b>Run all tests headless:</b> <code>godot --headless --path . -s res://tests/run_tests.gd</code> (sim, craft, progress, trivia and truck suites, plus load and mission checks).</li>
+  <li><b>Add a screen:</b> write <code>scripts/screens/name.gd</code> and add one line to <code>SCREENS</code> in main.gd.</li>
+  <li><b>Add a mission:</b> add <code>data/levelN.json</code> (or generate it with <code>tools/make_missions.py</code>); the mission list picks it up.</li>
+  <li><b>Add art:</b> drop a PNG with the expected name into <code>art/</code>; it replaces the code drawing automatically.</li>
+</ul>
+<p class="note">Numbers marked as placeholders in the data files (part prices, battery sizes, event effects) are for gameplay and are labelled in the game. Sources are listed in the in-game Resources panel and in docs/CREDITS.md.</p>
+
+</body>
+</html>

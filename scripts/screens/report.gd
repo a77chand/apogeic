@@ -132,10 +132,19 @@ func _build_top_bar(grade: String) -> void:
 	elif grade == "partial":
 		title_text = "Partial success"
 		color = UI.C_YELLOW
-	var title: Label = UI.label(title_text, 30, color)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	bar.add_child(title)
+	var art: Control = null
+	if grade != "partial":
+		art = UI.result_art(grade == "success", 560.0)
+	if art != null:
+		var mid: CenterContainer = CenterContainer.new()
+		mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.add_child(mid)
+		mid.add_child(art)
+	else:
+		var title: Label = UI.label(title_text, 30, color)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		bar.add_child(title)
 	var badge: Control = Player.badge(44.0)
 	add_child(badge)
 	badge.position = Vector2(14.0, 14.0)

@@ -41,7 +41,11 @@ func _ready() -> void:
 	_build_result()
 	_build_bottom()
 	_refresh()
-	Tutorial.maybe_show(self, "puzzle_power")
+	# the short film plays by itself when the puzzle opens (Skip is on it); then the tips
+	var film: Control = Film.play(self, "power_fail", ["Every orbit, the Earth hides the Sun for 35 minutes.", "If the battery is too small, it runs flat in the dark and the satellite goes silent."])
+	await film.finished
+	if is_inside_tree():
+		Tutorial.maybe_show(self, "puzzle_power")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -60,7 +64,6 @@ func _build_intro() -> void:
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
 	intro.custom_minimum_size = Vector2(248.0, 0.0)
 	col.add_child(intro)
-	col.add_child(UI.button("▶  Watch: a dead battery", _on_watch, 250.0, false))
 	col.add_child(UI.bullets(["Needs 12 W, day and night", "Dark for 35 of every 95 minutes"], 14, UI.C_TEXT, 250.0, UI.C_ORANGE))
 	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
 	col.add_child(UI.bullets(_pz.get("goal", []), 14, UI.C_TEXT, 250.0, UI.C_GREEN))
@@ -103,18 +106,30 @@ func _build_result() -> void:
 	var col: VBoxContainer = UI.vbox(8)
 	panel.add_child(col)
 	col.add_child(UI.label("Result", 20))
-	col.add_child(UI.label("Lowest battery level", 14, UI.C_MUTED))
+	col.add_child(_icon_row("res://art/icons/icon_battery.png", "Lowest battery level"))
 	_min_bar = UI.meter(250.0)
 	col.add_child(_min_bar)
 	_min_label = UI.label("", 14)
 	col.add_child(_min_label)
 	_end_label = UI.label("", 14, UI.C_MUTED, true)
 	col.add_child(_end_label)
-	col.add_child(UI.label("Mass", 14, UI.C_MUTED))
+	col.add_child(_icon_row("res://art/icons/icon_mass.png", "Mass"))
 	_mass_bar = UI.meter(250.0)
 	col.add_child(_mass_bar)
 	_mass_label = UI.label("", 14)
 	col.add_child(_mass_label)
+
+
+## A small team icon and a label, side by side.
+func _icon_row(path: String, text: String) -> HBoxContainer:
+	var row: HBoxContainer = UI.hbox(8)
+	var pic: Control = UI.picture(path, Vector2(30, 30), "")
+	pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(pic)
+	var l: Label = UI.label(text, 14, UI.C_MUTED)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(l)
+	return row
 
 
 func _build_bottom() -> void:
@@ -177,10 +192,6 @@ func _refresh() -> void:
 		_message.add_theme_color_override("font_color", UI.C_RED)
 		Chrome.set_tip(_tip, "Drag the sliders. The line shows the battery charge through one orbit.")
 	_lock_btn.disabled = _locked
-
-
-func _on_watch() -> void:
-	Film.play(self, "power_fail", ["Every orbit, the Earth hides the Sun for 35 minutes.", "If the battery is too small, it runs flat in the dark and the satellite goes silent."])
 
 
 func _on_lock() -> void:

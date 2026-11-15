@@ -259,12 +259,22 @@ func _failed() -> void:
 	var pulse: Tween = red.create_tween().set_loops(3)
 	pulse.tween_property(red, "color:a", 0.28, 0.18)
 	pulse.tween_property(red, "color:a", 0.0, 0.30)
-	var banner: Label = UI.label("Launch aborted" if _stage == "climb" else "Mission failed", 72, UI.C_RED)
-	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var banner: Control = UI.result_art(false, 1000.0)
+	if banner == null:
+		var words: Label = UI.label("Mission failed", 72, UI.C_RED)
+		words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		banner = words
 	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(banner)
 	banner.position = Vector2(140.0, 70.0)
 	banner.size = Vector2(1000.0, 100.0)
+	if _stage == "climb":
+		var abort: Label = UI.label("Launch aborted on the pad", 20, UI.C_ORANGE)
+		abort.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		abort.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(abort)
+		abort.position = Vector2(140.0, 146.0)
+		abort.size = Vector2(1000.0, 28.0)
 	banner.pivot_offset = Vector2(500.0, 50.0)
 	banner.scale = Vector2(1.6, 1.6)
 	banner.create_tween().tween_property(banner, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -273,7 +283,7 @@ func _failed() -> void:
 	code.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	code.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(code)
-	code.position = Vector2(140.0, 176.0)
+	code.position = Vector2(140.0, 180.0)
 	code.size = Vector2(1000.0, 30.0)
 	# the reasons, as short bullets in a panel
 	var panel: PanelContainer = UI.panel(UI.C_RED, 14.0)

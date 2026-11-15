@@ -67,14 +67,16 @@ func _build_intro() -> void:
 		"Goal: %d MB/wk to the ground" % int(_pz.get("need_mb_wk", 0)),
 	], 15, UI.C_TEXT, 272.0))
 	col.add_child(UI.label("Each card: what it adds, then its cost.", 12, UI.C_MUTED, true))
-	col.add_child(UI.label("What you have spare", 14, UI.C_MUTED))
-	for item in [["mass", "Mass"], ["cost", "Money"], ["power", "Power"]]:
+	col.add_child(UI.label("Your parameters:", 14, UI.C_MUTED))
+	# the team's icons for mass, money and power, then a bar of how much is used
+	for item in [["mass", "Mass", "res://art/icons/icon_mass.png"], ["cost", "Money", "res://art/icons/icon_budget.png"], ["power", "Power", "res://art/icons/icon_power.png"]]:
 		var pair: Array = item
-		var row: HBoxContainer = UI.hbox(6)
+		var row: HBoxContainer = UI.hbox(8)
 		col.add_child(row)
-		var name_label: Label = UI.label(str(pair[1]), 13, UI.C_MUTED)
-		name_label.custom_minimum_size = Vector2(52.0, 0.0)
-		row.add_child(name_label)
+		var icon: Control = UI.picture(str(pair[2]), Vector2(30, 30), str(pair[1]))
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		icon.tooltip_text = str(pair[1])
+		row.add_child(icon)
 		var bar: ProgressBar = UI.meter(110.0)
 		bar.custom_minimum_size = Vector2(110.0, 10.0)
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -227,6 +229,7 @@ func _on_lock() -> void:
 	_lock_btn.disabled = true
 	GameState.mark_puzzle_done(ID)
 	GameState.play_sound("fanfare")
+	UI.result_banner(self, true)
 	_message.text = str(_pz.get("lesson", ""))
 	_message.add_theme_color_override("font_color", UI.C_GREEN)
 	var timer: Timer = Timer.new()

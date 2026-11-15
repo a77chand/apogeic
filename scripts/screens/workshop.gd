@@ -10,6 +10,7 @@ const Sim = preload("res://scripts/core/sim.gd")
 const PartCard = preload("res://scripts/ui/part_card.gd")
 const DropZone = preload("res://scripts/ui/drop_zone.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
+const Confirm = preload("res://scripts/ui/confirm.gd")
 
 # bar id -> {"req": requirement id, "bar": ProgressBar, "text": Label, "status": Label}
 var _bars: Dictionary = {}
@@ -22,7 +23,7 @@ var _day_pill: Label = null
 var _money_pill: Label = null
 var _tray: ScrollContainer = null
 var _pause_btn: Button = null
-var _sat: Control = null            # the code-drawn satellite (only when the art PNG is missing)
+var _sat: Control = null            # the live satellite: the craft drawing plus the fitted parts
 var _paused: bool = false
 var _popup: Control = null          # the open "Why red?" popup, if any
 var _acc: float = 0.0               # seconds collected towards the next day
@@ -31,10 +32,11 @@ var _hurry: Label = null            # the "hurry up" warning over the satellite
 var _hurry_tween: Tween = null
 var _restore_btn: Button = null     # "Bring back my last parts", after Start with empty satellite
 const MAX_DAY: int = 250
-## One colour per resource, from the art guide: mass, power, battery, data, budget, time.
-const BAR_COLORS: Dictionary = {
-	"mass": Color(0.561, 0.639, 0.749), "power": Color(0.961, 0.784, 0.259), "eclipse": Color(0.180, 0.769, 0.714),
-	"data": Color(0.247, 0.816, 0.878), "budget": Color(0.357, 0.761, 0.478), "time": Color(0.949, 0.549, 0.157),
+## The team's icon for each check (time has no drawing yet, so it uses a code-drawn clock).
+const BAR_ICONS: Dictionary = {
+	"mass": "res://art/icons/icon_mass.png", "power": "res://art/icons/icon_power.png",
+	"eclipse": "res://art/icons/icon_battery.png", "data": "res://art/icons/icon_data.png",
+	"budget": "res://art/icons/icon_budget.png", "time": "res://art/icons/icon_time.png",
 }
 
 
@@ -87,6 +89,10 @@ func _build_top_bar() -> void:
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
 	row.add_child(Player.badge(44.0))
+	var back_btn: Button = UI.button("Back", _on_back, 90.0, false)
+	back_btn.custom_minimum_size = Vector2(90.0, 40.0)
+	back_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(back_btn)
 	var spacer_a: Control = Control.new()
 	spacer_a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer_a)
@@ -138,12 +144,10 @@ func _build_centre() -> void:
 	var col: VBoxContainer = UI.vbox(8)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	centre.add_child(col)
-	var sat_art: String = "res://art/modules/cubesat_3u.png"
-	if ResourceLoader.exists(sat_art):
-		col.add_child(UI.picture(sat_art, Vector2(560, 187)))
-	else:
-		_sat = Sprites.live_satellite(Vector2(560, 300))   # builds itself as parts are fitted
-		col.add_child(_sat)
+	# builds itself as parts are fitted; the body is the team's drawing for the chosen size
+	_sat = Sprites.live_satellite(Vector2(560, 330))
+	_sat.set("craft", GameState.craft_id)
+	col.add_child(_sat)
 	var hint: Label = UI.label("Drop parts here, or click them below", 14, UI.C_MUTED)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -177,11 +181,9 @@ func _build_right_panel() -> void:
 		var def: Array = item
 		var key: String = str(def[0])
 		var head: HBoxContainer = UI.hbox(6)
-		var dot: ColorRect = ColorRect.new()
-		dot.custom_minimum_size = Vector2(10.0, 10.0)
-		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		dot.color = BAR_COLORS.get(key, UI.C_MUTED)
-		head.add_child(dot)
+		var icon: Control = UI.picture(str(BAR_ICONS.get(key, "")), Vector2(20.0, 20.0), "")
+		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		head.add_child(icon)
 		var title: Label = UI.label(str(def[1]), 13, UI.C_MUTED)
 		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		head.add_child(title)
@@ -547,7 +549,10 @@ func _refresh() -> void:
 	var power_fill: float = 100.0
 	if gen > 0.0:
 		power_fill = use / gen * 100.0
-	_set_bar("power", power_fill, "%.1f W used of %.1f W" % [use, gen], results)
+	var power_text: String = "%.1f W used of %.1f W" % [use, gen]
+	if GameState.level.has("power_cap_w"):
+		power_text += " (%s makes %s W at most)" % [GameState.craft_id.to_upper(), str(snappedf(float(GameState.level["power_cap_w"]), 0.1))]
+	_set_bar("power", power_fill, power_text, results)
 	_set_bar("eclipse", float(ev.get("eclipse_min_pct", 0.0)),
 			"lowest %d%%" % int(round(float(ev.get("eclipse_min_pct", 0.0)))), results)
 	_set_bar("data", delivered / data_target * 100.0,
@@ -629,3 +634,14 @@ func _refresh_slots() -> void:
 			rm.custom_minimum_size = Vector2(36.0, 36.0)
 			rm.tooltip_text = "Remove"
 			row.add_child(rm)
+
+
+## Back to the briefing. This round's parts are lost, so ask first.
+func _on_back() -> void:
+	Confirm.ask(self, "Go back?", "Progress will be lost for this round. Do you still want to go back?", "Yes", _do_back)
+
+
+func _do_back() -> void:
+	GameState.remember_design()   # "Bring back my last parts" can still fetch them
+	GameState.reset_mission()
+	GameState.go("briefing")

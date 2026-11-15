@@ -17,7 +17,7 @@ var _need: float = 1.0
 var _t: float = 0.0
 
 
-const PICTURES: Array = ["res://art/icons/part_camera.png", "res://art/modules/part_antenna_small.png", "res://art/modules/ground_station.png"]
+const PICTURES: Array = ["res://art/icons/part_camera.png", "res://art/modules/part_antenna_sband.png", "res://art/modules/ground_station.png"]
 
 var _pics: Array = []
 
@@ -40,7 +40,8 @@ func _ready() -> void:
 ## One layout used by both the pictures and the drawing, so they always line up:
 ## the centre of each circle, and its radius.
 const R: float = 34.0
-const PIC: float = 50.0
+const PIC: float = 62.0       # camera and radio: no ring, so they can be a little bigger
+const STATION_PIC: float = 52.0   # the ground station sits inside its ring
 
 
 func _centres() -> Array:
@@ -52,8 +53,9 @@ func _place_pics() -> void:
 	var cs: Array = _centres()
 	for i in range(_pics.size()):
 		var pic: Control = _pics[i]
-		pic.size = Vector2(PIC, PIC)
-		pic.position = (cs[i] as Vector2) - Vector2(PIC, PIC) * 0.5
+		var side: float = STATION_PIC if i == 2 else PIC
+		pic.size = Vector2(side, side)
+		pic.position = (cs[i] as Vector2) - Vector2(side, side) * 0.5
 
 
 func set_flow(make: float, send: float, delivered: float, need: float) -> void:
@@ -109,9 +111,10 @@ func _draw() -> void:
 			edge = UI.C_RED
 		if i == 2:
 			edge = UI.C_GREEN if not short else UI.C_ORANGE
-		draw_circle(cc, R + 5.0, Color(edge, 0.10))
-		draw_circle(cc, R, Color(0.02, 0.05, 0.12, 0.9))
-		draw_arc(cc, R, 0.0, TAU, 48, edge, 2.5)
+		if i == 2:   # only the ground station has a ring; the camera and radio stand on their own
+			draw_circle(cc, R + 5.0, Color(edge, 0.10))
+			draw_circle(cc, R, Color(0.02, 0.05, 0.12, 0.9))
+			draw_arc(cc, R, 0.0, TAU, 48, edge, 2.5)
 		var caption: String = "%s  %d" % [str(n[0]), int(round(float(n[1])))]
 		if i == 2:
 			caption = "GROUND  %d of %d" % [int(round(_delivered)), int(round(_need))]
