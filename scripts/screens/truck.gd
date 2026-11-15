@@ -30,7 +30,11 @@ func _ready() -> void:
 	_build_limits()
 	_build_explain()
 	_refresh()
-	Tutorial.maybe_show(self, "truck")   # first visit; "The problem" button has the full story
+	# the drive test of a camera-only rover plays by itself when the problem opens (Skip is on
+	# it), so the problem is clear straight away; then the tips. "The problem" has the full story.
+	await _run_drive(["camera"])
+	if is_inside_tree():
+		Tutorial.maybe_show(self, "truck")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:

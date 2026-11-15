@@ -27,6 +27,8 @@ var _driving: float = -1.0   # step being shown while driving, -1 = planning
 var _result: Dictionary = {}
 var _next_btn: Button = null
 var _routes: Array = []
+var _speed: float = 1.0          # driving speed: 1x or 2x
+var _speed_btn: Button = null    # shows once the plan reaches the dig site
 
 
 func _ready() -> void:
@@ -157,7 +159,13 @@ func _build_side() -> void:
 	if bool(_route.get("waits", false)):
 		row2.add_child(UI.button("Wait", _on_wait, 100.0, false))
 	row2.add_child(UI.button("Clear", _on_clear, 100.0, false))
-	col.add_child(UI.button("Drive  >", _on_drive, 330.0, true))
+	var drive_row: HBoxContainer = UI.hbox(8)
+	col.add_child(drive_row)
+	drive_row.add_child(UI.button("Drive  >", _on_drive, 230.0, true))
+	_speed_btn = UI.button("Speed 1x", _toggle_speed, 92.0, false)
+	_speed_btn.tooltip_text = "Drive at normal or double speed"
+	_speed_btn.visible = false
+	drive_row.add_child(_speed_btn)
 	_next_btn = UI.button("Next  >", _on_next, 330.0, true)
 	_next_btn.visible = _set_done(GameState.truck_route)
 	col.add_child(_next_btn)
@@ -179,12 +187,20 @@ func _refresh() -> void:
 		_status.text = str(_result["fail"])
 		_status.add_theme_color_override("font_color", UI.C_RED)
 	elif bool(_result.get("reached", false)):
-		_status.text = "The plan reaches the dig site. Press Drive."
+		_status.text = "The plan reaches the dig site. Press Drive (1x or 2x speed)."
 		_status.add_theme_color_override("font_color", UI.C_GREEN)
 	else:
 		_status.text = "Click a square next to the end of the path."
 		_status.add_theme_color_override("font_color", UI.C_MUTED)
 	_map.queue_redraw()
+	# the speed choice appears once the path is finished (it reaches the dig site)
+	if _speed_btn != null:
+		_speed_btn.visible = bool(_result.get("reached", false)) or _driving >= 0.0
+
+
+func _toggle_speed() -> void:
+	_speed = 2.0 if _speed < 1.5 else 1.0
+	_speed_btn.text = "Speed %dx" % int(_speed)
 
 
 func _draw_map() -> void:
@@ -317,7 +333,7 @@ func _on_drive() -> void:
 			break
 	_driving = 0.0
 	while _driving < float(stop):
-		_driving = minf(float(stop), _driving + get_process_delta_time() * 2.5)
+		_driving = minf(float(stop), _driving + get_process_delta_time() * 2.5 * _speed)
 		_map.queue_redraw()
 		await get_tree().process_frame
 		if not is_inside_tree():
@@ -328,12 +344,57 @@ func _on_drive() -> void:
 		_status.text = "Arrived safely! " + str(_route.get("lesson", ""))
 		_status.add_theme_color_override("font_color", UI.C_GREEN)
 		_next_btn.visible = true
+		_good_job()
 	else:
 		GameState.play_sound("fail")
 		_status.text = (str(_result.get("fail", "")) if str(_result.get("fail", "")) != "" else "The route stops before the dig site.") + " Change the plan and try again."
 		_status.add_theme_color_override("font_color", UI.C_RED)
 	_driving = -1.0
 	_map.queue_redraw()
+
+
+## A small "Good job!" box over the map when a set is finished. It closes by itself after a
+## few seconds, or on a click.
+func _good_job() -> void:
+	var ch: int = int(_route.get("challenge", 2))
+	var total: int = 0
+	var done: int = 0
+	for i in range(_routes.size()):
+		if int((_routes[i] as Dictionary).get("challenge", 0)) == ch:
+			total += 1
+			if _set_done(i):
+				done += 1
+	var box: PanelContainer = UI.neon_panel(UI.C_GREEN, 18.0)
+	box.z_index = 50
+	box.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(box)
+	var col: VBoxContainer = UI.vbox(6)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(col)
+	var head: Label = UI.label("Good job!", 30, UI.C_GREEN)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(head)
+	var line: String = "Set %d of %d done." % [int(_route.get("set", done)), total]
+	if done >= total:
+		line = "All %d sets done: challenge %d complete!" % [total, ch]
+	var l: Label = UI.label(line, 17, UI.C_TEXT)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(l)
+	var more: Label = UI.label("Press Next for the next one.", 13, UI.C_MUTED)
+	more.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(more)
+	box.custom_minimum_size = Vector2(380.0, 0.0)
+	box.position = Vector2(ORIGIN.x + 230.0, ORIGIN.y + 150.0)
+	box.pivot_offset = Vector2(190.0, 70.0)
+	box.scale = Vector2(0.6, 0.6)
+	var tw: Tween = box.create_tween()
+	tw.tween_property(box, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(3.0)
+	tw.tween_property(box, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(box.queue_free)
+	box.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed and is_instance_valid(box):
+			box.queue_free())
 
 
 ## This set is done; when every set of the challenge is done, the challenge is too.

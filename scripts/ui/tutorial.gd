@@ -30,7 +30,7 @@ static func maybe_show(host: Control, screen_id: String) -> void:
 	if not screens.has(screen_id):
 		return
 	var entry: Dictionary = screens[screen_id]
-	var steps: Array = entry.get("steps", [])
+	var steps: Array = _only_if_needed(entry.get("steps", []))
 	if steps.is_empty():
 		return
 	var overlay: Control = Self.new()
@@ -156,3 +156,26 @@ func _finish() -> void:
 	GameState.mark_tutorial_seen(_screen_id)
 	GameState.tutorial_open = false
 	queue_free()
+
+
+## Lines marked "[locked]" only apply when this mission has a locked choice (most missions
+## have none). Drops those lines when there is none, and any step left empty.
+static func _only_if_needed(steps: Array) -> Array:
+	var has_locked: bool = false
+	for item in GameState.level.get("concept_chips", []):
+		if str((item as Dictionary).get("state", "")) == "locked":
+			has_locked = true
+	var out: Array = []
+	for step in steps:
+		var lines: Array = step if typeof(step) == TYPE_ARRAY else [step]
+		var kept: Array = []
+		for line in lines:
+			var t: String = str(line)
+			if t.begins_with("[locked] "):
+				if not has_locked:
+					continue
+				t = t.substr(9)
+			kept.append(t)
+		if not kept.is_empty():
+			out.append(kept)
+	return out

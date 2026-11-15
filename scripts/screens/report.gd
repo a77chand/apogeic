@@ -32,6 +32,16 @@ func _ready() -> void:
 		Tutorial.maybe_show(self, "report")
 
 
+## Plain, flat text for the light speech bubble: no outline and no drop shadow, which on a
+## pale background look 3D and smudge the letters together.
+func _flat(l: Label) -> void:
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	l.add_theme_constant_override("outline_size", 0)
+	l.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+	l.add_theme_constant_override("shadow_offset_y", 0)
+	l.add_theme_constant_override("line_spacing", 3)
+
+
 ## The end of a mission with stars: your astronaut jumps with a speech bubble. Three stars
 ## gets the big jump and "Well done!", fewer stars a smaller hop and a gentler word.
 ## Star dust earned or a life lost is shown too. Click anywhere (or wait) to close it.
@@ -63,17 +73,17 @@ func _celebrate(stars: int) -> void:
 	var h: Label = UI.label(head, 30, dark)
 	h.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
 	col.add_child(h)
-	var l: Label = UI.label(line, 16, dark, true)
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	var l: Label = UI.label(line, 17, dark, true)
+	_flat(l)
 	l.custom_minimum_size = Vector2(320.0, 0.0)
 	col.add_child(l)
 	col.add_child(UI.star_row(stars, 30.0))
 	if GameState.last_reward.has("stardust"):
 		var dust: Label = UI.label("+%d star dust" % int(GameState.last_reward["stardust"]), 16, Color(0.45, 0.30, 0.85))
-		dust.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+		_flat(dust)
 		col.add_child(dust)
-	var more: Label = UI.label("Click to continue", 12, Color(0.25, 0.45, 0.6))
-	more.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0))
+	var more: Label = UI.label("Click to continue", 13, Color(0.25, 0.45, 0.6))
+	_flat(more)
 	col.add_child(more)
 	# the bubble's tail, pointing at the astronaut
 	var tail: Control = Control.new()

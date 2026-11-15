@@ -34,7 +34,11 @@ func _ready() -> void:
 	_build_result()
 	_build_bottom()
 	_refresh()
-	Tutorial.maybe_show(self, "puzzle_mass")
+	# the short film plays by itself when the puzzle opens (Skip is on it); then the tips
+	var film: Control = Film.play(self, "launch_fail", ["Too heavy. A rocket can only push so much mass to orbit speed.", "Overloaded, it climbs too slowly, and the air pressure at max-Q tears it apart."])
+	await film.finished
+	if is_inside_tree():
+		Tutorial.maybe_show(self, "puzzle_mass")
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -66,7 +70,6 @@ func _build_intro() -> void:
 	var intro: Label = UI.label(str(_pz.get("intro", "")), 15, UI.C_TEXT, true)
 	intro.custom_minimum_size = Vector2(262.0, 0.0)
 	col.add_child(intro)
-	col.add_child(UI.button("▶  Watch: too heavy", _on_watch, 262.0, false))
 	col.add_child(UI.label("Your goal", 14, UI.C_GREEN))
 	col.add_child(UI.bullets(_pz.get("goal", []), 14, UI.C_TEXT, 262.0, UI.C_GREEN))
 	col.add_child(UI.label("Load parts, then press Launch it to see what happens.", 13, UI.C_MUTED, true))
@@ -187,10 +190,6 @@ func _refresh() -> void:
 		_message.text = "  •  ".join(PackedStringArray(reasons))
 		_message.add_theme_color_override("font_color", UI.C_RED)
 	_lock_btn.disabled = selected_ids.is_empty() or _locked
-
-
-func _on_watch() -> void:
-	Film.play(self, "launch_fail", ["Too heavy. A rocket can only push so much mass to orbit speed.", "Overloaded, it climbs too slowly, and the air pressure at max-Q tears it apart."])
 
 
 ## What the test launch shows: the first thing that is wrong, as a short film.

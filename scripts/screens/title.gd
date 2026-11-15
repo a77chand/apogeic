@@ -107,9 +107,9 @@ func _build_main_choices() -> void:
 
 
 func _build_footer() -> void:
-	var credit: Label = UI.label("v 1 . 0   ·   N A S A   S P A C E   A P P S   2 0 2 6", 10, Color(UI.C_MUTED, 0.7))
+	var credit: Label = UI.label("v 1 . 0   ·   N A S A   S P A C E   A P P S   2 0 2 6   ·   B Y   N E B U L A   F O R G E", 10, Color(UI.C_MUTED, 0.7))
 	credit.add_theme_font_override("font", UI.pixel_font(false))
-	_place(credit, Vector2(24, 690), Vector2(500, 16))
+	_place(credit, Vector2(24, 690), Vector2(900, 16))
 	var test: Button = UI.pixel_button("Self-test", _on_self_test, 100.0, 24.0, 9, Color(UI.C_MUTED, 0.6))
 	_place(test, Vector2(1156, 684), Vector2(100, 24))
 	var demo: Button = UI.pixel_button("Judge demo", _on_demo, 120.0, 24.0, 9, Color(UI.C_GOLD, 0.8))
