@@ -477,7 +477,9 @@ static func keep_text_inside(p: Control) -> void:
 		if sb != null:
 			need += sb.get_minimum_size().y
 		if need <= want + 0.5:
-			if p.size.y > want + 0.5:
+			# a panel placed by hand snaps back to its height; one inside a row or column is
+			# sized by that container (so it stays level with its neighbours) and is left alone
+			if p.size.y > want + 0.5 and not (p.get_parent() is Container):
 				p.size = Vector2(p.size.x, want)
 			return
 		if not _shrink_text(p):

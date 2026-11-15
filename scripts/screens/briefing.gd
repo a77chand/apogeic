@@ -258,7 +258,11 @@ func _build_bottom() -> void:
 	var bar: PanelContainer = PanelContainer.new()
 	bar.add_theme_stylebox_override("panel", UI.bar_style(false))
 	_place(bar, Vector2(0, 662), Vector2(1280, 58))
-	_tip = UI.label("Click a locked choice to see why it is locked.", 15)
+	var any_locked: bool = false
+	for item in GameState.level.get("concept_chips", []):
+		if str((item as Dictionary).get("state", "")) == "locked":
+			any_locked = true
+	_tip = UI.label("Click a locked choice to see why it is locked." if any_locked else "Read the goal and the limits, then press Start building.", 15)
 	bar.add_child(_tip)
 	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 590), Vector2(160, 52))
 	_place(UI.button("Start building", _on_start, 260.0, true), Vector2(1000, 590), Vector2(260, 52))

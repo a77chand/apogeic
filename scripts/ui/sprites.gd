@@ -208,6 +208,21 @@ const CLOUDS: Array = [[-100, 40], [-60, -20], [20, 10], [70, 35], [130, -5], [-
 
 
 func _earth_spin(c: Vector2, r: float, phase: float) -> void:
+	# the team's Earth drawing, turning slowly, with a glow and shading that stay still
+	var tex: Texture2D = _art("res://art/backgrounds/earth_dark.png")
+	if tex != null:
+		for i in range(6):
+			draw_circle(c, r * (1.16 - 0.025 * float(i)), Color(0.35, 0.65, 1.0, 0.045 + 0.012 * float(i)))
+		var k: float = (r * 2.0) / float(maxi(tex.get_width(), tex.get_height()))
+		var sz: Vector2 = Vector2(tex.get_width(), tex.get_height()) * k
+		draw_set_transform(c, phase * 0.5)
+		draw_texture_rect(tex, Rect2(-sz * 0.5, sz), false)
+		draw_set_transform(Vector2.ZERO)
+		draw_circle(c + Vector2(-0.30, -0.32) * r, r * 0.45, Color(1, 1, 1, 0.06))   # sunlit side
+		for i in range(8):   # the far edge gets darker, so it reads as a ball
+			draw_arc(c, r * (0.99 - 0.035 * float(i)), -0.15 * PI, 0.85 * PI, 24, Color(0.01, 0.04, 0.14, 0.05), r * 0.07)
+		draw_arc(c, r, 0.0, TAU, 64, Color(0.6, 0.85, 1.0, 0.6), 2.0)
+		return
 	for i in range(6):
 		draw_circle(c, r * (1.16 - 0.025 * float(i)), Color(0.35, 0.65, 1.0, 0.045 + 0.012 * float(i)))
 	draw_circle(c, r, OCEAN)
@@ -314,12 +329,14 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 		_rect(bx, top + bh * 0.84, bw, bh * 0.16, Color(0, 0, 0, 0.20), false)
 		_rect(bx, top, 0.02, bh, METAL, false)
 		_rect(bx + bw - 0.02, top, 0.02, bh, METAL, false)
+	# the middle of the body (the drawn body sits a little low, so this is not always 0.5)
 	var cx: float = bx + bw / 2.0
-	var cy: float = 0.5
+	var cy: float = top + bh / 2.0
 	if fitted.has("camera_std"):
-		draw_circle(_p(cx, cy), size.y * 0.085, OUTLINE)
-		draw_circle(_p(cx, cy), size.y * 0.065, Color(0.10, 0.20, 0.45))
-		draw_circle(_p(cx - 0.012, cy - 0.02), size.y * 0.02, Color(0.75, 0.9, 1.0, 0.9))
+		var cam: float = minf(size.y * 0.085, size.y * bh * 0.34)   # always fits inside the body
+		draw_circle(_p(cx, cy), cam, OUTLINE)
+		draw_circle(_p(cx, cy), cam * 0.76, Color(0.10, 0.20, 0.45))
+		draw_circle(_p(cx, cy) + Vector2(-cam * 0.28, -cam * 0.28), cam * 0.24, Color(0.75, 0.9, 1.0, 0.9))
 	if fitted.has("spectrometer"):
 		_poly([Vector2(cx - 0.05, cy + 0.07), Vector2(cx + 0.05, cy + 0.07), Vector2(cx, cy - 0.07)], METAL_LIGHT)
 		for i in range(3):
@@ -327,8 +344,12 @@ func _satellite(fitted: Array, body_scale: float, fold: float) -> void:
 			draw_line(_p(cx + 0.02, cy - 0.01 + 0.025 * float(i)), _p(cx + 0.09, cy - 0.04 + 0.04 * float(i)), colors[i], 2.0)
 	if fitted.has("battery_small") or fitted.has("battery_std"):
 		var bat_w: float = 0.11 if fitted.has("battery_std") else 0.07
-		_rect(bx + 0.025, top + bh - 0.14, bat_w, 0.09, GREEN)
-		draw_line(_p(bx + 0.025 + bat_w * 0.55, top + bh - 0.135), _p(bx + 0.025 + bat_w * 0.35, top + bh - 0.085), YELLOW, 2.0)
+		# inside the body, clear of the side rails of the drawn CubeSat
+		var bat_x: float = bx + (bw * 0.13 if tex != null else 0.025)
+		var bat_h: float = minf(0.09, bh * 0.32)
+		var bat_y: float = top + bh - bat_h - minf(0.05, bh * 0.12)
+		_rect(bat_x, bat_y, bat_w, bat_h, GREEN)
+		draw_line(_p(bat_x + bat_w * 0.55, bat_y + bat_h * 0.06), _p(bat_x + bat_w * 0.35, bat_y + bat_h * 0.62), YELLOW, 2.0)
 	if fitted.has("shielding"):
 		_rect(bx - 0.012, top + 0.03, 0.012, bh - 0.06, METAL_DARK, false)
 		_rect(bx + bw, top + 0.03, 0.012, bh - 0.06, METAL_DARK, false)

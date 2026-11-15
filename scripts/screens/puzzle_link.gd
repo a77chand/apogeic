@@ -77,8 +77,12 @@ func _build_intro() -> void:
 		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		icon.tooltip_text = str(pair[1])
 		row.add_child(icon)
-		var bar: ProgressBar = UI.meter(110.0)
-		bar.custom_minimum_size = Vector2(110.0, 10.0)
+		var name_label: Label = UI.label(str(pair[1]), 13, UI.C_MUTED)
+		name_label.custom_minimum_size = Vector2(50.0, 0.0)
+		name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(name_label)
+		var bar: ProgressBar = UI.meter(80.0)
+		bar.custom_minimum_size = Vector2(80.0, 10.0)
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		row.add_child(bar)
 		var text: Label = UI.label("", 13)

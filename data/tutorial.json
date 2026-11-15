@@ -13,8 +13,8 @@
           "Launch by day {deadline}"
         ],
         [
-          "Grey choices are locked in this mission",
-          "Click one to see why"
+          "[locked] Grey choices are locked in this mission",
+          "[locked] Click one to see why"
         ]
       ]
     },
@@ -193,7 +193,7 @@
         ],
         [
           "Cross when the shadow has moved off your path",
-          "Enter drives"
+          "Enter drives; 3 sets, each a little harder"
         ]
       ]
     }

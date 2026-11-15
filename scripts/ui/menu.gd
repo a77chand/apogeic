@@ -140,6 +140,7 @@ func _open() -> void:
 		col.add_child(_menu_button("Quit this mission", _on_quit_mission, false))
 	col.add_child(_menu_button("How to play", _on_guide, false))
 	col.add_child(_menu_button("Resources and sources", _on_sources, false))
+	col.add_child(_menu_button("About the team", _on_team, false))
 	col.add_child(_menu_button("Show tips again", _on_tips, false))
 	col.add_child(_menu_button("Reset progress", _on_reset, false))
 	_note = UI.label("", 13, UI.C_YELLOW, true)
@@ -300,6 +301,54 @@ func _on_sources() -> void:
 	var s: Control = Sources.new()
 	_layer.add_child(s)
 	s.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+## The team behind the game, by role (Nebula Forge).
+const TEAM: Array = [
+	["Artistry & animation", ["Adity Agrawal", "Tanvi Padala"]],
+	["Software development", ["Anusha Chandra", "Aadhav Dijay", "Bhairavi Swaminathan"]],
+	["Team management", ["Amudha Lakshmanan"]],
+]
+
+
+func _on_team() -> void:
+	var box: Control = Control.new()
+	box.process_mode = Node.PROCESS_MODE_ALWAYS
+	box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_layer.add_child(box)
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.7)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	box.add_child(dim)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var centre: CenterContainer = CenterContainer.new()
+	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(centre)
+	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel: PanelContainer = UI.panel(UI.C_CYAN, 24.0)
+	panel.custom_minimum_size = Vector2(560.0, 0.0)
+	centre.add_child(panel)
+	var col: VBoxContainer = UI.vbox(10)
+	panel.add_child(col)
+	var title: Label = UI.label("About the team", 26, UI.C_CYAN)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
+	var team: Label = UI.label("Nebula Forge  ·  NASA Space Apps 2026", 15, UI.C_GOLD)
+	team.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(team)
+	for item in TEAM:
+		var role: Array = item
+		var head: Label = UI.label(str(role[0]), 17, UI.C_ACCENT)
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(head)
+		var names: Label = UI.label("  ·  ".join(PackedStringArray(role[1])), 16, UI.C_TEXT, true)
+		names.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		names.custom_minimum_size = Vector2(500.0, 0.0)
+		col.add_child(names)
+	var close: Button = UI.button("Close", box.queue_free, 160.0, true)
+	close.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(close)
 
 
 func _on_tips() -> void:

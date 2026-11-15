@@ -107,13 +107,27 @@ func _wisp(c: Vector2, rx: float, ry: float, tilt: float, front: bool) -> void:
 		draw_line(p0, p1, Color(col, alpha), 1.2 + 2.2 * taper)
 
 
-## Half of a tilted ellipse: front = the near half (drawn over the letters), else the far half.
+## Half of the wispy ring round the 0: front = the near half (drawn over the letters), else
+## the far half. Two fine strands that taper to nothing at the ends, with a soft glow, and a
+## faint shimmer that runs round the ring, so it reads as gas and dust, not a solid hoop.
 func _ring(c: Vector2, rx: float, ry: float, tilt: float, front: bool) -> void:
-	var pts: PackedVector2Array = PackedVector2Array()
-	for i in range(33):
-		var a: float = (0.0 if front else PI) + PI * float(i) / 32.0
-		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry).rotated(tilt))
-	draw_polyline(pts, Color(0.75, 0.62, 1.0, 1.0 if front else 0.55), 4.0)
+	var n: int = 48
+	for strand in range(2):
+		var grow: float = 1.0 + 0.09 * float(strand)      # the outer strand is a little wider
+		var base_a: float = (0.95 if front else 0.45) * (1.0 - 0.45 * float(strand))
+		for i in range(n):
+			var u0: float = float(i) / float(n)
+			var u1: float = float(i + 1) / float(n)
+			var a0: float = (0.0 if front else PI) + PI * u0
+			var a1: float = (0.0 if front else PI) + PI * u1
+			var p0: Vector2 = c + Vector2(cos(a0) * rx * grow, sin(a0) * ry * grow).rotated(tilt)
+			var p1: Vector2 = c + Vector2(cos(a1) * rx * grow, sin(a1) * ry * grow).rotated(tilt)
+			# thin at the ends of each half, so the two halves fade into each other
+			var taper: float = 0.35 + 0.65 * sin(u0 * PI)
+			var shimmer: float = 0.75 + 0.25 * sin(_t * 1.6 + u0 * TAU * 2.0 + float(strand))
+			var col: Color = Color(0.80, 0.68, 1.0).lerp(Color(0.55, 0.90, 1.0), u0)
+			draw_line(p0, p1, Color(col, base_a * 0.16 * taper), 7.0 * taper)   # the soft glow
+			draw_line(p0, p1, Color(col, base_a * taper * shimmer), maxf(0.8, 1.6 * taper))
 
 
 ## The big orbit round the title, purple at one end fading to cyan, with a faint glow.
@@ -191,40 +205,53 @@ func _draw_planet() -> void:
 	_draw_orbit(c, r)
 
 
-## A satellite on a real, tilted orbit round the planet: the near half of the orbit passes
-## in front of the planet's face, the far half goes behind it (hidden where the planet is in
-## the way). The satellite looks bigger on the near side, so it reads as going round, not
-## sliding back and forth.
+## A satellite orbiting round the planet, never across its face: the orbit is a slightly
+## flattened ring just outside the planet's edge, so the satellite rises from the left edge
+## of the screen, passes over the top of the planet with a gap of sky below it, and sets
+## past the bottom right. It is drawn a little bigger and brighter on the lower right
+## (the near side), so it reads as going round, not sliding.
 func _draw_orbit(c: Vector2, r: float) -> void:
-	# centred just inside the planet's top edge, so the far half of the orbit dips behind
-	# the planet and the near half passes across its face
-	var oc: Vector2 = c + Vector2(-10.0, -r - 10.0)
-	var rx: float = 390.0
-	var ry: float = 74.0
-	var tilt: float = -0.12
-	# the orbit line: a dotted ring, faint behind, brighter in front
-	for i in range(120):
-		var a: float = TAU * float(i) / 120.0
-		var p: Vector2 = oc + Vector2(cos(a) * rx, sin(a) * ry).rotated(tilt)
-		var front: bool = sin(a) > 0.0
-		if not front and p.distance_to(c) < r:
+	var rx: float = r + 95.0
+	var ry: float = r + 60.0
+	var view: Vector2 = Vector2(maxf(size.x, get_viewport_rect().size.x), maxf(size.y, get_viewport_rect().size.y))
+	# the orbit line: dots round the ring (only where they are on screen)
+	for i in range(240):
+		var a: float = TAU * float(i) / 240.0
+		var p: Vector2 = c + Vector2(cos(a) * rx, sin(a) * ry)
+		if p.x < -4.0 or p.y < -4.0 or p.x > view.x + 4.0 or p.y > view.y + 4.0 or i % 2 == 1:
 			continue
-		if i % 2 == 0:
-			var dot: Rect2 = Rect2(p.snapped(Vector2(2, 2)) - Vector2(2, 2), Vector2(4, 4))
-			if front:
-				draw_rect(dot.grow(1.0), Color(0.10, 0.04, 0.25, 0.8))   # dark edge so it shows on the planet
-			draw_rect(dot, Color(0.55, 0.92, 1.0, 0.95 if front else 0.45))
-	# the satellite: one orbit every 16 seconds
-	var sa: float = _t * TAU / 16.0
-	var sp: Vector2 = oc + Vector2(cos(sa) * rx, sin(sa) * ry).rotated(tilt)
-	var near: bool = sin(sa) > 0.0
-	if not near and sp.distance_to(c) < r + 6.0:
-		return   # behind the planet
-	var k: float = 0.75 + 0.45 * (0.5 + 0.5 * sin(sa))   # bigger when nearer
-	sp = sp.snapped(Vector2(2, 2))
+		var near: float = clampf(0.5 + 0.5 * cos(a + 0.9), 0.0, 1.0)   # brighter towards the lower right
+		var dot: Rect2 = Rect2(p.snapped(Vector2(2, 2)) - Vector2(2, 2), Vector2(4, 4))
+		draw_rect(dot, Color(0.55, 0.92, 1.0, 0.35 + 0.45 * near))
+	# the part of the ring that is on screen, found once: the satellite runs along it and
+	# wraps round, so the orbit carries on off screen
+	var a0: float = PI
+	var a1: float = TAU
+	var found: bool = false
+	for i in range(361):
+		var a: float = PI + PI * float(i) / 360.0
+		var p: Vector2 = c + Vector2(cos(a) * rx, sin(a) * ry)
+		var on: bool = p.x >= -20.0 and p.x <= view.x + 20.0 and p.y >= -20.0 and p.y <= view.y + 20.0
+		if on and not found:
+			a0 = a
+			found = true
+		if on:
+			a1 = a
+	# a little more past the bottom right, where the ring leaves the screen below
+	var right_exit: float = asin(clampf((view.y + 20.0 - c.y) / ry, -1.0, 1.0))
+	if c.x + cos(right_exit) * rx <= view.x + 20.0:
+		a1 = TAU + right_exit
+	var u: float = fmod(_t / 11.0, 1.0)   # one pass across the sky every 11 seconds
+	var sa: float = lerpf(a0, a1, u)
+	var sp: Vector2 = (c + Vector2(cos(sa) * rx, sin(sa) * ry)).snapped(Vector2(2, 2))
+	var k: float = 0.85 + 0.35 * clampf(0.5 + 0.5 * cos(sa + 0.9), 0.0, 1.0)   # bigger when nearer
 	var body: Vector2 = Vector2(12, 12) * k
 	var panel: Vector2 = Vector2(16, 7) * k
-	draw_circle(sp, 18.0 * k, Color(UI.C_ACCENT, 0.18))
-	draw_rect(Rect2(sp - body * 0.5, body), C_CREAM)
-	draw_rect(Rect2(sp - Vector2(body.x * 0.5 + panel.x + 2.0, panel.y * 0.5), panel), Color(0.30, 0.55, 0.95))
-	draw_rect(Rect2(sp + Vector2(body.x * 0.5 + 2.0, -panel.y * 0.5), panel), Color(0.30, 0.55, 0.95))
+	# the panels lie along the direction of travel, so it flies round, not sideways
+	var along: float = atan2(cos(sa) * ry, -sin(sa) * rx)
+	draw_set_transform(sp, along)
+	draw_circle(Vector2.ZERO, 18.0 * k, Color(UI.C_ACCENT, 0.18))
+	draw_rect(Rect2(-body * 0.5, body), C_CREAM)
+	draw_rect(Rect2(Vector2(-body.x * 0.5 - panel.x - 2.0, -panel.y * 0.5), panel), Color(0.30, 0.55, 0.95))
+	draw_rect(Rect2(Vector2(body.x * 0.5 + 2.0, -panel.y * 0.5), panel), Color(0.30, 0.55, 0.95))
+	draw_set_transform(Vector2.ZERO)

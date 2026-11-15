@@ -339,11 +339,67 @@
       ]
     },
     {
-      "id": "shadows",
+      "id": "shadows_1",
       "challenge": 3,
       "set": 1,
-      "title": "Moving shadows",
-      "intro": "At the Moon's south pole the Sun circles low around the horizon, so the shadows sweep across the ground. The battery is almost flat. Wait in the sunlight to charge, and cross when the shadow has moved.",
+      "title": "Moving shadows: set 1",
+      "intro": "Set 1: one rock casts a long shadow across the way, and the battery is almost flat. The Sun circles low, so the shadow moves. Wait in the sunlight to charge (Space or Wait), then drive across.",
+      "lesson": "Waiting in the sunlight charges the battery and gives the shadow time to move.",
+      "kit": [
+        "camera",
+        "stereo",
+        "headlights"
+      ],
+      "sun_az": 195,
+      "sun_step_deg": 10,
+      "battery": 2,
+      "capacity": 30,
+      "waits": true,
+      "grid": [
+        "..............",
+        "..............",
+        ".....#........",
+        "S............G",
+        ".....#........",
+        "..............",
+        "..............",
+        ".............."
+      ]
+    },
+    {
+      "id": "shadows_2",
+      "challenge": 3,
+      "set": 2,
+      "title": "Moving shadows: set 2",
+      "intro": "Set 2: a longer ridge throws more shadow, and there is digging dust on both sides of the path. Charge first, then keep to the sunny middle.",
+      "lesson": "Charge before the long shadow, and stay out of the dust where the rover can't see rocks.",
+      "kit": [
+        "camera",
+        "stereo",
+        "headlights"
+      ],
+      "sun_az": 195,
+      "sun_step_deg": 10,
+      "battery": 2,
+      "capacity": 30,
+      "waits": true,
+      "grid": [
+        "..............",
+        "....#.........",
+        "....#....DD...",
+        "S............G",
+        "....#....DD...",
+        "....#.........",
+        "..............",
+        ".............."
+      ]
+    },
+    {
+      "id": "shadows",
+      "challenge": 3,
+      "set": 3,
+      "title": "Moving shadows: set 3",
+      "intro": "Set 3: At the Moon's south pole the Sun circles low around the horizon, so the shadows sweep across the ground. The battery is almost flat. Wait in the sunlight to charge, and cross when the shadow has moved.",
       "lesson": "Timing matters: wait in the light for the shadows to move, instead of driving into the dark.",
       "kit": [
         "camera",

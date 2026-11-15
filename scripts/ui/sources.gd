@@ -65,11 +65,12 @@ func _ready() -> void:
 	body.add_child(UI.label("Made with", 18, UI.C_TEXT))
 	for item in cfg.get("made_with", []):
 		var m: Dictionary = item if typeof(item) == TYPE_DICTIONARY else {"text": str(item)}
-		var row: HBoxContainer = UI.hbox(10)
-		body.add_child(row)
-		row.add_child(UI.label("•  " + str(m.get("text", "")), 14, UI.C_MUTED))
+		# one under the other, both wrapping, so nothing runs off the page at large text size
+		var made: Label = UI.label("•  " + str(m.get("text", "")), 14, UI.C_MUTED, true)
+		made.custom_minimum_size = Vector2(900.0, 0.0)
+		body.add_child(made)
 		if str(m.get("url", "")) != "":
-			row.add_child(_link(str(m.get("url", ""))))
+			body.add_child(_link(str(m.get("url", ""))))
 
 
 ## One source as a card: title, a formal citation, what it is used for, and a link.
@@ -97,11 +98,17 @@ func _card(src: Dictionary, used_for: String, accessed: String) -> Control:
 	return card
 
 
-func _link(url: String) -> LinkButton:
-	var l: LinkButton = LinkButton.new()
-	l.text = url
-	l.uri = url
-	l.add_theme_font_size_override("font_size", UI.fs(13))
-	l.add_theme_color_override("font_color", UI.C_ACCENT)
-	l.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
+## A clickable web link that wraps onto the next line when it is too long for the page.
+func _link(url: String) -> RichTextLabel:
+	var l: RichTextLabel = RichTextLabel.new()
+	l.bbcode_enabled = true
+	l.fit_content = true
+	l.scroll_active = false
+	l.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY   # a URL has no spaces, so break anywhere
+	l.custom_minimum_size = Vector2(900.0, 0.0)
+	l.add_theme_font_size_override("normal_font_size", UI.fs(13))
+	l.add_theme_color_override("default_color", UI.C_ACCENT)
+	l.text = "[url=%s]%s[/url]" % [url, url]
+	l.meta_clicked.connect(func(meta: Variant) -> void: OS.shell_open(str(meta)))
+	l.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	return l
