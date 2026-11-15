@@ -11,7 +11,7 @@
     "cost_k": 200
   },
   "launch": {
-    "name": "Small dedicated launcher",
+    "name": "Rokot launch",
     "cost_k": 180,
     "keep_cost": true
   },
@@ -36,9 +36,9 @@
     "deadline_day": 170
   },
   "orbit": {
-    "name": "Sun-synchronous orbit, 600 km",
+    "name": "Sun-synchronous orbit, about 820 km",
     "period_min": 96.0,
-    "eclipse_min": 38.0
+    "eclipse_min": 70
   },
   "slots": [
     {
@@ -104,10 +104,10 @@
     {
       "id": "R2",
       "kind": "delivered_min",
-      "target": 15.0,
+      "target": 22,
       "unit": "MB/wk",
       "hard": false,
-      "text": "Deliver at least 15 MB of air readings per week",
+      "text": "Deliver at least 22 MB of readings per week",
       "reason": "The radio sends less than the mission needs.",
       "tip": "A small radio is light but slow. Add a big antenna or a second ground station.",
       "consequence": "Fewer readings reach the ground each week."
@@ -115,10 +115,10 @@
     {
       "id": "R3",
       "kind": "power_spare_min",
-      "target": 10.0,
+      "target": 22,
       "unit": "%",
       "hard": false,
-      "text": "Keep at least 10% spare power",
+      "text": "Keep at least 22% spare power",
       "reason": "The parts use almost all the power the panels make.",
       "tip": "Use larger panels or a part that needs less power.",
       "consequence": "With no spare power, the battery drains a little every week."
@@ -161,7 +161,7 @@
     "weeks": 12,
     "seconds_per_week": 5.0,
     "storage_mb": 60.0,
-    "goal_mb": 180.0,
+    "goal_mb": 264.0,
     "extra_pass_mult": 1.5,
     "extra_pass_cost_k": 10.0,
     "extra_pass_cooldown_weeks": 2,
@@ -179,45 +179,21 @@
   "concept_chips": [
     {
       "group": "Spacecraft",
-      "label": "1U",
-      "state": "locked",
-      "why": "Too small for a spectrometer and a radio together."
-    },
-    {
-      "group": "Spacecraft",
-      "label": "3U",
-      "state": "chosen",
-      "why": ""
-    },
-    {
-      "group": "Spacecraft",
-      "label": "6U",
-      "state": "locked",
-      "why": "Costs more than this mission budget."
-    },
-    {
-      "group": "Orbit",
-      "label": "Sun-synchronous orbit",
+      "label": "Air-quality satellite (about 820 kg)",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Orbit",
-      "label": "Geostationary",
-      "state": "locked",
-      "why": "Too far away for a CubeSat radio."
-    },
-    {
-      "group": "Launch",
-      "label": "Rideshare",
+      "label": "Sun-synchronous orbit, about 820 km",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Launch",
-      "label": "Own rocket",
-      "state": "locked",
-      "why": "Costs more than the whole budget."
+      "label": "Rokot",
+      "state": "chosen",
+      "why": ""
     }
   ],
   "blurb": "A power-hungry instrument, a longer night on every orbit, and its own small rocket.",
@@ -227,8 +203,8 @@
   "main_problem": "Power",
   "rocket": {
     "kind": "rocket_launcher",
-    "name": "Small dedicated launcher",
-    "why": "A small rocket that carries only a few satellites, so it can go to the exact orbit you need. It costs more per seat, and it shakes harder: even a 75% full slot is risky with a known problem."
+    "name": "Rokot",
+    "why": "A converted missile used for ESA's Sentinel satellites."
   },
   "differences": [
     "Launched on a small Rokot rocket, its TROPOMI instrument maps air pollution such as nitrogen dioxide over the whole planet every day.",
@@ -246,5 +222,22 @@
     "source": "Wikipedia, \"Sentinel-5 Precursor\"",
     "url": "https://en.wikipedia.org/wiki/Sentinel-5_Precursor",
     "rocket": "Rokot"
+  },
+  "parts_offered": [
+    "solar_large",
+    "battery_small",
+    "battery_std",
+    "spectrometer",
+    "radio_uhf",
+    "radio_sband",
+    "antenna_big",
+    "ground2",
+    "shielding"
+  ],
+  "craft_kind": "satellite",
+  "craft_sizes": [],
+  "satellite_class": {
+    "name": "Air-quality satellite",
+    "real_mass": "about 820 kg"
   }
 }

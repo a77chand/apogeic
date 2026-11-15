@@ -226,6 +226,13 @@ static func sparkle_icon(size: float = 22.0, color: Color = Color(0.80, 0.72, 1.
 	return c
 
 
+## A sparkle drawn on another control (used for pictures in cards).
+static func draw_sparkle_at(ci: CanvasItem, m: Vector2, r: float, color: Color) -> void:
+	_draw_sparkle(ci, m, r, Color(color, 0.25))
+	_draw_sparkle(ci, m, r * 0.85, color)
+	_draw_sparkle(ci, m, r * 0.3, Color(1, 1, 1))
+
+
 ## A four-pointed sparkle with curved sides: long points up, down, left and right.
 static func _draw_sparkle(ci: CanvasItem, m: Vector2, r: float, color: Color) -> void:
 	var pts: PackedVector2Array = PackedVector2Array()
@@ -288,14 +295,12 @@ static func choice_toast(host: Node, rating: Dictionary, late: bool) -> void:
 
 
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:
-	# The menu's text size setting changes body text only: labels that wrap, so they can
-	# reflow. Headings and single-line labels in tight spots (bars, pills) keep their size,
-	# and small print on part cards is never made bigger, so cards do not overflow.
+	# The menu's text size setting: every label below title size follows it (small 0.9,
+	# medium 1, large 1.2), so puzzles, missions and pop-ups all change together. Titles
+	# keep their size because they sit in fixed bars.
 	var asked: int = size   # the font style follows the size asked for, not the scaled size
-	if wrap and size < HEADING_SIZE:
-		var scale: float = _font_scale()
-		if size > 13 or scale < 1.0:
-			size = int(round(float(size) * scale))
+	if size < TITLE_SIZE:
+		size = maxi(9, int(round(float(size) * _font_scale())))
 	var l: Label = Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
@@ -339,7 +344,7 @@ static func button(text: String, on_press: Callable, min_width: float = 220.0, p
 	b.custom_minimum_size = Vector2(min_width, 52.0)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_override("font", display_font())
-	b.add_theme_font_size_override("font_size", 18)
+	b.add_theme_font_size_override("font_size", int(round(18.0 * _font_scale())))
 	var fill: Color = C_BTN_MAIN if primary else C_BTN
 	var edge: Color = C_ACCENT if not primary else Color(0.62, 0.95, 1.0)
 	b.add_theme_stylebox_override("normal", chunky(fill, Color(edge, 0.75), false))
@@ -390,6 +395,11 @@ static func _click_sound() -> void:
 	var state: Node = tree.root.get_node_or_null("GameState")
 	if state != null:
 		state.call("play_sound", "click")
+
+
+## A font size scaled by the menu's text size (use for fonts set by hand on buttons).
+static func fs(size: int) -> int:
+	return maxi(9, int(round(float(size) * _font_scale())))
 
 
 static func _font_scale() -> float:

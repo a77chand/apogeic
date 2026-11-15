@@ -115,7 +115,7 @@ func _build_board() -> void:
 		var b: Button = UI.button("%s\n%s" % [str(opt.get("label", id)), _card_numbers(opt)], Callable(), 294.0, false)
 		b.toggle_mode = true
 		b.custom_minimum_size = Vector2(294.0, 78.0)
-		b.add_theme_font_size_override("font_size", 14)
+		b.add_theme_font_size_override("font_size", UI.fs(14))
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		var on: StyleBoxFlat = UI.chunky(Color(0.10, 0.30, 0.22), UI.C_GREEN, true)

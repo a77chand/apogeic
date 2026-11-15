@@ -18,7 +18,8 @@ const STARDUST_PER_PERFECT: int = 500   # the first time a mission gets 3 stars
 const LIFE_COST_STARDUST: int = 1500
 
 # ---- loaded once from data/*.json
-var parts: Dictionary = {}
+var parts: Dictionary = {}          # the parts as the current screen should see them (scaled to the craft in a mission)
+var base_parts: Dictionary = {}     # parts.json as loaded, never scaled (training puzzles use these)
 var level: Dictionary = {}          # the level for the chosen craft (see set_craft)
 var base_level: Dictionary = {}     # level1.json as loaded
 var craft_cfg: Dictionary = {}      # data/craft.json
@@ -76,7 +77,8 @@ var router: Node = null             # set by main.gd
 
 
 func _ready() -> void:
-	parts = Data.load_parts()
+	base_parts = Data.load_parts()
+	parts = base_parts.duplicate(true)
 	base_level = Data.load_level1()
 	craft_cfg = Craft.load_config()
 	craft_id = str(craft_cfg.get("default", "3u"))
@@ -130,7 +132,7 @@ func font_scale() -> float:
 	if font_size == "small":
 		return 0.9
 	if font_size == "large":
-		return 1.15
+		return 1.2
 	return 1.0
 
 
@@ -191,11 +193,30 @@ func set_craft(id: String) -> void:
 		return
 	craft_id = id
 	level = Craft.apply(base_level, craft_cfg, id)
+	parts = Craft.scale_parts(base_parts, Craft.scale_of(craft_cfg, id))
 	reset_mission()
+
+
+## The sizes this mission offers: a CubeSat mission lists the CubeSat sizes the real
+## spacecraft came in; a mission about a historical satellite has none (it is not a CubeSat).
+func craft_sizes() -> Array:
+	if str(base_level.get("craft_kind", "cubesat")) == "satellite":
+		return []
+	var sizes: Array = base_level.get("craft_sizes", [])
+	return sizes if not sizes.is_empty() else ["3u"]
+
+
+func is_cubesat_mission() -> bool:
+	return str(base_level.get("craft_kind", "cubesat")) != "satellite"
 
 
 ## Change screen. Screen ids are listed in main.gd.
 func go(screen_id: String) -> void:
+	# training puzzles use the parts as they are; missions use parts scaled to the craft
+	if screen_id.begins_with("puzzle_"):
+		parts = base_parts.duplicate(true)
+	elif screen_id in ["workshop", "test_lab", "launch", "ops", "report", "briefing"]:
+		parts = Craft.scale_parts(base_parts, Craft.scale_of(craft_cfg, craft_id))
 	if router != null:
 		router.call("go", screen_id)
 
@@ -321,7 +342,15 @@ func set_mission(id: String) -> void:
 		return
 	mission_id = id
 	base_level = loaded
+	# a historical satellite has no CubeSat size; a CubeSat mission offers only its real sizes
+	if not is_cubesat_mission():
+		craft_id = Craft.BASE_ID
+	else:
+		var sizes: Array = craft_sizes()
+		if not sizes.has(craft_id):
+			craft_id = str(sizes[0])
 	level = Craft.apply(base_level, craft_cfg, craft_id)
+	parts = Craft.scale_parts(base_parts, Craft.scale_of(craft_cfg, craft_id))
 	reset_mission()
 
 

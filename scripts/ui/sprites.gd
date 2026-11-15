@@ -426,15 +426,11 @@ func _band(y0: float, y1: float, c0: Color, c1: Color) -> void:
 			PackedColorArray([c0, c0, c1, c1]))
 
 
+## The satellite release background: the Earth drawn as a whole round planet (the same
+## drawing as the rest of the game), low in the frame, with the stars behind it.
 func _orbit_bg() -> void:
-	var c: Vector2 = Vector2(size.x * 0.5, size.y * 2.05)
-	var r: float = size.y * 1.38
-	for i in range(8):
-		draw_circle(c, r + float(i) * 5.0, Color(0.35, 0.65, 1.0, 0.03 + 0.012 * float(8 - i)))
-	draw_circle(c, r, OCEAN)
-	for blob in [[0.18, 0.80, 0.10], [0.42, 0.74, 0.07], [0.70, 0.78, 0.12], [0.88, 0.86, 0.09]]:
-		draw_circle(Vector2(size.x * float(blob[0]), size.y * float(blob[1])), size.y * float(blob[2]), LAND)
-	draw_arc(c, r, PI * 1.18, PI * 1.82, 64, Color(0.6, 0.85, 1.0, 0.8), 3.0)
+	var r: float = size.y * 0.30
+	_earth(Vector2(size.x * 0.5, size.y * 0.70), r)
 
 
 func _logo() -> void:

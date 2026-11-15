@@ -61,7 +61,7 @@ func _build_sensors() -> void:
 		var b: Button = UI.button(text, Callable(), 380.0, false)
 		b.toggle_mode = true
 		b.custom_minimum_size = Vector2(380.0, 50.0)
-		b.add_theme_font_size_override("font_size", 13)
+		b.add_theme_font_size_override("font_size", UI.fs(13))
 		b.clip_text = true
 		b.add_theme_stylebox_override("pressed", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 4, 6.0))
 		b.add_theme_stylebox_override("hover_pressed", UI.box(UI.C_HOVER.lightened(0.1), UI.C_GREEN, 16, 4, 6.0))

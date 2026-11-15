@@ -285,7 +285,7 @@ static func run() -> Array:
 	_same(fails, "unknown mission is empty", Data.load_level("nope").is_empty(), true)
 	var day_sched: Dictionary = Sim.new_schedule()
 	day_sched["day"] = 41
-	var d2: Dictionary = _design(lvl2, "solar_small", "battery_small", "spectrometer", "radio_uhf", "ground2", "")
+	var d2: Dictionary = _design(lvl2, "solar_large", "battery_small", "spectrometer", "radio_uhf", "ground2", "")
 	var ev_m2: Dictionary = Sim.evaluate_design(lvl2, parts, d2, day_sched)
 	_same(fails, "mission 2 reference design passes every check", Sim.all_passed(Sim.check_requirements(lvl2, ev_m2)), true)
 	_same(fails, "mission 2 reference reaches orbit", Sim.launch_outcome(lvl2, Sim.check_requirements(lvl2, ev_m2), ev_m2)["reached_orbit"], true)

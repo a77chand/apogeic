@@ -14,7 +14,7 @@
     "cost_k": 200
   },
   "launch": {
-    "name": "Small dedicated launcher",
+    "name": "PSLV launch",
     "cost_k": 180,
     "keep_cost": true
   },
@@ -39,9 +39,9 @@
     "deadline_day": 170
   },
   "orbit": {
-    "name": "Sun-synchronous orbit, 600 km",
+    "name": "Sun-synchronous orbit, about 600 km",
     "period_min": 96.0,
-    "eclipse_min": 38.0
+    "eclipse_min": 55
   },
   "slots": [
     {
@@ -107,10 +107,10 @@
     {
       "id": "R2",
       "kind": "delivered_min",
-      "target": 43,
+      "target": 15,
       "unit": "MB/wk",
       "hard": false,
-      "text": "Deliver at least 43 MB of photos per week",
+      "text": "Deliver at least 15 MB of photos per week",
       "reason": "The radio sends less than the mission needs.",
       "tip": "Add a big antenna or a second ground station.",
       "consequence": "Fewer photos reach the ground each week."
@@ -118,10 +118,10 @@
     {
       "id": "R3",
       "kind": "power_spare_min",
-      "target": 10.0,
+      "target": 5,
       "unit": "%",
       "hard": false,
-      "text": "Keep at least 10% spare power",
+      "text": "Keep at least 5% spare power",
       "reason": "The parts use almost all the power the panels make.",
       "tip": "Use larger panels or a part that needs less power.",
       "consequence": "With no spare power, the battery drains a little every week."
@@ -164,7 +164,7 @@
     "weeks": 12,
     "seconds_per_week": 5.0,
     "storage_mb": 80.0,
-    "goal_mb": 495,
+    "goal_mb": 180.0,
     "extra_pass_mult": 1.5,
     "extra_pass_cost_k": 10.0,
     "extra_pass_cooldown_weeks": 2,
@@ -182,53 +182,29 @@
   "concept_chips": [
     {
       "group": "Spacecraft",
-      "label": "1U",
-      "state": "locked",
-      "why": "Too small for a camera and a radio together."
-    },
-    {
-      "group": "Spacecraft",
-      "label": "3U",
-      "state": "chosen",
-      "why": ""
-    },
-    {
-      "group": "Spacecraft",
-      "label": "6U",
-      "state": "locked",
-      "why": "Costs more than this mission's budget. Unlocks in Level 2."
-    },
-    {
-      "group": "Orbit",
-      "label": "Low Earth orbit",
+      "label": "Technology demonstrator (about 94 kg)",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Orbit",
-      "label": "Geostationary",
-      "state": "locked",
-      "why": "Too far away for a CubeSat radio."
-    },
-    {
-      "group": "Launch",
-      "label": "Rideshare",
+      "label": "Sun-synchronous orbit, about 600 km",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Launch",
-      "label": "Own rocket",
-      "state": "locked",
-      "why": "Costs more than the whole budget."
+      "label": "PSLV",
+      "state": "chosen",
+      "why": ""
     }
   ],
   "level_label": "Level 11  ·  Hard",
   "main_problem": "Balance",
   "rocket": {
     "kind": "rocket_launcher",
-    "name": "Small dedicated launcher",
-    "why": "A small rocket that carries only a few satellites, so it can go to the exact orbit you need. It costs more per seat, and it shakes harder: even a 75% full slot is risky with a known problem."
+    "name": "PSLV",
+    "why": "India's reliable workhorse rocket."
   },
   "differences": [
     "A small test satellite launched on India's PSLV, planned for two years. It kept working for nearly two decades.",
@@ -249,5 +225,21 @@
   },
   "event_bias": [
     "drift_off_course"
-  ]
+  ],
+  "parts_offered": [
+    "solar_small",
+    "battery_small",
+    "battery_std",
+    "camera_std",
+    "radio_uhf",
+    "radio_sband",
+    "ground2",
+    "shielding"
+  ],
+  "craft_kind": "satellite",
+  "craft_sizes": [],
+  "satellite_class": {
+    "name": "Technology demonstrator",
+    "real_mass": "about 94 kg"
+  }
 }

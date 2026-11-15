@@ -164,7 +164,7 @@ func _section(text: String) -> Label:
 func _menu_button(text: String, on_press: Callable, primary: bool) -> Button:
 	var b: Button = UI.button(text, on_press, 340.0, primary)
 	b.custom_minimum_size = Vector2(340.0, 36.0)
-	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_font_size_override("font_size", UI.fs(16))
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return b
 
@@ -172,7 +172,7 @@ func _menu_button(text: String, on_press: Callable, primary: bool) -> Button:
 func _leave_button(text: String, on_press: Callable, accent: Color) -> Button:
 	var b: Button = UI.button(text, on_press, 165.0, false)
 	b.custom_minimum_size = Vector2(165.0, 42.0)
-	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_font_size_override("font_size", UI.fs(16))
 	b.add_theme_color_override("font_color", accent)
 	b.add_theme_stylebox_override("normal", UI.box(Color(accent, 0.12), accent, 8, 2, 8.0))
 	b.add_theme_stylebox_override("hover", UI.box(Color(accent, 0.28), accent, 8, 2, 8.0))
@@ -191,7 +191,7 @@ func _volume_row(text: String, volume: float, on: bool, on_slide: Callable, on_t
 	head.add_child(pct)
 	var toggle: Button = UI.button("On" if on else "Muted", Callable(), 84.0, false)
 	toggle.custom_minimum_size = Vector2(84.0, 32.0)
-	toggle.add_theme_font_size_override("font_size", 15)
+	toggle.add_theme_font_size_override("font_size", UI.fs(15))
 	toggle.pressed.connect(func() -> void:
 		var now_on: bool = toggle.text != "On"
 		toggle.text = "On" if now_on else "Muted"

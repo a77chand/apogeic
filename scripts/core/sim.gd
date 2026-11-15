@@ -163,6 +163,10 @@ static func check_requirements(level: Dictionary, ev: Dictionary) -> Array:
 		var value: float = float(ev.get(_value_key(kind), 0.0))
 		var target: float = float(req.get("target", 0.0))
 		var passed: bool = false
+		if kind == "part_fitted":
+			# "this part must be on board" (e.g. radiation shielding for a radiation mission)
+			value = 1.0 if (ev.get("part_ids", []) as Array).has(str(req.get("part", ""))) else 0.0
+			target = 1.0
 		if kind.ends_with("_max"):
 			passed = value <= target + EPS
 		else:

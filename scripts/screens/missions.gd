@@ -403,7 +403,7 @@ func _on_list() -> void:
 			var stars_row: HBoxContainer = UI.star_row(s, 18.0)
 			row.add_child(stars_row)
 			stars_row.position = Vector2(350.0, 12.0)
-		row.add_theme_font_size_override("font_size", 15 if open else 13)
+		row.add_theme_font_size_override("font_size", UI.fs(15 if open else 13))
 		row.add_theme_color_override("font_color", UI.C_TEXT if open else C_LOCKED_TEXT)
 		row.add_theme_color_override("font_disabled_color", C_LOCKED_TEXT)
 		var fill: Color = Color(0.04, 0.09, 0.17) if open else Color(0.02, 0.03, 0.06)
