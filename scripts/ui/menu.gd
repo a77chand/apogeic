@@ -231,6 +231,12 @@ func _close() -> void:
 	get_tree().paused = false
 
 
+## Leaving a mission part-way: costs a life, then goes to the screen.
+func _abandon(screen: String) -> void:
+	GameState.abandon_mission()
+	_go(screen)
+
+
 func _go(screen: String) -> void:
 	_close()
 	GameState.go(screen)
@@ -274,18 +280,18 @@ func _host() -> Control:
 
 func _on_home() -> void:
 	if GameState.in_mission():
-		Confirm.ask(_host(), "Quit the game?", "You are in the middle of a mission. If you go home now, you will lose your progress on this attempt.", "Yes, go home", _go.bind("title"))
+		Confirm.ask(_host(), "Leave this mission?", "You are in the middle of a mission. Going home now loses this attempt and costs 1 life (you have %d)." % GameState.lives, "Yes, go home (-1 life)", _abandon.bind("title"))
 		return
 	_go("title")
 
 
 func _on_quit_mission() -> void:
-	Confirm.ask(_layer, "Quit this mission?", "Your parts and progress on this attempt will be lost. You can pick the mission again.", "Yes, quit", _go.bind("missions"))
+	Confirm.ask(_layer, "Quit this mission?", "Your parts and progress on this attempt will be lost, and it costs 1 life (you have %d)." % GameState.lives, "Yes, quit (-1 life)", _abandon.bind("missions"))
 
 
 func _on_guide() -> void:
 	if GameState.in_mission():
-		Confirm.ask(_layer, "Leave the mission?", "Opening the guide leaves this mission and loses this attempt.", "Yes, open guide", _go.bind("guide"))
+		Confirm.ask(_layer, "Leave the mission?", "Opening the guide leaves this mission, loses this attempt and costs 1 life (you have %d)." % GameState.lives, "Yes, open guide (-1 life)", _abandon.bind("guide"))
 		return
 	_go("guide")
 

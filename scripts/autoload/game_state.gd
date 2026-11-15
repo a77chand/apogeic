@@ -13,7 +13,7 @@ const SAVE_PATH: String = "user://save.json"
 const STAGE_SIZE: int = 7               # missions come in stages of 7
 const STAGE_STARS_NEEDED: int = 17      # stars (of 21) in a stage to open the next stage
 const MAX_LIVES: int = 5
-const LIFE_SECONDS: float = 1800.0      # one life comes back every 30 minutes
+const LIFE_SECONDS: float = 3600.0      # one life comes back every hour
 const STARDUST_PER_PERFECT: int = 500   # the first time a mission gets 3 stars
 const LIFE_COST_STARDUST: int = 1500
 
@@ -32,12 +32,13 @@ var puzzles_done: Dictionary = {}   # puzzle id -> true
 var best_stars: int = 0
 var missions_done: Dictionary = {}  # mission id -> best grade ("partial" or "success"). Failed does not count
 var mission_stars: Dictionary = {}  # mission id -> best stars
-var lives: int = MAX_LIVES          # a failed mission (0 stars) costs one, saved
+var lives: int = MAX_LIVES          # a failed mission (0 stars) or quitting one midway costs one, saved
 var life_clock: float = 0.0         # unix time the next life started refilling (0 = full)
 var stardust: int = 0               # earned by 3-star missions and trivia, spent on lives and advice, saved
 var demo_mode: bool = false         # judge demo: everything open for this session, not saved
 var truck_done: Dictionary = {}     # truck challenge number -> true, saved
-var truck_route: int = 0            # which route challenge the route screen shows (0 = challenge 2)
+var truck_route: int = 0            # which entry of truck.json "routes" the route screen shows
+var truck_sets_done: Dictionary = {} # route id -> true, saved
 var trivia_seen: Dictionary = {}    # trivia question id -> true, so questions do not repeat; saved
 var trivia_day: String = ""         # the date of today's trivia rounds, saved
 var trivia_rounds: int = 0          # rounds played on trivia_day, saved
@@ -435,6 +436,12 @@ func lose_life() -> void:
 	save_game()
 
 
+## Leaving a mission part-way (going home, quitting it, opening the guide) costs a life.
+func abandon_mission() -> void:
+	if in_mission():
+		lose_life()
+
+
 func buy_life() -> bool:
 	refresh_lives()
 	if lives >= MAX_LIVES or stardust < LIFE_COST_STARDUST:
@@ -550,7 +557,7 @@ func save_game() -> void:
 		return
 	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
 			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch,
-			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on, "truck_done": truck_done, "trivia_day": trivia_day, "trivia_seen": trivia_seen, "trivia_rounds": trivia_rounds, "trivia_last": trivia_last,
+			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on, "truck_done": truck_done, "truck_sets_done": truck_sets_done, "trivia_day": trivia_day, "trivia_seen": trivia_seen, "trivia_rounds": trivia_rounds, "trivia_last": trivia_last,
 			"lives": lives, "life_clock": life_clock, "stardust": stardust}))
 	file.close()
 
@@ -596,6 +603,9 @@ func load_save() -> void:
 	music_muted = bool(data.get("music_muted", false))
 	font_size = str(data.get("font_size", "medium"))
 	tips_on = bool(data.get("tips_on", true))
+	var tsd: Variant = data.get("truck_sets_done", {})
+	if typeof(tsd) == TYPE_DICTIONARY:
+		truck_sets_done = tsd
 	var td: Variant = data.get("truck_done", {})
 	if typeof(td) == TYPE_DICTIONARY:
 		truck_done = td

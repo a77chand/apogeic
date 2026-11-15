@@ -57,30 +57,34 @@ func _initialize() -> void:
 	var text: String = " ".join(PackedStringArray(cam["causes"]))
 	check(text.contains("never sees sunlight") and text.contains("Adding a"), "cause chain explains the dark failure and suggests a sensor")
 
-	# route challenges: the solutions found by the level search still work in the game rules
+	# route challenges: the solutions found by the level search (route_solve, same rules)
+	# still work, and the obvious straight route does not
 	var routes: Array = cfg.get("routes", [])
-	check(routes.size() == 2, "two route challenges")
-	var r2: Dictionary = routes[0]
-	var sol2: Array = [Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]
-	for x in range(1, 8):
-		sol2.append(Vector2i(x, 0))
-	sol2.append_array([Vector2i(7, 1), Vector2i(7, 2), Vector2i(7, 3)])
-	for x in range(8, 14):
-		sol2.append(Vector2i(x, 3))
-	check(bool(TruckSim.route_eval(cfg, r2, sol2)["ok"]), "route 1: the top path around the ridge works")
-	var straight: Array = [Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(2, 4), Vector2i(2, 5), Vector2i(2, 6)]
-	check(not bool(TruckSim.route_eval(cfg, r2, straight)["ok"]), "route 1: an unfinished path is not a pass")
-	var r3: Dictionary = routes[1]
-	var sol3: Array = [Vector2i(0, 3), Vector2i(0, 3), Vector2i(0, 3)]
-	for x in range(1, 12):
-		sol3.append(Vector2i(x, 3))
-	sol3.append_array([Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4)])
-	check(bool(TruckSim.route_eval(cfg, r3, sol3)["ok"]), "route 2: waiting for the shadow, then crossing, works")
-	var rush: Array = [Vector2i(0, 3)]
-	for x in range(1, 12):
-		rush.append(Vector2i(x, 3))
-	rush.append_array([Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4)])
-	check(not bool(TruckSim.route_eval(cfg, r3, rush)["ok"]), "route 2: driving straight into the shadow runs the battery flat")
+	check(routes.size() == 4, "three route sets and the moving-shadows map")
+	var sols: Dictionary = {
+		"route_1": [[0, 3], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [7, 1], [7, 2], [7, 3], [8, 3], [9, 3], [10, 3], [11, 3], [12, 3], [13, 3]],
+		"route_2": [[0, 3], [0, 4], [0, 5], [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6], [7, 6], [8, 6], [8, 5], [8, 4], [9, 4], [9, 3], [10, 3], [11, 3], [12, 3], [13, 3]],
+		"route_3": [[0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [4, 7], [5, 7], [6, 7], [7, 7], [8, 7], [9, 7], [10, 7], [11, 7], [12, 7], [13, 7], [13, 6], [13, 5], [13, 4], [13, 3]],
+		"shadows": [[0, 3], [0, 3], [0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [7, 3], [8, 3], [9, 3], [10, 3], [11, 3], [11, 4], [12, 4], [13, 4]],
+	}
+	for r in routes:
+		var rd: Dictionary = r
+		var path: Array = (sols[str(rd["id"])] as Array).map(func(p: Variant) -> Vector2i: return Vector2i(int(p[0]), int(p[1])))
+		check(bool(TruckSim.route_eval(cfg, rd, path)["ok"]), str(rd["id"]) + ": the known solution works")
+		# straight along the start row to the goal's column, then to the goal: must fail
+		var s0: Vector2i = TruckSim.route_find(rd, "S")
+		var g0: Vector2i = TruckSim.route_find(rd, "G")
+		var straight: Array = [s0]
+		var c: Vector2i = s0
+		while c.x < g0.x:
+			c += Vector2i(1, 0)
+			straight.append(c)
+		while c.y != g0.y:
+			c += Vector2i(0, 1 if g0.y > c.y else -1)
+			straight.append(c)
+		check(not bool(TruckSim.route_eval(cfg, rd, straight)["ok"]), str(rd["id"]) + ": the straight route fails")
+	var back: Array = [Vector2i(0, 3), Vector2i(1, 3), Vector2i(1, 2), Vector2i(0, 2), Vector2i(0, 3)]
+	check(str(TruckSim.route_eval(cfg, routes[0], back)["fail"]).contains("tracks"), "driving back over its own tracks is not allowed")
 
 	if fails.is_empty():
 		print("TRUCK TESTS PASSED")
