@@ -13,6 +13,7 @@ const Menu = preload("res://scripts/ui/menu.gd")
 const SCREENS: Dictionary = {
 	"title": "res://scripts/screens/title.gd",
 	"profile": "res://scripts/screens/profile.gd",
+	"trivia": "res://scripts/screens/trivia.gd",
 	"guide": "res://scripts/screens/guide.gd",
 	"ladder": "res://scripts/screens/ladder.gd",
 	"puzzle_mass": "res://scripts/screens/puzzle_mass.gd",

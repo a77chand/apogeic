@@ -34,7 +34,10 @@ var missions_done: Dictionary = {}  # mission id -> best grade ("partial" or "su
 var mission_stars: Dictionary = {}  # mission id -> best stars
 var lives: int = MAX_LIVES          # a failed mission (0 stars) costs one, saved
 var life_clock: float = 0.0         # unix time the next life started refilling (0 = full)
-var stardust: int = 0               # earned by 3-star missions, spent on lives, saved
+var stardust: int = 0               # earned by 3-star missions and trivia, spent on lives and advice, saved
+var trivia_day: String = ""         # the date of today's trivia rounds, saved
+var trivia_rounds: int = 0          # rounds played on trivia_day, saved
+var trivia_last: float = 0.0        # unix time the last round finished, saved
 var last_reward: Dictionary = {}    # what the last mission earned or cost, for the report (not saved)
 var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
 var tips_on: bool = true           # first-visit tips shown at all, saved (off = harder)
@@ -438,6 +441,34 @@ func buy_life() -> bool:
 	return true
 
 
+# ---- trivia: up to 3 rounds a day, 10 minutes apart (numbers in data/trivia.json)
+
+## {"ok": can a round start now, "wait": seconds until it can, "left": rounds left today,
+## "why": a short reason when it cannot}
+func trivia_status(cfg: Dictionary) -> Dictionary:
+	var today: String = Time.get_date_string_from_system()
+	var played: int = trivia_rounds if trivia_day == today else 0
+	var per_day: int = int(cfg.get("rounds_per_day", 3))
+	var left: int = maxi(0, per_day - played)
+	if left <= 0:
+		return {"ok": false, "wait": 0, "left": 0, "why": "Come back tomorrow! You have played all %d rounds today." % per_day}
+	var wait: int = int(ceil(float(cfg.get("cooldown_minutes", 10)) * 60.0 - (Time.get_unix_time_from_system() - trivia_last)))
+	if played > 0 and wait > 0:
+		return {"ok": false, "wait": wait, "left": left, "why": "Next round in %d:%02d." % [wait / 60, wait % 60]}
+	return {"ok": true, "wait": 0, "left": left, "why": ""}
+
+
+func finish_trivia_round(earned: int) -> void:
+	var today: String = Time.get_date_string_from_system()
+	if trivia_day != today:
+		trivia_day = today
+		trivia_rounds = 0
+	trivia_rounds += 1
+	trivia_last = Time.get_unix_time_from_system()
+	stardust += earned
+	save_game()
+
+
 func can_start_mission() -> bool:
 	refresh_lives()
 	return lives > 0
@@ -511,7 +542,7 @@ func save_game() -> void:
 		return
 	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
 			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch,
-			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on,
+			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on, "trivia_day": trivia_day, "trivia_rounds": trivia_rounds, "trivia_last": trivia_last,
 			"lives": lives, "life_clock": life_clock, "stardust": stardust}))
 	file.close()
 
@@ -557,6 +588,9 @@ func load_save() -> void:
 	music_muted = bool(data.get("music_muted", false))
 	font_size = str(data.get("font_size", "medium"))
 	tips_on = bool(data.get("tips_on", true))
+	trivia_day = str(data.get("trivia_day", ""))
+	trivia_rounds = int(data.get("trivia_rounds", 0))
+	trivia_last = float(data.get("trivia_last", 0.0))
 	lives = clampi(int(data.get("lives", MAX_LIVES)), 0, MAX_LIVES)
 	life_clock = float(data.get("life_clock", 0.0))
 	stardust = maxi(0, int(data.get("stardust", 0)))

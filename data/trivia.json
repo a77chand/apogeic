@@ -1,0 +1,695 @@
+{
+ "_note": "Trivia for star dust. 40 questions in 4 levels of difficulty (10 each). A round asks 10, getting harder. Facts checked against NASA, ESA, ISRO and agency histories; photos are NASA images (see docs/CREDITS.md). answer is the index of the right choice.",
+ "per_round": [
+  3,
+  3,
+  2,
+  2
+ ],
+ "seconds": 20,
+ "stardust_per_correct": 50,
+ "rounds_per_day": 3,
+ "cooldown_minutes": 10,
+ "questions": [
+  {
+   "id": "q01",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "Who was the first person to walk on the Moon?",
+   "choices": [
+    "Buzz Aldrin",
+    "Neil Armstrong",
+    "Yuri Gagarin",
+    "Michael Collins"
+   ],
+   "answer": 1,
+   "explain": "Neil Armstrong stepped onto the Moon on 20 July 1969 during Apollo 11. Buzz Aldrin followed him; Michael Collins stayed in orbit.",
+   "image": "res://art/trivia/lunar_module_eagle.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q02",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "What was the first artificial satellite?",
+   "choices": [
+    "Explorer 1",
+    "Vanguard 1",
+    "Sputnik 1",
+    "Telstar"
+   ],
+   "answer": 2,
+   "explain": "The USSR launched Sputnik 1 on 4 October 1957. It was a polished ball with four antennas that sent out a simple beep.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q03",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "Who was the first human in space?",
+   "choices": [
+    "Alan Shepard",
+    "Yuri Gagarin",
+    "John Glenn",
+    "Valentina Tereshkova"
+   ],
+   "answer": 1,
+   "explain": "Yuri Gagarin orbited the Earth once in Vostok 1 on 12 April 1961.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q04",
+   "difficulty": 1,
+   "kind": "recognise",
+   "question": "Recognise this rocket.",
+   "choices": [
+    "Falcon 9",
+    "Space Shuttle",
+    "Saturn V",
+    "Soyuz"
+   ],
+   "answer": 2,
+   "explain": "This is a Saturn V, the rocket that launched the Apollo crews to the Moon. It is still one of the most powerful rockets ever flown.",
+   "image": "res://art/trivia/saturn_v_launch.jpg",
+   "anim": "launch",
+   "scene": ""
+  },
+  {
+   "id": "q05",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "What does ISS stand for?",
+   "choices": [
+    "International Space Station",
+    "Inner Solar System",
+    "Integrated Satellite System",
+    "Interplanetary Space Shuttle"
+   ],
+   "answer": 0,
+   "explain": "The International Space Station has had people living on board without a break since November 2000.",
+   "image": "res://art/trivia/iss.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q06",
+   "difficulty": 1,
+   "kind": "count",
+   "question": "How many astronauts flew on Apollo 11?",
+   "choices": [
+    "One",
+    "Two",
+    "Three",
+    "Five"
+   ],
+   "answer": 2,
+   "explain": "Three: Neil Armstrong, Buzz Aldrin and Michael Collins. Two landed; Collins orbited the Moon in the command module.",
+   "image": "res://art/trivia/lunar_module_eagle.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q07",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "Which planet did the Curiosity rover land on in 2012?",
+   "choices": [
+    "The Moon",
+    "Venus",
+    "Mars",
+    "Mercury"
+   ],
+   "answer": 2,
+   "explain": "Curiosity landed in Gale Crater on Mars in August 2012 and is still exploring.",
+   "image": "res://art/trivia/curiosity.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q08",
+   "difficulty": 1,
+   "kind": "recognise",
+   "question": "Which space telescope did the Space Shuttle launch in 1990?",
+   "choices": [
+    "James Webb",
+    "Hubble",
+    "Kepler",
+    "Spitzer"
+   ],
+   "answer": 1,
+   "explain": "The Space Shuttle Discovery released Hubble into orbit in April 1990.",
+   "image": "res://art/trivia/hubble_deploy.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q09",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "Why does a satellite in low orbit need a battery?",
+   "choices": [
+    "To make it heavier",
+    "To keep working while the Earth blocks the Sun",
+    "To steer it",
+    "To cool the camera"
+   ],
+   "answer": 1,
+   "explain": "In low orbit the Earth hides the Sun for a big part of every orbit, and the solar panels make nothing in the dark.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q10",
+   "difficulty": 1,
+   "kind": "fact",
+   "question": "What does 1U mean for a CubeSat?",
+   "choices": [
+    "One unit: a 10 cm cube",
+    "One kilogram",
+    "One year in orbit",
+    "One solar panel"
+   ],
+   "answer": 0,
+   "explain": "A CubeSat is built from 10 cm cubes. 1U is one cube; a 3U CubeSat is three stacked together.",
+   "image": "",
+   "anim": "twinkle",
+   "scene": "cubesat"
+  },
+  {
+   "id": "q11",
+   "difficulty": 2,
+   "kind": "fact",
+   "question": "Which country built Aryabhata, its first satellite, in 1975?",
+   "choices": [
+    "China",
+    "India",
+    "Japan",
+    "France"
+   ],
+   "answer": 1,
+   "explain": "Aryabhata was built by India's space agency, ISRO, and launched on a Soviet rocket in April 1975.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q12",
+   "difficulty": 2,
+   "kind": "person",
+   "question": "Who led the MIT team that wrote the on-board flight software for Apollo?",
+   "choices": [
+    "Katherine Johnson",
+    "Grace Hopper",
+    "Margaret Hamilton",
+    "Annie Easley"
+   ],
+   "answer": 2,
+   "explain": "Margaret Hamilton led the software engineering team for the Apollo guidance computer at the MIT Instrumentation Laboratory. Katherine Johnson worked on trajectory calculations at NASA.",
+   "image": "",
+   "anim": "twinkle",
+   "scene": "code"
+  },
+  {
+   "id": "q13",
+   "difficulty": 2,
+   "kind": "person",
+   "question": "Which NASA mathematician checked the computer's orbit numbers by hand before John Glenn's 1962 flight?",
+   "choices": [
+    "Katherine Johnson",
+    "Margaret Hamilton",
+    "Mary Jackson",
+    "Sally Ride"
+   ],
+   "answer": 0,
+   "explain": "John Glenn asked for Katherine Johnson to verify the computer's calculations before he flew Friendship 7 in February 1962.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q14",
+   "difficulty": 2,
+   "kind": "fact",
+   "question": "What did Explorer 1 discover in 1958?",
+   "choices": [
+    "Water on the Moon",
+    "The Van Allen radiation belts",
+    "Rings around Jupiter",
+    "The ozone hole"
+   ],
+   "answer": 1,
+   "explain": "Explorer 1's radiation counter found belts of charged particles trapped by Earth's magnetic field, now called the Van Allen belts.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q15",
+   "difficulty": 2,
+   "kind": "recognise",
+   "question": "Recognise this spacecraft.",
+   "choices": [
+    "Skylab",
+    "Mir",
+    "The International Space Station",
+    "Tiangong"
+   ],
+   "answer": 2,
+   "explain": "This is the International Space Station, photographed from the Space Shuttle Endeavour in 2011.",
+   "image": "res://art/trivia/iss.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q16",
+   "difficulty": 2,
+   "kind": "mission type",
+   "question": "What kind of missions did the Saturn V fly?",
+   "choices": [
+    "Mars landers",
+    "Crewed missions to the Moon",
+    "Space station cargo",
+    "Weather satellites"
+   ],
+   "answer": 1,
+   "explain": "The Saturn V launched the crewed Apollo missions to the Moon. Its last flight, in 1973, put the Skylab space station into orbit.",
+   "image": "res://art/trivia/saturn_v_launch.jpg",
+   "anim": "launch",
+   "scene": "earth"
+  },
+  {
+   "id": "q17",
+   "difficulty": 2,
+   "kind": "recognise",
+   "question": "Recognise this rover.",
+   "choices": [
+    "Sojourner",
+    "Spirit",
+    "Curiosity",
+    "Lunokhod 1"
+   ],
+   "answer": 2,
+   "explain": "This is Curiosity, in a selfie taken with the camera on its robotic arm. The arm is left out of the picture because it holds the camera.",
+   "image": "res://art/trivia/curiosity.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q18",
+   "difficulty": 2,
+   "kind": "fact",
+   "question": "What protects a capsule when it comes back through the atmosphere?",
+   "choices": [
+    "A parachute",
+    "A heat shield",
+    "Solar panels",
+    "A radio"
+   ],
+   "answer": 1,
+   "explain": "Hitting the air at many kilometres per second heats the capsule to thousands of degrees. The heat shield takes that heat.",
+   "image": "",
+   "anim": "launch",
+   "scene": "earth"
+  },
+  {
+   "id": "q19",
+   "difficulty": 2,
+   "kind": "fact",
+   "question": "Why are satellites shaken on a vibration table before launch?",
+   "choices": [
+    "To clean them",
+    "To check they survive the shaking of launch",
+    "To test the radio",
+    "To make them lighter"
+   ],
+   "answer": 1,
+   "explain": "A launch shakes a spacecraft hard. Vibration tests find loose parts on the ground, not in orbit.",
+   "image": "",
+   "anim": "twinkle",
+   "scene": "cubesat"
+  },
+  {
+   "id": "q20",
+   "difficulty": 2,
+   "kind": "fact",
+   "question": "What does a geomagnetic storm do to satellites in very low orbit?",
+   "choices": [
+    "Nothing",
+    "It makes the upper air thicker, so they are dragged down",
+    "It pushes them higher",
+    "It charges their batteries"
+   ],
+   "answer": 1,
+   "explain": "The storm heats the upper atmosphere, which swells and drags low satellites. In 2022 about 38 new Starlink satellites burned up this way.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q21",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "Why was Mars Climate Orbiter lost in 1999?",
+   "choices": [
+    "A meteor hit it",
+    "Two teams used different units",
+    "Its battery failed",
+    "It ran out of fuel"
+   ],
+   "answer": 1,
+   "explain": "One team's software gave thruster data in pound-force seconds; another expected newton-seconds. The orbiter flew too low into Mars' atmosphere.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "mars"
+  },
+  {
+   "id": "q22",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "About how long did Sputnik 1 keep transmitting before its batteries died?",
+   "choices": [
+    "One day",
+    "About three weeks",
+    "Six months",
+    "Two years"
+   ],
+   "answer": 1,
+   "explain": "Sputnik 1 had no solar panels. Its batteries kept the radio going for about three weeks.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q23",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "Which rocket launched India's Chandrayaan-1 to the Moon in 2008?",
+   "choices": [
+    "GSLV",
+    "Ariane 5",
+    "PSLV",
+    "Proton"
+   ],
+   "answer": 2,
+   "explain": "Chandrayaan-1 launched on a PSLV, India's workhorse rocket, from Sriharikota in October 2008.",
+   "image": "",
+   "anim": "launch",
+   "scene": "rocket"
+  },
+  {
+   "id": "q24",
+   "difficulty": 3,
+   "kind": "recognise part",
+   "question": "These engines are being test-fired for NASA's SLS rocket. What engine type are they?",
+   "choices": [
+    "F-1",
+    "RS-25",
+    "Merlin",
+    "Raptor"
+   ],
+   "answer": 1,
+   "explain": "These are four RS-25 engines, the same type that powered the Space Shuttle, firing during the SLS core stage test at Stennis in 2021.",
+   "image": "res://art/trivia/rs25_green_run.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q25",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "What exploded on Apollo 13 on the way to the Moon?",
+   "choices": [
+    "A fuel tank on the lander",
+    "An oxygen tank in the service module",
+    "The heat shield",
+    "A rocket engine"
+   ],
+   "answer": 1,
+   "explain": "An oxygen tank in the service module exploded. The crew used the lunar module as a lifeboat and came home safely.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "moon"
+  },
+  {
+   "id": "q26",
+   "difficulty": 3,
+   "kind": "recognise part",
+   "question": "Recognise this part of the Apollo spacecraft.",
+   "choices": [
+    "The command module",
+    "The service module",
+    "The lunar module",
+    "The launch escape tower"
+   ],
+   "answer": 2,
+   "explain": "This is the lunar module Eagle, coming back from the Moon's surface to meet the command module. The Earth is rising behind it.",
+   "image": "res://art/trivia/lunar_module_eagle.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q27",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "What was wrong with Hubble when it reached orbit?",
+   "choices": [
+    "Its solar panels were missing",
+    "Its main mirror was the wrong shape",
+    "Its radio was broken",
+    "It was in the wrong orbit"
+   ],
+   "answer": 1,
+   "explain": "The main mirror was ground very slightly to the wrong shape, so pictures were blurry. Astronauts fitted corrective optics in 1993.",
+   "image": "res://art/trivia/hubble_deploy.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q28",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "Which mission sent the first CubeSats to another planet?",
+   "choices": [
+    "MarCO",
+    "TROPICS",
+    "Flock-1",
+    "Explorer 1"
+   ],
+   "answer": 0,
+   "explain": "The two MarCO CubeSats flew past Mars in 2018 and relayed data from the InSight lander as it landed.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "mars"
+  },
+  {
+   "id": "q29",
+   "difficulty": 3,
+   "kind": "recognise",
+   "question": "What did the Voyager probes carry as a message to anyone who finds them?",
+   "choices": [
+    "A flag",
+    "A golden record",
+    "A time capsule of coins",
+    "A map drawn by children"
+   ],
+   "answer": 1,
+   "explain": "Each Voyager carries a gold-plated record of sounds, music and pictures from Earth.",
+   "image": "res://art/trivia/golden_record.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q30",
+   "difficulty": 3,
+   "kind": "fact",
+   "question": "Which spacecraft first landed people on the Moon?",
+   "choices": [
+    "Columbia",
+    "Eagle",
+    "Vostok 1",
+    "Orion"
+   ],
+   "answer": 1,
+   "explain": "The lunar module Eagle landed on 20 July 1969. Columbia was the command module that stayed in orbit.",
+   "image": "res://art/trivia/lunar_module_eagle.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  },
+  {
+   "id": "q31",
+   "difficulty": 4,
+   "kind": "person",
+   "question": "Who was the first woman in space?",
+   "choices": [
+    "Sally Ride",
+    "Valentina Tereshkova",
+    "Svetlana Savitskaya",
+    "Kalpana Chawla"
+   ],
+   "answer": 1,
+   "explain": "Valentina Tereshkova flew Vostok 6 in June 1963 and orbited the Earth 48 times.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q32",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "What caused the Space Shuttle Challenger accident in 1986?",
+   "choices": [
+    "A computer bug",
+    "A seal on a booster failed in cold weather",
+    "A bird strike",
+    "Running out of fuel"
+   ],
+   "answer": 1,
+   "explain": "An O-ring seal in a solid rocket booster failed after a very cold night, letting hot gas escape.",
+   "image": "",
+   "anim": "launch",
+   "scene": "rocket"
+  },
+  {
+   "id": "q33",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "What damaged Space Shuttle Columbia in 2003?",
+   "choices": [
+    "A meteor",
+    "Foam from the fuel tank hit the wing at launch",
+    "An engine fire",
+    "A docking accident"
+   ],
+   "answer": 1,
+   "explain": "A piece of insulating foam hit the left wing during launch and damaged its heat protection. The shuttle broke up on its way home.",
+   "image": "",
+   "anim": "launch",
+   "scene": "rocket"
+  },
+  {
+   "id": "q34",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "Which was the first spacecraft to make a soft landing on the Moon?",
+   "choices": [
+    "Surveyor 1",
+    "Luna 9",
+    "Apollo 11",
+    "Chang'e 3"
+   ],
+   "answer": 1,
+   "explain": "The Soviet Luna 9 landed softly in February 1966, four months before NASA's Surveyor 1.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "moon"
+  },
+  {
+   "id": "q35",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "Which country first landed a spacecraft near the Moon's south pole?",
+   "choices": [
+    "USA",
+    "China",
+    "India",
+    "Japan"
+   ],
+   "answer": 2,
+   "explain": "India's Chandrayaan-3 landed near the south pole in August 2023.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "moon"
+  },
+  {
+   "id": "q36",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "What was the first rover to drive on another planet?",
+   "choices": [
+    "Lunokhod 1",
+    "Sojourner",
+    "Spirit",
+    "Curiosity"
+   ],
+   "answer": 1,
+   "explain": "Sojourner drove on Mars in 1997 with the Mars Pathfinder lander. Lunokhod 1 drove earlier, in 1970, but on the Moon, which is not a planet.",
+   "image": "",
+   "anim": "drift",
+   "scene": "mars"
+  },
+  {
+   "id": "q37",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "Why did Ariane 5's first flight fail in 1996?",
+   "choices": [
+    "Bad weather",
+    "Software reused from Ariane 4 hit a number too big for it",
+    "A fuel leak",
+    "The fairing did not open"
+   ],
+   "answer": 1,
+   "explain": "Guidance software reused from Ariane 4 tried to store a number too big for its format. Both inertial reference units shut down and the rocket broke up.",
+   "image": "",
+   "anim": "launch",
+   "scene": "rocket"
+  },
+  {
+   "id": "q38",
+   "difficulty": 4,
+   "kind": "person",
+   "question": "Who was the first American woman in space?",
+   "choices": [
+    "Mae Jemison",
+    "Sally Ride",
+    "Eileen Collins",
+    "Peggy Whitson"
+   ],
+   "answer": 1,
+   "explain": "Sally Ride flew on the Space Shuttle Challenger in June 1983.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "earth"
+  },
+  {
+   "id": "q39",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "What was the first crewed spacecraft to orbit the Moon?",
+   "choices": [
+    "Apollo 8",
+    "Apollo 10",
+    "Apollo 11",
+    "Luna 3"
+   ],
+   "answer": 0,
+   "explain": "Apollo 8 orbited the Moon ten times at Christmas 1968 and took the famous Earthrise photo.",
+   "image": "",
+   "anim": "orbit",
+   "scene": "moon"
+  },
+  {
+   "id": "q40",
+   "difficulty": 4,
+   "kind": "fact",
+   "question": "About how fast does the ISS travel?",
+   "choices": [
+    "2,800 km/h",
+    "28,000 km/h",
+    "280,000 km/h",
+    "2.8 million km/h"
+   ],
+   "answer": 1,
+   "explain": "About 28,000 km/h, so it goes round the Earth roughly every 90 minutes.",
+   "image": "res://art/trivia/iss.jpg",
+   "anim": "drift",
+   "scene": "earth"
+  }
+ ]
+}

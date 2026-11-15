@@ -89,10 +89,27 @@ func _build_stats() -> void:
 	row.add_child(_stat(hearts, null, "LIVES", _lives_label))
 	_dust_label = _pixel_label("", Color(0.82, 0.74, 1.0))
 	row.add_child(_stat(UI.sparkle_icon(28.0), _dust_label, "STAR DUST"))
-	_buy_btn = UI.pixel_button("+1 life", _on_buy, 84.0, 30.0, 11, UI.C_RED)
+	var buttons: VBoxContainer = UI.vbox(4)
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(buttons)
+	_buy_btn = UI.pixel_button("+1 life", _on_buy, 96.0, 24.0, 10, UI.C_RED)
 	_buy_btn.tooltip_text = "Buy a life for %d star dust" % GameState.LIFE_COST_STARDUST
-	_buy_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_buy_btn)
+	buttons.add_child(_buy_btn)
+	var trivia: Button = UI.pixel_button("Trivia", _on_trivia, 96.0, 24.0, 10, Color(0.82, 0.74, 1.0))
+	trivia.tooltip_text = "Answer space questions to earn star dust"
+	buttons.add_child(trivia)
+	# low on star dust: make the trivia button pulse and point at it
+	if GameState.stardust < GameState.LIFE_COST_STARDUST:
+		var pulse: Tween = trivia.create_tween().set_loops()
+		pulse.tween_property(trivia, "modulate", Color(1.6, 1.4, 2.0), 0.6)
+		pulse.tween_property(trivia, "modulate", Color(1, 1, 1), 0.6)
+		var hint: Label = _pixel_label("GET MORE STAR DUST >", Color(0.82, 0.74, 1.0))
+		hint.add_theme_font_size_override("font_size", 9)
+		_place(hint, Vector2(1040, 72), Vector2(220, 18))
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var bob: Tween = hint.create_tween().set_loops()
+		bob.tween_property(hint, "position:y", 76.0, 0.5)
+		bob.tween_property(hint, "position:y", 72.0, 0.5)
 	_refresh_stats()
 
 
@@ -326,6 +343,10 @@ func _on_next() -> void:
 		_index = i
 		_layout(true)
 	_on_start(id)
+
+
+func _on_trivia() -> void:
+	GameState.go("trivia")
 
 
 func _on_buy() -> void:
