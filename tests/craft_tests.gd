@@ -18,9 +18,11 @@ func _initialize() -> void:
 	var cfg: Dictionary = Craft.load_config()
 	var base: Dictionary = Data.load_level1()
 	check(Craft.ids(cfg) == ["1u", "3u", "6u"], "three sizes load")
-	# 3U must be exactly the existing level, so nothing else moves
+	# 3U is the base size: the rocket slot, bus, launch and requirements stay as in level1.json
+	# (a mission's own "craft_values" may still add numbers for its data goal)
 	var u3: Dictionary = Craft.apply(base, cfg, "3u")
-	check(JSON.stringify(u3) == JSON.stringify(base), "3U is identical to level1.json")
+	for key in ["limits", "bus", "launch", "orbit", "schedule"]:
+		check(JSON.stringify(u3[key]) == JSON.stringify(base[key]), "3U leaves '%s' as in level1.json" % key)
 	# apply() never changes the level it is given
 	var before: String = JSON.stringify(base)
 	var u6: Dictionary = Craft.apply(base, cfg, "6u")
@@ -51,9 +53,11 @@ func _initialize() -> void:
 	var cost3: float = float(Sim.evaluate_design(u3, parts, design, sched)["total_cost_k"])
 	var cost6: float = float(Sim.evaluate_design(u6, parts, design, sched)["total_cost_k"])
 	check(cost6 > cost3, "6U costs more than 3U for the same parts (%s vs %s)" % [cost6, cost3])
-	# 6U launch + parts leave less than the 10% reserve: the choice has a real price
+	# the 6U launch is dearer, so Earth Imager gives 6U its own bigger budget (craft_values):
+	# the reference design must still keep the 10% reserve there, so 6U has a winning design
 	var res6: float = float(Sim.evaluate_design(u6, parts, design, sched)["reserve_pct"])
-	check(res6 < 10.0, "6U with the reference design misses the 10%% reserve (%.1f%%)" % res6)
+	check(res6 >= 10.0, "6U reference design keeps the 10%% reserve (%.1f%%)" % res6)
+	check(float(u6["limits"]["budget_k"]) > float(base["limits"]["budget_k"]), "6U has a bigger budget than 3U")
 	if fails.is_empty():
 		print("CRAFT TESTS PASSED")
 		quit(0)
