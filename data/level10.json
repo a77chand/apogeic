@@ -243,7 +243,8 @@
     "story": "Denmark's first satellite rode up as a secondary passenger on a Delta II and mapped Earth's magnetic field for many years.",
     "lesson": "A rideshare seat is cheap, but you go where the main passenger goes.",
     "source": "Wikipedia, \"Ørsted (satellite)\"",
-    "url": "https://en.wikipedia.org/wiki/%C3%98rsted_(satellite)"
+    "url": "https://en.wikipedia.org/wiki/%C3%98rsted_(satellite)",
+    "rocket": "Delta II"
   },
   "event_bias": [
     "solar_storm"

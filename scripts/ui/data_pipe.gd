@@ -1,5 +1,6 @@
 extends Control
-## The data pipeline for Puzzle 3, drawn in code: camera, then radio, then the ground.
+## The data pipeline for Puzzle 3: pictures of the camera, the radio and the ground station,
+## joined by pipes drawn in code.
 ## Each pipe is as thick as the data flowing through it, and the narrowest one (the
 ## bottleneck) is drawn red, so the player can see where the photos get stuck.
 ##   pipe.call("set_flow", make, send, delivered, need)
@@ -16,8 +17,32 @@ var _need: float = 1.0
 var _t: float = 0.0
 
 
+const PICTURES: Array = ["res://art/icons/part_camera.png", "res://art/modules/part_antenna_small.png", "res://art/modules/ground_station.png"]
+
+var _pics: Array = []
+
+
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## The camera, the radio and the ground station as pictures (not text boxes).
+func _ready() -> void:
+	for path in PICTURES:
+		var pic: Control = UI.picture(str(path), Vector2(62, 62))
+		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(pic)
+		_pics.append(pic)
+	resized.connect(_place_pics)
+	_place_pics()
+
+
+func _place_pics() -> void:
+	var xs: Array = [70.0, size.x * 0.5, size.x - 70.0]
+	for i in range(_pics.size()):
+		var pic: Control = _pics[i]
+		pic.size = Vector2(62, 62)
+		pic.position = Vector2(float(xs[i]) - 31.0, size.y * 0.5 + 6.0 - 41.0)
 
 
 func set_flow(make: float, send: float, delivered: float, need: float) -> void:
@@ -42,8 +67,8 @@ func _draw() -> void:
 	var bottleneck_is_radio: bool = _send < _make
 	# pipes between the boxes
 	for i in range(2):
-		var x0: float = float(xs[i]) + 56.0
-		var x1: float = float(xs[i + 1]) - 56.0
+		var x0: float = float(xs[i]) + 44.0
+		var x1: float = float(xs[i + 1]) - 44.0
 		var rate: float = _make if i == 0 else _delivered
 		var thick: float = clampf(rate / FULL_MB_WK * 34.0, 3.0, 34.0)
 		var c: Color = UI.C_ACCENT
@@ -61,26 +86,30 @@ func _draw() -> void:
 			draw_circle(Vector2(x, mid), minf(4.0, thick * 0.3), Color(1, 1, 1, 0.8))
 			x += gap
 		draw_string(font, Vector2((x0 + x1) * 0.5 - 40.0, mid - 24.0), "%d MB/wk" % int(round(rate)), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, c)
-	# the boxes
+	# a glow under each picture (red at the bottleneck, green or orange at the ground),
+	# and a short caption under it
 	for i in range(3):
 		var n: Array = nodes[i]
 		var cx: float = float(xs[i])
-		var r: Rect2 = Rect2(cx - 56.0, mid - 34.0, 112.0, 68.0)
 		var edge: Color = UI.C_ACCENT
 		if i == 1 and bottleneck_is_radio and _delivered < _need:
 			edge = UI.C_RED
 		if i == 2:
 			edge = UI.C_GREEN if _delivered >= _need else UI.C_ORANGE
-		draw_rect(r, Color(0.03, 0.08, 0.17, 0.95))
-		draw_rect(r, edge, false, 2.0)
-		draw_string(font, Vector2(r.position.x + 10.0, r.position.y + 22.0), str(n[0]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, edge)
-		draw_string(font, Vector2(r.position.x + 10.0, r.position.y + 48.0), "%s %d" % [str(n[1]), int(round(float(n[2])))], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, UI.C_TEXT)
+		var c: Vector2 = Vector2(cx, mid - 4.0)
+		draw_circle(c, 40.0, Color(0.02, 0.05, 0.12, 0.85))
+		draw_arc(c, 40.0, 0.0, TAU, 48, edge, 2.5)
+		draw_circle(c, 45.0, Color(edge, 0.10))
+		var caption: String = "%s  %d" % [str(n[0]), int(round(float(n[2])))]
+		var tw: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14).x
+		draw_string(font, Vector2(cx - tw * 0.5, mid + 48.0), caption, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, edge)
 	# the label over the narrowest step
 	var label_x: float = float(xs[1]) - 44.0
+	mid -= 6.0
 	if _delivered >= _need:
-		draw_string(font, Vector2(float(xs[2]) - 70.0, mid - 46.0), "GOAL MET (%d)" % int(round(_need)), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, UI.C_GREEN)
+		draw_string(font, Vector2(float(xs[2]) - 70.0, mid - 54.0), "GOAL MET (%d)" % int(round(_need)), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, UI.C_GREEN)
 	elif bottleneck_is_radio:
-		draw_string(font, Vector2(label_x, mid - 46.0), "BOTTLENECK", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, UI.C_RED)
+		draw_string(font, Vector2(label_x, mid - 54.0), "BOTTLENECK", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, UI.C_RED)
 	else:
-		draw_string(font, Vector2(float(xs[0]) - 50.0, mid - 46.0), "TOO LITTLE DATA MADE", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, UI.C_RED)
-	draw_string(font, Vector2(float(xs[2]) - 56.0, mid + 54.0), "needs %d MB/wk" % int(round(_need)), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, UI.C_MUTED)
+		draw_string(font, Vector2(float(xs[0]) - 50.0, mid - 54.0), "TOO LITTLE DATA MADE", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, UI.C_RED)
+	draw_string(font, Vector2(float(xs[2]) - 46.0, mid + 62.0), "needs %d" % int(round(_need)), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, UI.C_MUTED)

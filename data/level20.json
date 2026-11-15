@@ -244,7 +244,8 @@
     "story": "The first two of these hurricane-watching CubeSats were lost when their small rocket failed in 2022. NASA flew the remaining four in 2023, and they worked.",
     "lesson": "Learn from a failure, fix it, and fly again.",
     "source": "NASA Science, \"TROPICS\"",
-    "url": "https://science.nasa.gov/mission/tropics/"
+    "url": "https://science.nasa.gov/mission/tropics/",
+    "rocket": "Astra Rocket 3.3"
   },
   "event_bias": [
     "radio_interference",

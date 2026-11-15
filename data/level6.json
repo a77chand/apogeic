@@ -244,7 +244,8 @@
     "story": "Broadcast live on TV, the rocket rose about a metre, lost thrust and exploded on the pad. The small satellite was thrown clear, still beeping.",
     "lesson": "A launch is only as ready as its least-tested part.",
     "source": "Wikipedia, \"Vanguard TV-3\"",
-    "url": "https://en.wikipedia.org/wiki/Vanguard_TV-3"
+    "url": "https://en.wikipedia.org/wiki/Vanguard_TV-3",
+    "rocket": "Vanguard"
   },
   "event_bias": [
     "software_bug"

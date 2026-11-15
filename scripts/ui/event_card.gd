@@ -12,7 +12,7 @@ extends Control
 ##
 ## No choice is highlighted and the order is shuffled, so the safe answer is never just
 ## "the first button". The player can ask for a free clue, or pay for an expert's advice
-## (advice_paid_k tells the owner what to charge). If the timer runs out, the card shows
+## (it costs star dust, taken straight away; advice_paid_k stays 0 so no money is charged). If the timer runs out, the card shows
 ## what was chosen for them and the penalty, before closing.
 
 const UI = preload("res://scripts/ui/ui.gd")
@@ -21,7 +21,7 @@ const Sim = preload("res://scripts/core/sim.gd")
 signal chosen(index: int)
 
 const DEFAULT_SECONDS: float = 22.0   # 20-25 s to decide
-const ADVICE_COST_K: float = 15.0
+const ADVICE_COST_STARDUST: int = 250
 const TIMEOUT_NOTICE_SECONDS: float = 7.0
 
 var timed_out: bool = false   # true when the choice was made by the timer running out
@@ -131,8 +131,11 @@ func _build_help(col: VBoxContainer) -> void:
 		_clue_btn.custom_minimum_size = Vector2(200.0, 38.0)
 		row.add_child(_clue_btn)
 	if advice != "":
-		_advice_btn = UI.button("Ask an expert (%s)" % UI.money(ADVICE_COST_K), _on_advice, 260.0, false)
-		_advice_btn.custom_minimum_size = Vector2(260.0, 38.0)
+		_advice_btn = UI.button("Ask an expert (%d star dust)" % ADVICE_COST_STARDUST, _on_advice, 300.0, false)
+		_advice_btn.disabled = GameState.stardust < ADVICE_COST_STARDUST
+		if _advice_btn.disabled:
+			_advice_btn.tooltip_text = "You have %d star dust. Earn more with 3-star missions or trivia." % GameState.stardust
+		_advice_btn.custom_minimum_size = Vector2(300.0, 38.0)
 		row.add_child(_advice_btn)
 	_help_label = UI.label("", 14, UI.C_YELLOW, true)
 	_help_label.custom_minimum_size = Vector2(560.0, 0.0)
@@ -147,7 +150,10 @@ func _on_clue() -> void:
 
 
 func _on_advice() -> void:
-	advice_paid_k = ADVICE_COST_K
+	if GameState.stardust < ADVICE_COST_STARDUST:
+		return
+	GameState.stardust -= ADVICE_COST_STARDUST
+	GameState.save_game()
 	_help_label.text = "Expert: " + str(_event.get("advice", ""))
 	_help_label.visible = true
 	_advice_btn.disabled = true

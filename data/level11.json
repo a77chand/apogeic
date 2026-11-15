@@ -243,7 +243,8 @@
     "story": "One team's software gave thruster figures in pound-force seconds, another expected newton-seconds. The orbiter flew too low into Mars' atmosphere and was lost.",
     "lesson": "Small mistakes in numbers can end a whole mission. Test everything twice.",
     "source": "NASA Science, \"Mars Climate Orbiter\"",
-    "url": "https://science.nasa.gov/mission/mars-climate-orbiter/"
+    "url": "https://science.nasa.gov/mission/mars-climate-orbiter/",
+    "rocket": "Delta II"
   },
   "event_bias": [
     "software_bug",

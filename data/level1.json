@@ -243,6 +243,7 @@
     "story": "The first satellite built to photograph Earth's land. Its scanner sent back hundreds of thousands of pictures of farms, forests and coastlines.",
     "lesson": "A camera mission lives or dies by how much data it can get down.",
     "source": "NASA Landsat Science, \"Landsat 1\"",
-    "url": "https://landsat.gsfc.nasa.gov/satellites/landsat-1/"
+    "url": "https://landsat.gsfc.nasa.gov/satellites/landsat-1/",
+    "rocket": "Delta 900"
   }
 }

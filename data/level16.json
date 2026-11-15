@@ -243,7 +243,8 @@
     "story": "Meant to bring back soil from Mars' moon Phobos, its engines never fired to leave Earth orbit. It fell back to Earth two months later.",
     "lesson": "If the spacecraft cannot fix itself, the mission is over.",
     "source": "Wikipedia, \"Fobos-Grunt\"",
-    "url": "https://en.wikipedia.org/wiki/Fobos-Grunt"
+    "url": "https://en.wikipedia.org/wiki/Fobos-Grunt",
+    "rocket": "Zenit-2SB"
   },
   "event_bias": [
     "orbit_decay",

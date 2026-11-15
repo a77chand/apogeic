@@ -400,6 +400,47 @@ static func panel(border: Color = C_BORDER, margin: float = 16.0) -> PanelContai
 	return p
 
 
+## A sci-fi panel: cut corners, a soft neon edge, a few circuit-style details (a tab on
+## the top edge, three slashes, small nodes on the side lines). The fill is dark and nearly
+## solid so text on it stays easy to read.
+static func neon_panel(color: Color = C_CYAN, margin: float = 18.0) -> PanelContainer:
+	var p: PanelContainer = PanelContainer.new()
+	var sb: StyleBoxEmpty = StyleBoxEmpty.new()
+	sb.content_margin_left = margin
+	sb.content_margin_right = margin
+	sb.content_margin_top = margin + 6.0
+	sb.content_margin_bottom = margin
+	p.add_theme_stylebox_override("panel", sb)
+	p.draw.connect(_neon.bind(p, color))
+	return p
+
+
+static func _neon(p: Control, color: Color) -> void:
+	var s: Vector2 = p.size
+	var cut: float = 18.0
+	var pts: PackedVector2Array = PackedVector2Array([
+		Vector2(cut, 0), Vector2(s.x * 0.55, 0), Vector2(s.x * 0.55 + 10.0, 6.0), Vector2(s.x - cut, 6.0), Vector2(s.x, 6.0 + cut),
+		Vector2(s.x, s.y - cut), Vector2(s.x - cut, s.y), Vector2(cut + 30.0, s.y), Vector2(cut + 22.0, s.y - 6.0), Vector2(cut, s.y - 6.0),
+		Vector2(0, s.y - 6.0 - cut), Vector2(0, cut)])
+	p.draw_colored_polygon(pts, Color(0.02, 0.05, 0.11, 0.94))
+	var outline: PackedVector2Array = pts.duplicate()
+	outline.append(pts[0])
+	for i in range(3):
+		p.draw_polyline(outline, Color(color, 0.08), 8.0 - float(i) * 2.5, true)
+	p.draw_polyline(outline, Color(color, 0.9), 1.6, true)
+	# a tab on the top edge and three slashes at the top right
+	p.draw_rect(Rect2(cut + 10.0, -3.0, 70.0, 4.0), Color(color, 0.95))
+	for i in range(3):
+		var x: float = s.x - cut - 60.0 + float(i) * 12.0
+		p.draw_line(Vector2(x, 14.0), Vector2(x + 8.0, 10.0), Color(color, 0.8), 3.0)
+	# small circuit nodes on the left and right edges
+	for y in [s.y * 0.30, s.y * 0.34]:
+		p.draw_line(Vector2(-10.0, y), Vector2(0, y), Color(color, 0.6), 1.5)
+		p.draw_circle(Vector2(-12.0, y), 2.5, Color(color, 0.8))
+	p.draw_line(Vector2(s.x, s.y * 0.7), Vector2(s.x + 10.0, s.y * 0.7), Color(color, 0.6), 1.5)
+	p.draw_circle(Vector2(s.x + 12.0, s.y * 0.7), 2.5, Color(color, 0.8))
+
+
 ## Short cyan ticks at the four corners of a panel (drawn under its contents).
 static func _brackets(p: Control) -> void:
 	var s: Vector2 = p.size

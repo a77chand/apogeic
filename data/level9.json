@@ -244,7 +244,8 @@
     "story": "Built by a university team on a small budget, it sent data to radio amateurs and schools for about eight years.",
     "lesson": "A careful, cheap design can outlast an expensive one.",
     "source": "Wikipedia, \"UoSAT-1\"",
-    "url": "https://en.wikipedia.org/wiki/UoSAT-1"
+    "url": "https://en.wikipedia.org/wiki/UoSAT-1",
+    "rocket": "Delta 2310"
   },
   "event_bias": [
     "radio_interference"

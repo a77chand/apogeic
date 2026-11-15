@@ -244,7 +244,8 @@
     "story": "A geomagnetic storm made the upper air thicker just after launch. About 38 of 49 new satellites could not climb out of the drag and burned up.",
     "lesson": "Space weather can undo a launch in days.",
     "source": "Wikipedia, \"Starlink\"",
-    "url": "https://en.wikipedia.org/wiki/Starlink"
+    "url": "https://en.wikipedia.org/wiki/Starlink",
+    "rocket": "Falcon 9"
   },
   "event_bias": [
     "solar_storm",

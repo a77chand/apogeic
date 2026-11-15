@@ -243,7 +243,8 @@
     "story": "The first artificial satellite. It ran on batteries alone, with no solar panels, and fell silent after about three weeks when they ran flat.",
     "lesson": "Without a way to recharge, every mission has a short clock.",
     "source": "NASA NSSDCA Master Catalog, \"Sputnik 1\" (1957-001B)",
-    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1957-001B"
+    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1957-001B",
+    "rocket": "R-7 Sputnik"
   },
   "event_bias": [
     "ground_silent"
