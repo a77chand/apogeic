@@ -27,6 +27,11 @@ var _caption: Label = null
 var _full_text: String = ""
 var _continue: Button = null
 var _done: bool = false
+var _skip: Button = null
+## Every film ends on the team's MISSION COMPLETED / MISSION FAILED drawing (shown between
+## about 3.8 s and 5 s, depending on the scene). Continue appears once it is up, and Skip jumps
+## to this moment instead of closing, so the result is always seen.
+const RESULT_AT: float = 5.4
 var _c: Control = null   # the stage: the scene is drawn here, clipped to its frame
 
 ## The team's drawings. Each one falls back to the code drawing if its file is missing.
@@ -72,9 +77,9 @@ func _ready() -> void:
 	_caption.visible_characters = 0
 	_caption.text = _full_text
 	add_child(_caption)
-	var skip: Button = UI.button("Skip", _finish, 120.0, false)
-	skip.position = Vector2(BOX.end.x - 120.0, BOX.position.y - 48.0)
-	add_child(skip)
+	_skip = UI.button("Skip", _on_skip, 120.0, false)
+	_skip.position = Vector2(BOX.end.x - 120.0, BOX.position.y - 48.0)
+	add_child(_skip)
 	_continue = UI.button("Continue", _finish, 200.0, true)
 	_continue.position = Vector2(BOX.end.x - 200.0, 650.0)
 	_continue.visible = false
@@ -121,10 +126,20 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_caption.visible_characters = int(_t * CHARS_PER_SECOND)
-	if _t >= DURATION * 0.6 and not _continue.visible:
+	if _t >= RESULT_AT and not _continue.visible:
 		_continue.visible = true
+		_skip.visible = false
 	queue_redraw()
 	_c.queue_redraw()
+
+
+## Skip: jump straight to the ending (the result banner), then Continue closes the film.
+func _on_skip() -> void:
+	if _t < RESULT_AT:
+		_t = RESULT_AT
+		_caption.visible_characters = -1
+		return
+	_finish()
 
 
 func _finish() -> void:
@@ -306,21 +321,21 @@ func _power(ok: bool) -> void:
 	_c.draw_rect(Rect2(r.position.x, r.position.y, r.size.x * 0.45, r.size.y), Color(0, 0, 0, 0.35))
 	_c.draw_string(ThemeDB.fallback_font, r.position + Vector2(30, r.size.y - 60), "EARTH'S SHADOW", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1, 1, 1, 0.6))
 	# the satellite moves right to left, into the shadow
-	var u: float = clampf(_t / 5.5, 0.0, 1.0)
+	var u: float = clampf(_t / 4.4, 0.0, 1.0)   # in the shadow and flat by about 4.3 s
 	var a: float = lerpf(-0.35, -2.75, u)
 	var pos: Vector2 = earth + Vector2(cos(a), sin(a)) * (er + 60.0)
 	var in_dark: bool = pos.x < r.position.x + r.size.x * 0.45
 	var battery: float = 100.0
 	if in_dark:
-		var dark_u: float = clampf((r.position.x + r.size.x * 0.45 - pos.x) / (r.size.x * 0.35), 0.0, 1.0)
+		var dark_u: float = clampf((r.position.x + r.size.x * 0.45 - pos.x) / (r.size.x * 0.24), 0.0, 1.0)
 		battery = lerpf(100.0, 0.0 if not ok else 45.0, dark_u)
 	var dead: bool = not ok and battery <= 1.0
 	var spin: float = 0.0
 	if dead:
-		spin = (_t - 4.5) * 2.0
+		spin = maxf(0.0, _t - 4.3) * 2.0
 	_satellite(pos, a + PI * 0.5 + spin, not dead)
-	_gauge(r.position + Vector2(r.size.x - 260, 150), "BATTERY", battery, 15.0)
-	if dead:
+	_gauge(r.position + Vector2(r.size.x - 260, 270), "BATTERY", battery, 15.0)
+	if not ok:
 		_big_text("SIGNAL LOST", UI.C_RED, 4.6)
 	elif ok and _t > 5.0:
 		_big_text("SURVIVED THE NIGHT", UI.C_GREEN, 5.0)
@@ -344,14 +359,14 @@ func _data() -> void:
 		var k: float = fmod(_t * 0.8 - float(i) * 0.33, 1.0)
 		if k > 0.0:
 			_c.draw_rect(Rect2(sat.lerp(station + Vector2(0, -24), k) - Vector2(5, 5), Vector2(10, 10)), UI.C_GREEN)
-	var stored: float = clampf(float(made - sent) * 5.0, 0.0, 100.0)
+	var stored: float = clampf(float(made - sent) * 8.0, 0.0, 100.0)   # full by about 4.2 s
 	_gauge(r.position + Vector2(40, 260), "STORAGE ON BOARD", stored, -1.0, 90.0)
 	_c.draw_string(ThemeDB.fallback_font, r.position + Vector2(40, 320), "Photos made: %d    sent: %d" % [made, sent], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(1, 1, 1, 0.85))
 	if stored >= 100.0:
 		for i in range(8):
 			var p: Vector2 = sat + Vector2(-30 + i * 9, 30 + fmod(_t * 60.0 + i * 20.0, 120.0))
 			_c.draw_rect(Rect2(p, Vector2(8, 8)), Color(UI.C_RED, 0.8))
-		_big_text("PHOTOS LOST", UI.C_RED, 4.0)
+	_big_text("PHOTOS LOST", UI.C_RED, 4.4)
 
 
 func _budget() -> void:
@@ -361,10 +376,11 @@ func _budget() -> void:
 	_gauge(r.position + Vector2(40, 90), "MONEY LEFT", money, 15.0)
 	if _t > 4.0:
 		var k: float = clampf((_t - 4.0) * 4.0, 0.0, 1.0)
-		_c.draw_set_transform(r.get_center() + Vector2(0, 30), -0.25, Vector2.ONE * lerpf(2.0, 1.0, k))
+		_c.draw_set_transform(r.get_center() + Vector2(0, 120), -0.18, Vector2.ONE * lerpf(1.6, 0.8, k))
 		_c.draw_rect(Rect2(-190, -40, 380, 80), Color(UI.C_RED, 0.9 * k), false, 6.0)
 		_c.draw_string(UI.display_font(), Vector2(-170, 18), "CANCELLED", HORIZONTAL_ALIGNMENT_LEFT, -1, 50, Color(UI.C_RED, k))
 		_c.draw_set_transform(Vector2.ZERO)
+	_big_text("THE MONEY RAN OUT", UI.C_RED, 4.2)
 
 
 func _late() -> void:
