@@ -251,5 +251,70 @@
     "Robots near the Moon's south pole must drive themselves: a radio signal to Earth and back takes time, and people can't watch every metre.",
     "The Sun is only 1 to 2 degrees above the horizon there (8 to 50 degrees during Apollo), so rocks hide in long, black shadows.",
     "If a robot misses a rock, it can break a wheel or tip over, and nobody can fix it."
-  ]
+  ],
+  "route_note": "Route challenges: a light scout rover with a camera, a stereo camera and headlights. Battery numbers are illustrative. The idea is real: at the lunar south pole the Sun circles low around the horizon, so shadows sweep across the ground, and VIPER's team planned routes to stay in sunlight because the rover is solar powered.",
+  "routes": [
+    {
+      "id": "route",
+      "title": "Plan the route",
+      "intro": "A light scout rover must reach the dig site. Its sensors can't see rocks in digging dust, and its battery drains in shadow and dark craters because the solar panels only charge in sunlight. Click squares to plan a path, then drive.",
+      "lesson": "Plan around what the sensors can't see, and stay in the sunlight to keep the battery up.",
+      "kit": [
+        "camera",
+        "stereo",
+        "headlights"
+      ],
+      "sun_az": 180,
+      "sun_step_deg": 0,
+      "battery": 20,
+      "capacity": 40,
+      "waits": false,
+      "grid": [
+        "..............",
+        "...#....DDD...",
+        "...#....DDD...",
+        "S..#.CCCC....G",
+        "...#.CCCC.#...",
+        "...##.....#...",
+        ".DD.......#...",
+        ".DD..//////..."
+      ]
+    },
+    {
+      "id": "shadows",
+      "title": "Moving shadows",
+      "intro": "At the Moon's south pole the Sun circles low around the horizon, so the shadows sweep across the ground. The battery is almost flat. Wait in the sunlight to charge, and cross when the shadow has moved.",
+      "lesson": "Timing matters: wait in the light for the shadows to move, instead of driving into the dark.",
+      "kit": [
+        "camera",
+        "stereo",
+        "headlights"
+      ],
+      "sun_az": 195,
+      "sun_step_deg": 10,
+      "battery": 4,
+      "capacity": 30,
+      "waits": true,
+      "grid": [
+        "....##........",
+        "....##........",
+        "....##...DD...",
+        "S.............",
+        "....##...DD..G",
+        "....##........",
+        "....##........",
+        "....##........"
+      ]
+    }
+  ],
+  "route_energy": {
+    "clear": 1,
+    "shadow": -6,
+    "dark": -6,
+    "dust": -4,
+    "slope": -1,
+    "wait_clear": 4,
+    "wait_other": -2,
+    "shadow_length": 5
+  }
 }

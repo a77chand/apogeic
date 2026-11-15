@@ -39,20 +39,25 @@ func _ready() -> void:
 	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(centre)
 	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var panel: PanelContainer = UI.panel(UI.C_ORANGE, 22.0)
-	panel.custom_minimum_size = Vector2(460.0, 0.0)
+	# everything centred: title, text and the two buttons
+	var panel: PanelContainer = UI.neon_panel(UI.C_ORANGE, 26.0)
+	panel.custom_minimum_size = Vector2(520.0, 0.0)
 	centre.add_child(panel)
-	var col: VBoxContainer = UI.vbox(14)
+	var col: VBoxContainer = UI.vbox(16)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(col)
-	col.add_child(UI.label(_title, 24, UI.C_ORANGE))
+	var title: Label = UI.label(_title, 24, UI.C_ORANGE)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
 	var body: Label = UI.label(_body, 16, UI.C_TEXT, true)
-	body.custom_minimum_size = Vector2(416.0, 0.0)
+	body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	body.custom_minimum_size = Vector2(468.0, 0.0)
 	col.add_child(body)
-	var row: HBoxContainer = UI.hbox(12)
-	row.alignment = BoxContainer.ALIGNMENT_END
+	var row: HBoxContainer = UI.hbox(16)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_child(row)
-	row.add_child(UI.button("No", _on_no, 120.0, false))
-	row.add_child(UI.button(_yes_text, _on_yes_pressed, 180.0, true))
+	row.add_child(UI.button("No", _on_no, 160.0, false))
+	row.add_child(UI.button(_yes_text, _on_yes_pressed, 200.0, true))
 
 
 func _on_no() -> void:

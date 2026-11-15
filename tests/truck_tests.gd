@@ -57,6 +57,31 @@ func _initialize() -> void:
 	var text: String = " ".join(PackedStringArray(cam["causes"]))
 	check(text.contains("never sees sunlight") and text.contains("Adding a"), "cause chain explains the dark failure and suggests a sensor")
 
+	# route challenges: the solutions found by the level search still work in the game rules
+	var routes: Array = cfg.get("routes", [])
+	check(routes.size() == 2, "two route challenges")
+	var r2: Dictionary = routes[0]
+	var sol2: Array = [Vector2i(0, 3), Vector2i(0, 2), Vector2i(0, 1), Vector2i(0, 0)]
+	for x in range(1, 8):
+		sol2.append(Vector2i(x, 0))
+	sol2.append_array([Vector2i(7, 1), Vector2i(7, 2), Vector2i(7, 3)])
+	for x in range(8, 14):
+		sol2.append(Vector2i(x, 3))
+	check(bool(TruckSim.route_eval(cfg, r2, sol2)["ok"]), "route 1: the top path around the ridge works")
+	var straight: Array = [Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(2, 4), Vector2i(2, 5), Vector2i(2, 6)]
+	check(not bool(TruckSim.route_eval(cfg, r2, straight)["ok"]), "route 1: an unfinished path is not a pass")
+	var r3: Dictionary = routes[1]
+	var sol3: Array = [Vector2i(0, 3), Vector2i(0, 3), Vector2i(0, 3)]
+	for x in range(1, 12):
+		sol3.append(Vector2i(x, 3))
+	sol3.append_array([Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4)])
+	check(bool(TruckSim.route_eval(cfg, r3, sol3)["ok"]), "route 2: waiting for the shadow, then crossing, works")
+	var rush: Array = [Vector2i(0, 3)]
+	for x in range(1, 12):
+		rush.append(Vector2i(x, 3))
+	rush.append_array([Vector2i(11, 4), Vector2i(12, 4), Vector2i(13, 4)])
+	check(not bool(TruckSim.route_eval(cfg, r3, rush)["ok"]), "route 2: driving straight into the shadow runs the battery flat")
+
 	if fails.is_empty():
 		print("TRUCK TESTS PASSED")
 		quit(0)

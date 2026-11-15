@@ -37,6 +37,8 @@ const SPECS: Dictionary = {
 	"Proton-K": {"w": 0.09, "body": WHITE, "boosters": 2, "blen": 0.40, "bcol": WHITE, "nose": "bulb", "bands": [[0.40, 0.43, GREY], [0.62, 0.65, GREY]]},
 	"Zenit-2SB": {"w": 0.085, "body": WHITE, "nose": "bulb", "bands": [[0.58, 0.61, DARK]]},
 	"H-IIA": {"w": 0.08, "body": WHITE, "boosters": 2, "blen": 0.32, "bcol": WHITE, "nose": "bulb", "bands": [[0.0, 0.58, Color(0.95, 0.62, 0.30)]]},
+	"Vostok-K": {"w": 0.07, "body": GREY, "boosters": 2, "blen": 0.52, "bcol": GREY, "taper": true, "nose": "bulb", "bands": [[0.66, 0.70, DARK], [0.78, 0.92, Color(0.85, 0.86, 0.88)]]},
+	"Ariane 5": {"w": 0.085, "body": WHITE, "boosters": 2, "blen": 0.62, "bcol": WHITE, "nose": "bulb", "bands": [[0.02, 0.06, DARK]]},
 	"Falcon 9": {"w": 0.06, "body": WHITE, "nose": "bulb", "legs": true, "bands": [[0.66, 0.71, DARK], [0.02, 0.06, DARK]]},
 	"Astra Rocket 3.3": {"w": 0.07, "body": Color(0.29, 0.30, 0.33), "nose": "ogive", "short": 0.55, "bands": [[0.6, 1.0, WHITE]]},
 }

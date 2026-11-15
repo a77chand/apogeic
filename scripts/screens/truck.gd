@@ -8,6 +8,7 @@ extends Control
 const UI = preload("res://scripts/ui/ui.gd")
 const TruckSim = preload("res://scripts/core/truck_sim.gd")
 const DriveTest = preload("res://scripts/ui/drive_test.gd")
+const TruckTabs = preload("res://scripts/ui/truck_tabs.gd")
 
 var _cfg: Dictionary = {}
 var selected: Array = []
@@ -27,7 +28,8 @@ func _ready() -> void:
 	_build_limits()
 	_build_explain()
 	_refresh()
-	_show_problem()
+	if not GameState.is_truck_done(1):
+		_show_problem()   # the first time; after that it is behind "The problem"
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -38,20 +40,7 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 
 
 func _build_top_bar() -> void:
-	var bar: PanelContainer = PanelContainer.new()
-	bar.add_theme_stylebox_override("panel", UI.bar_style(true))
-	_place(bar, Vector2(0, 0), Vector2(1280, 72))
-	var row: HBoxContainer = UI.hbox(16)
-	bar.add_child(row)
-	row.add_child(UI.label("NASA problem: robots at the Moon's south pole", 15, UI.C_MUTED))
-	var spacer: Control = Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
-	row.add_child(UI.label(str(_cfg.get("title", "Can the truck see?")), 28))
-	var spacer2: Control = Control.new()
-	spacer2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer2)
-	row.add_child(UI.label("MOSTLY ILLUSTRATIVE NUMBERS", 12, UI.C_ORANGE))
+	add_child(TruckTabs.bar(_cfg, 1))
 
 
 func _build_sensors() -> void:
@@ -209,7 +198,8 @@ func _run_drive(sensors: Array) -> void:
 	var all_safe: bool = await t.finished
 	if all_safe and sensors == selected and bool(TruckSim.evaluate(_cfg, selected).get("passed", false)):
 		GameState.play_sound("fanfare")
-		_verdict.text = "Drive test passed: ready for the south pole!"
+		GameState.mark_truck_done(1)
+		_verdict.text = "Drive test passed! Challenge 2 is open: plan the route."
 		_verdict.add_theme_color_override("font_color", UI.C_GREEN)
 
 

@@ -9,6 +9,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
 const Data = preload("res://scripts/core/data.gd")
 const Sprites = preload("res://scripts/ui/sprites.gd")
+const RocketArt = preload("res://scripts/ui/rocket_art.gd")
 
 var _cfg: Dictionary = {}
 var _round: Array = []
@@ -24,6 +25,7 @@ var _explain: Label = null
 var _next_btn: Button = null
 var _score_label: Label = null
 var _art: Control = null
+var _wait_label: Label = null   # the live "next round in m:ss" on the start panel
 
 
 func _ready() -> void:
@@ -69,6 +71,7 @@ func _refresh_score() -> void:
 
 func _clear() -> void:
 	set_process(false)
+	_wait_label = null
 	UI.clear(_body)
 	_buttons = []
 
@@ -101,10 +104,11 @@ func _show_intro() -> void:
 		go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		col.add_child(go)
 	else:
-		var why: Label = UI.label(str(st.get("why", "")), 20, UI.C_YELLOW, true)
-		why.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		why.custom_minimum_size = Vector2(640.0, 0.0)
-		col.add_child(why)
+		_wait_label = UI.label(str(st.get("why", "")), 20, UI.C_YELLOW, true)
+		_wait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_wait_label.custom_minimum_size = Vector2(640.0, 0.0)
+		col.add_child(_wait_label)
+		set_process(true)
 	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 606), Vector2(160, 50), _body)
 
 
@@ -165,6 +169,14 @@ func _show_question() -> void:
 
 
 func _process(delta: float) -> void:
+	if _wait_label != null:
+		# waiting for the next round: count down every frame, and open when it is time
+		var st: Dictionary = GameState.trivia_status(_cfg)
+		if bool(st.get("ok", false)):
+			_show_intro()
+		else:
+			_wait_label.text = str(st.get("why", ""))
+		return
 	if _answered:
 		return
 	_left -= delta
@@ -257,21 +269,22 @@ class TriviaArt:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		clip_contents = true
 		var path: String = str(q.get("image", ""))
+		var art: String = str(q.get("art", ""))
 		if path != "" and ResourceLoader.exists(path):
 			_tex = load(path)
-		else:
-			var kind: String = {"earth": "earth_large", "mars": "earth_large", "moon": "earth_large", "cubesat": "cubesat_3u", "rocket": "rocket_medium", "code": "spacecraft_marker"}.get(str(q.get("scene", "earth")), "earth_large")
-			_scene = Sprites.make(kind, Vector2(220, 220))
-			if str(q.get("scene", "")) == "mars":
-				_scene.modulate = Color(1.0, 0.55, 0.35)
-			elif str(q.get("scene", "")) == "moon":
-				_scene.modulate = Color(0.75, 0.75, 0.78)
+		elif art.begins_with("rocket:"):
+			# the real rocket, drawn (no free photo of it)
+			_scene = RocketArt.new()
+			_scene.set("rocket", art.substr(7))
+			_scene.size = Vector2(140, 330)
 			add_child(_scene)
+		# otherwise "art" names a subject drawn in _draw (sputnik, dsky, mars_orbit)
 
 	func _process(delta: float) -> void:
 		_t += delta
 		if _scene != null:
 			_scene.position = size * 0.5 - _scene.size * 0.5 + Vector2(0, sin(_t * 1.2) * 6.0)
+			_scene.queue_redraw()
 		queue_redraw()
 
 	func _draw() -> void:
@@ -283,6 +296,15 @@ class TriviaArt:
 			var draw_size: Vector2 = tsz * fit
 			var off: Vector2 = (size - draw_size) * 0.5 + Vector2(sin(_t * 0.27) * 12.0, cos(_t * 0.21) * 8.0)
 			draw_texture_rect(_tex, Rect2(off, draw_size), false)
+		match str(q.get("art", "")):
+			"":
+				pass
+			"sputnik":
+				_draw_sputnik()
+			"dsky":
+				_draw_dsky()
+			"mars_orbit":
+				_draw_mars_orbit()
 		match str(q.get("anim", "twinkle")):
 			"launch":
 				for i in range(16):
@@ -310,3 +332,51 @@ class TriviaArt:
 		draw_line(Vector2(0, y), Vector2(size.x, y), Color(UI.C_ACCENT, 0.12), 2.0)
 		if _tex != null:
 			draw_string(ThemeDB.fallback_font, Vector2(8, size.y - 8), "Image: NASA", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.7))
+		elif str(q.get("art", "")) != "":
+			draw_string(ThemeDB.fallback_font, Vector2(8, size.y - 8), "Drawing", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.5))
+
+	## Sputnik 1: a polished ball with four long antennas swept back, slowly turning, beeping.
+	func _draw_sputnik() -> void:
+		var c: Vector2 = size * 0.5 + Vector2(sin(_t * 0.5) * 20.0, cos(_t * 0.4) * 10.0)
+		var ang: float = _t * 0.25
+		for k in range(4):
+			var a: float = ang + 2.5 + float(k) * 0.16 - 0.24
+			var tip: Vector2 = c + Vector2(cos(a), sin(a)) * 170.0 + Vector2(0, float(k - 1.5) * 18.0)
+			draw_line(c, tip, Color(0.78, 0.80, 0.85), 2.0)
+		draw_circle(c, 40.0, Color(0.62, 0.64, 0.70))
+		draw_circle(c + Vector2(-12, -12), 26.0, Color(0.85, 0.87, 0.92))
+		draw_circle(c + Vector2(-18, -18), 8.0, Color(1, 1, 1))
+		# the beep
+		var k2: float = fmod(_t, 1.0)
+		draw_arc(c, 50.0 + k2 * 120.0, -0.6, 0.6, 24, Color(UI.C_ACCENT, 1.0 - k2), 2.0)
+		draw_string(UI.pixel_font(false), c + Vector2(70, -60), "BEEP", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(UI.C_ACCENT, 1.0 - k2))
+
+	## The Apollo guidance computer's keypad (the DSKY): green number displays and keys.
+	func _draw_dsky() -> void:
+		var r: Rect2 = Rect2(size.x * 0.5 - 170, 30, 340, size.y - 60)
+		draw_rect(r, Color(0.55, 0.56, 0.58))
+		draw_rect(r, Color(0.2, 0.2, 0.22), false, 3.0)
+		var disp: Rect2 = Rect2(r.position + Vector2(20, 18), Vector2(300, 130))
+		draw_rect(disp, Color(0.05, 0.06, 0.05))
+		var font: Font = UI.pixel_font(false)
+		var labels: Array = ["PROG 63", "VERB 16  NOUN 68", "+%05d" % (int(_t * 37.0) % 99999), "+%05d" % (int(_t * 11.0 + 400.0) % 99999)]
+		for i in range(labels.size()):
+			draw_string(font, disp.position + Vector2(14, 28 + i * 28), str(labels[i]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.35, 1.0, 0.45, 0.9 if fmod(_t + float(i), 2.0) > 0.3 else 0.4))
+		var keys: Array = ["VERB", "+", "7", "8", "9", "CLR", "NOUN", "-", "4", "5", "6", "PRO", "", "0", "1", "2", "3", "KEY REL", "", "", "ENTR", "RSET", "", ""]
+		for i in range(18):
+			var kx: float = r.position.x + 20.0 + float(i % 6) * 50.0
+			var ky: float = r.position.y + 170.0 + float(i / 6) * 50.0
+			draw_rect(Rect2(kx, ky, 44, 42), Color(0.12, 0.12, 0.13))
+			draw_string(ThemeDB.fallback_font, Vector2(kx + 6, ky + 26), str(keys[i]), HORIZONTAL_ALIGNMENT_LEFT, 40, 11, Color(0.92, 0.92, 0.92))
+
+	## Mars, and a small orbiter dipping too low, into the glowing upper air.
+	func _draw_mars_orbit() -> void:
+		var c: Vector2 = Vector2(size.x * 0.5, size.y * 0.62)
+		draw_circle(c, 150.0, Color(0.72, 0.36, 0.22))
+		draw_circle(c + Vector2(-30, -30), 110.0, Color(0.82, 0.46, 0.28))
+		draw_arc(c, 158.0, 0.0, TAU, 64, Color(1.0, 0.6, 0.4, 0.35), 8.0)
+		var a: float = -2.6 + fmod(_t * 0.4, 1.6)
+		var p: Vector2 = c + Vector2(cos(a), sin(a)) * 165.0
+		draw_rect(Rect2(p - Vector2(6, 6), Vector2(12, 12)), Color(0.9, 0.85, 0.6))
+		draw_line(p - Vector2(18, 0), p + Vector2(18, 0), Color(0.4, 0.6, 1.0), 4.0)
+		draw_circle(p, 14.0, Color(1.0, 0.5, 0.2, 0.25 + 0.2 * sin(_t * 8.0)))
