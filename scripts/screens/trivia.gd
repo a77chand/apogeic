@@ -10,6 +10,7 @@ const Player = preload("res://scripts/ui/player.gd")
 const Data = preload("res://scripts/core/data.gd")
 const Sprites = preload("res://scripts/ui/sprites.gd")
 const RocketArt = preload("res://scripts/ui/rocket_art.gd")
+const TriviaPick = preload("res://scripts/core/trivia_pick.gd")
 
 var _cfg: Dictionary = {}
 var _round: Array = []
@@ -113,15 +114,15 @@ func _show_intro() -> void:
 
 
 ## 10 questions: a few from each level of difficulty, easiest first, shuffled within a level.
+## Questions you have already had are left out until you have seen every question in that
+## level; then that level starts over (GameState.trivia_seen remembers, across sessions).
 func _start_round() -> void:
 	var per_level: Array = _cfg.get("per_round", [3, 3, 2, 2])
 	var all: Array = _cfg.get("questions", [])
-	_round = []
-	for level in range(per_level.size()):
-		var pool: Array = all.filter(func(q: Variant) -> bool: return int((q as Dictionary).get("difficulty", 1)) == level + 1)
-		pool.shuffle()
-		for k in range(mini(int(per_level[level]), pool.size())):
-			_round.append(pool[k])
+	_round = TriviaPick.pick_round(all, per_level, GameState.trivia_seen)
+	for q in _round:
+		GameState.trivia_seen[str((q as Dictionary).get("id", ""))] = true
+	GameState.save_game()
 	_i = 0
 	_correct = 0
 	_show_question()

@@ -43,6 +43,7 @@ godot --headless --path . -s tests/run_tests.gd        # the rules (sim)
 godot --headless --path . -s tests/truck_tests.gd      # the truck scenario
 godot --headless --path . -s tests/craft_tests.gd      # 1U / 3U / 6U sizes
 godot --headless --path . -s tests/progress_tests.gd   # mission unlock rules
+godot --headless --path . -s tests/trivia_tests.gd     # trivia never repeats a question until a level runs out
 godot --headless --path . -s tests/mission_check.gd    # every mission can still get 3 stars (slow)
 godot --headless --path . -s tests/load_check.gd       # every script compiles (run before every merge)
 godot --headless --path . -s tests/flow_check.gd       # plays through every screen and flies missions
