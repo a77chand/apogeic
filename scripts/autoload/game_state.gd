@@ -37,6 +37,7 @@ var life_clock: float = 0.0         # unix time the next life started refilling 
 var stardust: int = 0               # earned by 3-star missions, spent on lives, saved
 var last_reward: Dictionary = {}    # what the last mission earned or cost, for the report (not saved)
 var tutorial_seen: Dictionary = {}  # screen id -> true, so each tip shows once
+var tips_on: bool = true           # first-visit tips shown at all, saved (off = harder)
 var tutorial_open: bool = false     # true while a tip box is on screen (clocks wait)
 var muted: bool = false             # sound effects on/off, saved
 var sfx_volume: float = 0.8         # sound effects volume, 0..1, saved
@@ -496,7 +497,7 @@ func save_game() -> void:
 		return
 	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
 			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch,
-			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size,
+			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on,
 			"lives": lives, "life_clock": life_clock, "stardust": stardust}))
 	file.close()
 
@@ -541,6 +542,7 @@ func load_save() -> void:
 	music_volume = clampf(float(data.get("music_volume", 0.5)), 0.0, 1.0)
 	music_muted = bool(data.get("music_muted", false))
 	font_size = str(data.get("font_size", "medium"))
+	tips_on = bool(data.get("tips_on", true))
 	lives = clampi(int(data.get("lives", MAX_LIVES)), 0, MAX_LIVES)
 	life_clock = float(data.get("life_clock", 0.0))
 	stardust = maxi(0, int(data.get("stardust", 0)))
@@ -550,7 +552,23 @@ func load_save() -> void:
 		tutorial_seen = seen
 
 
+func set_tips_on(value: bool) -> void:
+	tips_on = value
+	if value:
+		tutorial_seen = {}   # turning tips back on shows them again from the start
+	save_game()
+
+
+## Missions open only after every training puzzle has been finished once.
+func all_puzzles_done() -> bool:
+	for id in puzzle_order():
+		if not is_puzzle_done(str(id)):
+			return false
+	return true
+
+
 func reset_progress() -> void:
+	play_sound("power_down")
 	puzzles_done = {}
 	best_stars = 0
 	missions_done = {}

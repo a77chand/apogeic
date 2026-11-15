@@ -23,7 +23,7 @@ var _typed: Array = []
 
 ## Shows the tips for screen_id on host, unless they were already seen.
 static func maybe_show(host: Control, screen_id: String) -> void:
-	if bool(GameState.tutorial_seen.get(screen_id, false)):
+	if not GameState.tips_on or bool(GameState.tutorial_seen.get(screen_id, false)):
 		return
 	var cfg: Dictionary = Data.load_dict(PATH)
 	var screens: Dictionary = cfg.get("screens", {})

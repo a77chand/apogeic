@@ -33,9 +33,9 @@ func _draw() -> void:
 
 func _draw_title() -> void:
 	var font: Font = UI.pixel_font(false)   # the regular weight: the bold one read too heavy
-	var fs: int = 112
+	var fs: int = 128
 	var w: float = font.get_string_size(TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-	var pos: Vector2 = Vector2(560.0 - w * 0.5, 175)
+	var pos: Vector2 = Vector2(560.0 - w * 0.5, 225)
 	var cap: float = fs * 0.62   # height of a capital in this font (less than the ascent)
 	# the 0 is a little ringed planet: where it sits
 	var x0: float = pos.x + font.get_string_size("AP", HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
@@ -43,27 +43,32 @@ func _draw_title() -> void:
 	var zero: Vector2 = Vector2(x0 + gw * 0.40, pos.y - cap * 0.5)
 	# a sweeping orbit around the whole title: the far half behind the letters
 	var oc: Vector2 = Vector2(560.0, pos.y - cap * 0.5)
-	_swoosh(oc, w * 0.62, 70.0, -0.10, false)
+	_swoosh(oc, w * 0.60, 82.0, -0.10, false)
 	_ring(zero, gw * 0.62, cap * 0.16, -0.38, false)
 	draw_circle(zero, cap * 0.22, Color(0.30, 0.55, 0.95))
 	draw_circle(zero + Vector2(-cap * 0.06, -cap * 0.06), cap * 0.12, Color(0.45, 0.70, 1.0))
-	# stepped shadow, a few pixels down and right, like an old arcade cabinet
+	# a soft violet glow behind the letters
+	for i in range(4):
+		var g: float = float(4 - i) * 3.0
+		draw_string_outline(font, pos, TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, int(g * 2.0), Color(0.55, 0.35, 1.0, 0.07))
+	# stepped shadow, a few pixels down and right, magenta into deep blue, like an arcade cabinet
+	var shadow_cols: Array = [Color(0.16, 0.12, 0.45), Color(0.35, 0.20, 0.70), Color(0.62, 0.28, 0.85)]
 	for i in range(3, 0, -1):
-		draw_string(font, pos + Vector2(i * 3, i * 3), TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(C_SHADOW, 0.5 + 0.15 * i))
+		draw_string(font, pos + Vector2(i * 3, i * 3), TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, shadow_cols[3 - i])
 	draw_string(font, pos, TITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, C_CREAM)
 	_ring(zero, gw * 0.62, cap * 0.16, -0.38, true)
-	_swoosh(oc, w * 0.62, 70.0, -0.10, true)
+	_swoosh(oc, w * 0.60, 82.0, -0.10, true)
 	# a bright star at the top of the orbit, gently pulsing
-	var star: Vector2 = oc + Vector2(-40.0, -78.0)
+	var star: Vector2 = oc + Vector2(-40.0, -92.0)
 	var k: float = 0.75 + 0.25 * sin(_t * 2.2)
 	draw_circle(star, 14.0 * k, Color(1.0, 0.75, 0.45, 0.18))
 	draw_line(star - Vector2(26 * k, 0), star + Vector2(26 * k, 0), Color(1.0, 0.85, 0.6, 0.9), 2.0)
 	draw_line(star - Vector2(0, 18 * k), star + Vector2(0, 18 * k), Color(1.0, 0.85, 0.6, 0.9), 2.0)
 	draw_circle(star, 3.5, Color(1, 0.95, 0.85))
 	var strap: String = "D E S I G N    ·    L A U N C H    ·    L E A R N"
-	var ss: int = 16
+	var ss: int = 18
 	var sw: float = font.get_string_size(strap, HORIZONTAL_ALIGNMENT_LEFT, -1, ss).x
-	draw_string(font, Vector2(560.0 - sw * 0.5, 232), strap, HORIZONTAL_ALIGNMENT_LEFT, -1, ss, Color(UI.C_ACCENT, 0.9))
+	draw_string(font, Vector2(560.0 - sw * 0.5, 282), strap, HORIZONTAL_ALIGNMENT_LEFT, -1, ss, Color(UI.C_ACCENT, 0.9))
 
 
 ## Half of a tilted ellipse: front = the near half (drawn over the letters), else the far half.
@@ -100,6 +105,9 @@ func _draw_planet() -> void:
 	var light: Vector2 = Vector2(-0.55, -0.83).normalized()
 	var shades: Array = [Color(0.30, 0.14, 0.58), Color(0.44, 0.24, 0.78), Color(0.58, 0.38, 0.92), Color(0.72, 0.54, 1.0), Color(0.84, 0.70, 1.0), Color(0.93, 0.85, 1.0)]
 	var spin: float = _t * 0.9
+	# a wide soft haze around the planet so it stands out from the sky
+	for i in range(8):
+		draw_circle(c, r + 70.0 - float(i) * 8.0, Color(0.55, 0.40, 1.0, 0.035))
 	# the window can be taller or wider than 1280 x 720 (the screen stretches to fill it),
 	# so draw to the edge of what is really visible, not just the design size
 	var view: Vector2 = get_viewport_rect().size
@@ -120,18 +128,22 @@ func _draw_planet() -> void:
 			var z: float = sqrt(maxf(0.0, 1.0 - nz.length_squared()))
 			var lit: float = clampf(nz.dot(light) * 0.85 + z * 0.45, -1.0, 1.0)
 			var level: float = (lit + 0.9) * 2.6
-			# craters on a drifting grid of cells, each cell with its own size and place
+			# round craters on a drifting grid of cells: a dark floor, a bright rim on the side
+			# facing the light and a dark rim on the other, so they read as dents, not squares
 			var u: float = float(gx) + spin
-			var cell: Vector2i = Vector2i(int(floor(u / 11.0)), int(floor(float(gy) / 9.0)))
+			var cw: float = 14.0
+			var ch: float = 11.0
+			var cell: Vector2i = Vector2i(int(floor(u / cw)), int(floor(float(gy) / ch)))
 			var hsh: int = absi(hash(cell))
-			var cc: Vector2 = Vector2(float(cell.x) * 11.0 + 3.0 + float(hsh % 5), float(cell.y) * 9.0 + 2.0 + float((hsh / 7) % 5))
-			var cr: float = 1.6 + float((hsh / 49) % 4) * 0.8
-			var cd: float = Vector2(u, float(gy)).distance_to(cc)
-			if (hsh / 343) % 3 != 0:
-				if cd < cr - 0.5:
-					level -= 1.2
-				elif cd < cr + 0.5:
-					level += 0.7
+			if (hsh / 343) % 4 != 0:
+				var cc: Vector2 = Vector2(float(cell.x) * cw + 4.0 + float(hsh % 6), float(cell.y) * ch + 3.0 + float((hsh / 7) % 5))
+				var cr: float = 2.0 + float((hsh / 49) % 4) * 0.9
+				var off: Vector2 = Vector2(u, float(gy)) - cc
+				var cd: float = off.length()
+				if cd < cr - 0.7:
+					level -= 1.0 + (0.4 if off.dot(light) > 0.0 else 0.0)
+				elif cd < cr + 0.6:
+					level += 0.9 if off.dot(light) > 0.0 else -0.6
 			var idx: int = clampi(int(level), 0, shades.size() - 1)
 			draw_rect(Rect2(c + d, Vector2(PX, PX)), shades[idx])
 	# the glowing rim of atmosphere along the top

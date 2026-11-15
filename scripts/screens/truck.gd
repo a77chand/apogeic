@@ -136,7 +136,7 @@ func _build_explain() -> void:
 	_causes = UI.vbox(3)
 	_causes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_causes)
-	var back: Button = UI.button("Back to title", _on_back, 200.0, false)
+	var back: Button = UI.button("Back to home", _on_back, 200.0, false)
 	_place(back, Vector2(20, 660), Vector2(200, 52))
 	var note: Label = UI.label(str(_cfg.get("fusion_note", "")), 11, UI.C_MUTED, true)
 	_place(note, Vector2(240, 662), Vector2(740, 50))

@@ -152,6 +152,66 @@ static func heart_icon(full: bool, size: float = 20.0) -> Control:
 	return c
 
 
+## A small icon drawn at the left of a button (the text stays centred). Kinds: sparkle,
+## target, speaker, note, bulb, reset, book, rocket.
+static func add_icon(b: Button, kind: String, color: Color, size: float = 18.0) -> void:
+	# make room on the left so the text never runs under the icon
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var sb: StyleBox = b.get_theme_stylebox(state)
+		if sb != null:
+			var copy: StyleBox = sb.duplicate()
+			copy.content_margin_left = size * 1.8 + 8.0
+			copy.content_margin_right = maxf(copy.content_margin_right, 8.0)
+			b.add_theme_stylebox_override(state, copy)
+	b.draw.connect(func() -> void:
+		var m: Vector2 = Vector2(size * 0.9 + 6.0, b.size.y * 0.5)
+		draw_icon(b, kind, m, size, color))
+
+
+static func draw_icon(ci: CanvasItem, kind: String, m: Vector2, s: float, color: Color) -> void:
+	var w: float = maxf(1.5, s * 0.11)
+	match kind:
+		"sparkle":
+			_draw_sparkle(ci, m, s * 0.62, Color(1.0, 0.85, 0.35, 0.3))
+			_draw_sparkle(ci, m, s * 0.52, Color(1.0, 0.82, 0.30))
+			_draw_sparkle(ci, m, s * 0.18, Color(1, 1, 0.9))
+		"target":
+			var gold: Color = Color(0.98, 0.78, 0.30)
+			ci.draw_arc(m, s * 0.42, 0.0, TAU, 32, gold, w)
+			ci.draw_arc(m, s * 0.20, 0.0, TAU, 24, gold, w)
+			ci.draw_circle(m, s * 0.07, gold)
+			for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
+				ci.draw_line(m + d * s * 0.30, m + d * s * 0.58, gold, w)
+		"speaker":
+			ci.draw_colored_polygon(PackedVector2Array([m + Vector2(-s * 0.45, -s * 0.15), m + Vector2(-s * 0.25, -s * 0.15), m + Vector2(0, -s * 0.38), m + Vector2(0, s * 0.38), m + Vector2(-s * 0.25, s * 0.15), m + Vector2(-s * 0.45, s * 0.15)]), color)
+			ci.draw_arc(m + Vector2(s * 0.05, 0), s * 0.22, -0.9, 0.9, 12, color, w)
+			ci.draw_arc(m + Vector2(s * 0.05, 0), s * 0.40, -0.9, 0.9, 12, color, w)
+		"note":
+			ci.draw_circle(m + Vector2(-s * 0.18, s * 0.26), s * 0.14, color)
+			ci.draw_circle(m + Vector2(s * 0.26, s * 0.18), s * 0.14, color)
+			ci.draw_line(m + Vector2(-s * 0.05, s * 0.26), m + Vector2(-s * 0.05, -s * 0.36), color, w)
+			ci.draw_line(m + Vector2(s * 0.39, s * 0.18), m + Vector2(s * 0.39, -s * 0.44), color, w)
+			ci.draw_line(m + Vector2(-s * 0.05, -s * 0.36), m + Vector2(s * 0.39, -s * 0.44), color, w * 1.6)
+		"bulb":
+			ci.draw_circle(m + Vector2(0, -s * 0.08), s * 0.26, Color(1.0, 0.86, 0.35))
+			ci.draw_rect(Rect2(m + Vector2(-s * 0.12, s * 0.16), Vector2(s * 0.24, s * 0.2)), color)
+		"reset":
+			ci.draw_arc(m, s * 0.32, 0.4, TAU - 0.3, 24, color, w)
+			ci.draw_colored_polygon(PackedVector2Array([m + Vector2(s * 0.32, -s * 0.22), m + Vector2(s * 0.48, s * 0.06), m + Vector2(s * 0.14, s * 0.04)]), color)
+		"book":
+			ci.draw_rect(Rect2(m + Vector2(-s * 0.46, -s * 0.30), Vector2(s * 0.42, s * 0.6)), color, false, w)
+			ci.draw_rect(Rect2(m + Vector2(s * 0.04, -s * 0.30), Vector2(s * 0.42, s * 0.6)), color, false, w)
+			for i in range(3):
+				var y: float = -s * 0.14 + float(i) * s * 0.14
+				ci.draw_line(m + Vector2(-s * 0.38, y), m + Vector2(-s * 0.12, y), color, 1.0)
+				ci.draw_line(m + Vector2(s * 0.12, y), m + Vector2(s * 0.38, y), color, 1.0)
+		"rocket":
+			ci.draw_colored_polygon(PackedVector2Array([m + Vector2(0, -s * 0.5), m + Vector2(s * 0.16, -s * 0.2), m + Vector2(s * 0.16, s * 0.25), m + Vector2(-s * 0.16, s * 0.25), m + Vector2(-s * 0.16, -s * 0.2)]), Color(0.92, 0.94, 0.98))
+			ci.draw_colored_polygon(PackedVector2Array([m + Vector2(-s * 0.16, 0), m + Vector2(-s * 0.36, s * 0.32), m + Vector2(-s * 0.16, s * 0.22)]), color)
+			ci.draw_colored_polygon(PackedVector2Array([m + Vector2(s * 0.16, 0), m + Vector2(s * 0.36, s * 0.32), m + Vector2(s * 0.16, s * 0.22)]), color)
+			ci.draw_colored_polygon(PackedVector2Array([m + Vector2(-s * 0.1, s * 0.27), m + Vector2(0, s * 0.52), m + Vector2(s * 0.1, s * 0.27)]), Color(1.0, 0.62, 0.2))
+
+
 ## The star dust sparkle: a four-pointed star with a small one beside it (from the
 ## reference sheet of sparkles), in pale violet.
 static func sparkle_icon(size: float = 22.0, color: Color = Color(0.80, 0.72, 1.0)) -> Control:
