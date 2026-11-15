@@ -54,7 +54,7 @@ static func build_streams() -> Dictionary:
 	out["chime"] = _wav(_join([_tone(523.25, 0.14, 0.35, 9.0), _tone(659.25, 0.14, 0.35, 9.0), _tone(783.99, 0.55, 0.35, 5.0)]))
 	out["fail"] = _wav(_slide(420.0, 170.0, 0.55, 0.32))
 	out["rumble"] = _wav(_rumble(2.4, 0.5))
-	out["power_down"] = _wav(_power_down(1.15, 0.26))
+	out["power_down"] = _wav(_power_down(0.55, 0.11))
 	# a harsh alarm buzzer: two low square-ish blasts
 	out["error"] = _wav(_join([_buzz(150.0, 0.28, 0.30), _silence(0.07), _buzz(150.0, 0.28, 0.30), _silence(0.07), _buzz(110.0, 0.5, 0.30)]))
 	# an explosion: a loud burst of noise that dies away
@@ -149,8 +149,8 @@ static func _join(parts: Array) -> PackedFloat32Array:
 
 
 ## A tone whose pitch slides from f0 to f1 (used for the gentle failure sound).
-## Going home or resetting: a falling, wobbling tone that winds down in steps, like an old
-## arcade machine powering off, but soft. Square-ish wave, so it reads as "game" not "alarm".
+## Going home or resetting: a soft two-note "wind down" (G down to C), pure tones with a
+## gentle slide between them and a smooth fade. Quiet, so it says "back to base", not "error".
 static func _power_down(seconds: float, volume: float) -> PackedFloat32Array:
 	var n: int = int(seconds * float(RATE))
 	var out: PackedFloat32Array = PackedFloat32Array()
@@ -159,13 +159,11 @@ static func _power_down(seconds: float, volume: float) -> PackedFloat32Array:
 	for i in range(n):
 		var t: float = float(i) / float(RATE)
 		var u: float = t / seconds
-		# five falling "wah" steps, each sliding down, the whole thing dropping in pitch
-		var step: float = fmod(u * 5.0, 1.0)
-		var f: float = lerpf(620.0, 90.0, u) * (1.25 - 0.35 * step)
+		# hold G5, then glide down to C5 in the second half
+		var f: float = 783.99 if u < 0.4 else lerpf(783.99, 523.25, smoothstep(0.4, 0.7, u))
 		phase += f / float(RATE)
-		var wave: float = 0.6 * sign(sin(TAU * phase)) + 0.4 * sin(TAU * phase)
-		var env: float = (1.0 - u) * minf(1.0, t * 40.0) * (0.75 + 0.25 * cos(step * PI))
-		out[i] = wave * env * volume * 0.6
+		var env: float = minf(1.0, t / 0.02) * pow(1.0 - u, 1.5)
+		out[i] = (sin(TAU * phase) + 0.15 * sin(TAU * phase * 2.0)) * env * volume
 	return out
 
 
