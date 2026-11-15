@@ -78,6 +78,18 @@ static func best_addition(cfg: Dictionary, selected: Array, condition_id: String
 	return best_id
 
 
+## How well the chosen sensors cover a condition, as a word: the detection numbers are
+## mostly illustrative, so the screens show this ranking instead of a precise-looking %.
+## "Covered" = meets the target, "Weak" = within 15 points of it, "Blind" = below that.
+static func coverage_word(cfg: Dictionary, pct: float) -> String:
+	var target: float = float(cfg.get("target_detect_pct", 95.0))
+	if pct >= target - EPS:
+		return "Covered"
+	if pct >= target - 15.0:
+		return "Weak"
+	return "Blind"
+
+
 ## Everything the screen shows. selected is an Array of sensor ids.
 static func evaluate(cfg: Dictionary, selected: Array) -> Dictionary:
 	var limits: Dictionary = cfg.get("limits", {})
@@ -107,8 +119,8 @@ static func evaluate(cfg: Dictionary, selected: Array) -> Dictionary:
 		if not passed:
 			all_detect_ok = false
 			tip_id = best_addition(cfg, selected, id)
-			var cause: String = "%s: the truck sees only %.1f%% of obstacles (needs %.0f%%). %s" % [
-					str(c.get("name", id)), pct, target, str(c.get("why", ""))]
+			var cause: String = "%s: %s. %s" % [
+					str(c.get("name", id)), "weak coverage, it would miss some rocks" if coverage_word(cfg, pct) == "Weak" else "blind, it would miss most rocks", str(c.get("why", ""))]
 			if tip_id != "":
 				cause += " Adding a %s would help most here." % str(sensor_by_id(cfg, tip_id).get("name", tip_id)).to_lower()
 			causes.append(cause)
@@ -216,7 +228,7 @@ static func route_eval(cfg: Dictionary, route: Dictionary, path: Array) -> Dicti
 		steps.append({"cell": c, "cond": cond, "pct": pct, "safe": safe, "battery": battery, "wait": wait})
 		if fail == "":
 			if not safe:
-				fail = "The rover drove into %s and could not see a rock (it spots only %.0f%% there)." % [_cond_words(cond), pct]
+				fail = "The rover drove into %s, where its sensors are %s, and hit a rock." % [_cond_words(cond), coverage_word(cfg, pct).to_lower()]
 			elif battery <= 0.0:
 				fail = "The battery ran flat in %s." % _cond_words(cond)
 	var reached: bool = not path.is_empty() and path[path.size() - 1] == route_find(route, "G")

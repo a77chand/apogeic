@@ -1,27 +1,30 @@
 extends Node
 ## Background music, made in code like the sound effects (no audio files to license).
-## A calm, spacey loop: soft pad chords with a quiet bell arpeggio on top, 32 seconds long.
+## An upbeat space loop, 16 seconds long at 120 beats a minute: a bright plucked arpeggio,
+## a pulsing bass, soft pad chords and a light beat (kick on the beat, a tick in between).
 ## It is built a little at a time over the first second (so start-up does not freeze),
 ## then loops forever. main.gd creates one and stores it in GameState.music.
 ## The volume comes from GameState (menu slider); it is kept low even at full volume.
 
 const RATE: int = 11025           # low sample rate: the music has no high notes, and it builds faster
-const CHORD_SECONDS: float = 4.0
+const CHORD_SECONDS: float = 2.0      # one bar at 120 bpm
+const BEAT: float = 0.5
 const CHUNK: int = 6000           # samples built per frame
 const MAX_DB: float = -14.0       # full volume is still quiet behind the game
 
-## Eight chords, each as four notes (Hz): Cmaj7, Am7, Fmaj7, G6, Em7, Am7, Dm7, Gsus.
+## Eight chords, each as four notes (Hz): C, G, Am, F, C, G, F, Gsus. Bright and hopeful.
 const CHORDS: Array = [
-	[130.81, 164.81, 196.00, 246.94],
-	[110.00, 130.81, 164.81, 196.00],
-	[87.31, 110.00, 130.81, 164.81],
-	[98.00, 146.83, 196.00, 220.00],
-	[164.81, 196.00, 246.94, 293.66],
-	[110.00, 130.81, 164.81, 196.00],
-	[146.83, 174.61, 220.00, 261.63],
+	[130.81, 164.81, 196.00, 261.63],
+	[98.00, 123.47, 146.83, 196.00],
+	[110.00, 130.81, 164.81, 220.00],
+	[87.31, 110.00, 130.81, 174.61],
+	[130.81, 164.81, 196.00, 261.63],
+	[98.00, 123.47, 146.83, 196.00],
+	[87.31, 110.00, 130.81, 174.61],
 	[98.00, 130.81, 146.83, 196.00],
 ]
-const ARP: Array = [0, 1, 2, 3, 2, 1, 2, 3]   # which chord note each half-second plays
+const ARP: Array = [0, 1, 2, 3, 2, 3, 1, 2]   # which chord note each eighth note plays
+
 
 var _player: AudioStreamPlayer = null
 var _samples: PackedFloat32Array = PackedFloat32Array()
@@ -89,25 +92,28 @@ static func sample_at(t: float) -> float:
 	var count: int = CHORDS.size()
 	var k: int = int(floor(t / CHORD_SECONDS)) % count
 	var local: float = t - floor(t / CHORD_SECONDS) * CHORD_SECONDS
-	var prev: int = (k - 1 + count) % count
-	# pad: the new chord fades in while the last one fades out, so the loop has no seams
-	var fade_in: float = minf(1.0, local / 0.9)
-	var fade_out: float = maxf(0.0, 1.0 - local / 0.9)
-	var swell: float = 0.85 + 0.15 * sin(TAU * 0.25 * t)
-	# each chord's notes are timed from the start of that chord, so the end of the loop
-	# joins the start without a click
-	var out: float = _pad(CHORDS[k], local) * fade_in + _pad(CHORDS[prev], local + CHORD_SECONDS) * fade_out
-	out *= 0.20 * swell
-	# a very low hum on the root
-	var root: float = float((CHORDS[k] as Array)[0]) * 0.5
-	var prev_root: float = float((CHORDS[prev] as Array)[0]) * 0.5
-	out += (sin(TAU * root * local) * fade_in + sin(TAU * prev_root * (local + CHORD_SECONDS)) * fade_out) * 0.05
-	# the arpeggio: one soft bell note every half second, two octaves up
-	var step: int = int(floor(local / 0.5))
-	var tn: float = local - float(step) * 0.5
-	var note: float = float((CHORDS[k] as Array)[int(ARP[step % ARP.size()])]) * 4.0
-	var env: float = minf(1.0, tn / 0.01) * exp(-5.0 * tn) * minf(1.0, (0.5 - tn) / 0.04)
-	out += (sin(TAU * note * tn) + 0.25 * sin(TAU * note * 2.0 * tn)) * env * 0.07
+	var chord: Array = CHORDS[k]
+	# soft pad underneath, short fade at each chord change so the loop has no clicks
+	var edge: float = minf(1.0, minf(local / 0.05, (CHORD_SECONDS - local) / 0.05))
+	var out: float = _pad(chord, local) * 0.10 * edge
+	# plucked arpeggio: an eighth note every quarter second, two octaves up, bright and short
+	var step: int = int(floor(local / (BEAT * 0.5)))
+	var tn: float = local - float(step) * BEAT * 0.5
+	var note: float = float(chord[int(ARP[step % ARP.size()])]) * 4.0
+	var pluck: float = minf(1.0, tn / 0.004) * exp(-11.0 * tn)
+	var tri: float = 2.0 * absf(2.0 * fposmod(note * tn, 1.0) - 1.0) - 1.0
+	out += (0.7 * tri + 0.3 * sin(TAU * note * 2.0 * tn)) * pluck * 0.085
+	# pulsing bass: the root on every eighth note, octave jump on the off-beats
+	var root: float = float(chord[0]) * 0.5 * (2.0 if step % 2 == 1 else 1.0)
+	var benv: float = minf(1.0, tn / 0.006) * exp(-7.0 * tn)
+	out += sin(TAU * root * tn) * benv * 0.16
+	# the beat: a soft kick on each beat, a quiet tick on the off-beats
+	var bt: float = fposmod(local, BEAT)
+	var kick_f: float = 110.0 * exp(-18.0 * bt) + 45.0
+	out += sin(TAU * kick_f * bt) * exp(-14.0 * bt) * 0.22
+	var off: float = fposmod(local - BEAT * 0.5, BEAT)
+	var noise: float = fposmod(sin(t * 91234.5678) * 43758.5453, 1.0) * 2.0 - 1.0
+	out += noise * exp(-60.0 * off) * 0.035
 	return out
 
 

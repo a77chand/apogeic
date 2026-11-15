@@ -3,7 +3,7 @@
   "title": "Can the truck see?",
   "intro": "NASA's Artemis plans need robots that drive and dig on their own near the Moon's south pole, like NASA's IPEx excavator. There, the Sun stays 1 to 2 degrees above the horizon, so shadows are long and some craters never see sunlight. Pick sensors so the truck spots rocks in every condition, then drive it.",
   "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots within mass, power and budget. NASA's VIPER rover is designed with headlights for exactly this reason: cameras need light in the shadows.",
-  "fusion_note": "Sensors are treated as independent: the chance every sensor misses is the product of each miss chance. Real sensors are not fully independent, so this is a simplification.",
+  "fusion_note": "Coverage words come from a simple model: sensors are treated as independent, and most of their numbers are illustrative (hover a word to see the model value). Only the structured-light 97% is a measured NASA figure.",
   "source": "placeholder",
   "target_detect_pct": 95.0,
   "limits": {

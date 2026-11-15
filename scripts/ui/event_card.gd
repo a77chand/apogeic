@@ -17,6 +17,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui.gd")
 const Sim = preload("res://scripts/core/sim.gd")
+const RocketArt = preload("res://scripts/ui/rocket_art.gd")
 
 signal chosen(index: int)
 
@@ -68,7 +69,16 @@ func _ready() -> void:
 	var col: VBoxContainer = UI.vbox(12)
 	panel.add_child(col)
 	_col = col
-	var pic: Control = UI.picture(str(_event.get("picture", "")), Vector2(384.0, 216.0), str(_event.get("title", "")))
+	# the event's picture; a mission's own real-life decision shows the real rocket instead
+	var pic: Control = null
+	var path: String = str(_event.get("picture", ""))
+	var rocket: String = str((GameState.level.get("based_on", {}) as Dictionary).get("rocket", ""))
+	if (path == "" or not ResourceLoader.exists(path)) and rocket != "":
+		pic = RocketArt.new()
+		pic.set("rocket", rocket)
+		pic.custom_minimum_size = Vector2(160.0, 216.0)
+	else:
+		pic = UI.picture(path, Vector2(384.0, 216.0), str(_event.get("title", "")))
 	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(pic)
 	col.add_child(UI.label(str(_event.get("title", "")), 24))

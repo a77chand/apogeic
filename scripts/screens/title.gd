@@ -112,6 +112,9 @@ func _build_footer() -> void:
 	_place(credit, Vector2(24, 690), Vector2(500, 16))
 	var test: Button = UI.pixel_button("Self-test", _on_self_test, 100.0, 24.0, 9, Color(UI.C_MUTED, 0.6))
 	_place(test, Vector2(1156, 684), Vector2(100, 24))
+	var demo: Button = UI.pixel_button("Judge demo", _on_demo, 120.0, 24.0, 9, Color(UI.C_GOLD, 0.8))
+	demo.tooltip_text = "A 5-minute tour of the highlights, with everything unlocked"
+	_place(demo, Vector2(1028, 684), Vector2(120, 24))
 
 
 ## Play goes to training. The very first time (no astronaut yet) it goes through the
@@ -145,6 +148,10 @@ func _on_mission() -> void:
 		GameState.go("profile")
 		return
 	GameState.go("missions")
+
+
+func _on_demo() -> void:
+	GameState.go("demo")
 
 
 func _on_truck() -> void:

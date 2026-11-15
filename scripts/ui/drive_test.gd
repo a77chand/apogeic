@@ -57,9 +57,9 @@ func _process(delta: float) -> void:
 	# write each zone's result as the truck reaches its rock
 	while _shown < _zones.size() and (_t - float(_shown) * ZONE_SECONDS) > ZONE_SECONDS * 0.6:
 		var z: Dictionary = _zones[_shown]
-		var target: float = float(cfg.get("target_detect_pct", 95.0))
-		var text: String = "%s:  SPOTTED, steered round it  (spots %.0f%% of rocks)" % [str(z["name"]), float(z["pct"])] if bool(z["safe"]) \
-				else "%s:  HIT THE ROCK  (spots only %.0f%% of rocks, needs %.0f%%)" % [str(z["name"]), float(z["pct"]), target]
+		var word: String = TruckSim.coverage_word(cfg, float(z["pct"])).to_lower()
+		var text: String = "%s:  SPOTTED, steered round it  (sensors: covered)" % str(z["name"]) if bool(z["safe"]) \
+				else "%s:  HIT THE ROCK  (sensors: %s here)" % [str(z["name"]), word]
 		_results.add_child(UI.label(text, 14, UI.C_GREEN if bool(z["safe"]) else UI.C_RED))
 		GameState.play_sound("chime" if bool(z["safe"]) else "fail")
 		_shown += 1

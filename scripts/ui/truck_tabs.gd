@@ -33,7 +33,7 @@ static func bar(cfg: Dictionary, current: int) -> Control:
 	for i in range(NAMES.size()):
 		var n: int = i + 1
 		var done: bool = GameState.is_truck_done(n)
-		var open: bool = n == 1 or GameState.is_truck_done(n - 1)
+		var open: bool = n == 1 or GameState.demo_mode or GameState.is_truck_done(n - 1)
 		var accent: Color = UI.C_GOLD if n == current else (UI.C_GREEN if done else (UI.C_ACCENT if open else UI.C_DISABLED_BORDER))
 		var text: String = "%d %s%s" % [n, str(NAMES[i]), " ✓" if done else ""]
 		var b: Button = UI.pixel_button(text, _go.bind(n), 112.0, 34.0, 10, accent)
