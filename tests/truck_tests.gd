@@ -40,19 +40,22 @@ func _initialize() -> void:
 	# a winning build, and a cheaper winning build (no perfect build)
 	var rich: Dictionary = TruckSim.evaluate(cfg, ["lidar", "radar", "camera"])
 	check(bool(rich["passed"]), "lidar+radar+camera wins")
-	var cheap: Dictionary = TruckSim.evaluate(cfg, ["camera", "radar", "thermal"])
-	check(bool(cheap["passed"]), "camera+radar+thermal wins")
+	var cheap: Dictionary = TruckSim.evaluate(cfg, ["camera", "headlights", "radar", "stereo"])
+	check(bool(cheap["passed"]), "camera+headlights+radar+stereo wins")
+	check(TruckSim.detect_chance(cfg, ["headlights"], "dark") == 0.0, "headlights alone see nothing")
+	check(TruckSim.detect_chance(cfg, ["camera", "headlights"], "dark") > TruckSim.detect_chance(cfg, ["camera"], "dark") + 0.5, "headlights let the camera see in the dark")
+	check(TruckSim.sensor_by_id(cfg, "thermal").is_empty(), "the unsupported thermal camera is gone")
 	check(float(cheap["cost_k"]) < float(rich["cost_k"]), "the cheaper build costs less")
 
 	# limits: every sensor together breaks mass, power and budget
-	var all: Dictionary = TruckSim.evaluate(cfg, ["camera", "stereo", "lidar", "radar", "thermal"])
+	var all: Dictionary = TruckSim.evaluate(cfg, ["camera", "stereo", "lidar", "radar", "headlights"])
 	check(not bool(all["power_ok"]) and not bool(all["cost_ok"]), "all sensors break power and budget")
 	check(not bool(all["passed"]), "over the limits means fail")
 
 	# the explanation names the weak condition and a fix
 	var cam: Dictionary = TruckSim.evaluate(cfg, ["camera"])
 	var text: String = " ".join(PackedStringArray(cam["causes"]))
-	check(text.contains("Dark") and text.contains("Adding a"), "cause chain explains the dark failure and suggests a sensor")
+	check(text.contains("never sees sunlight") and text.contains("Adding a"), "cause chain explains the dark failure and suggests a sensor")
 
 	if fails.is_empty():
 		print("TRUCK TESTS PASSED")

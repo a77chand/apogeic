@@ -108,8 +108,8 @@ func _build_stats() -> void:
 		_place(hint, Vector2(1040, 72), Vector2(220, 18))
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		var bob: Tween = hint.create_tween().set_loops()
-		bob.tween_property(hint, "position:y", 76.0, 0.5)
-		bob.tween_property(hint, "position:y", 72.0, 0.5)
+		bob.tween_property(hint, "modulate:a", 0.35, 0.6)   # a blink, so it stays where the header is
+		bob.tween_property(hint, "modulate:a", 1.0, 0.6)
 	_refresh_stats()
 
 

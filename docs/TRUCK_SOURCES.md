@@ -1,5 +1,15 @@
 # Truck scenario: where the numbers come from
 
+**The problem (14 Nov update):** an autonomous digging robot near the Moon's south pole must spot rocks while driving itself. The setting and the problem are sourced:
+
+| Fact | Source |
+|---|---|
+| At the south pole the Sun sits about 1 to 2 degrees above the horizon (8 to 50 degrees during Apollo), giving long shadows and high contrast that can seriously affect safe driving. | NASA lighting study, [NTRS 20240011393](https://ntrs.nasa.gov/citations/20240011393) |
+| NASA tests an autonomous lunar excavator (IPEx) under simulated south pole lighting, using onboard cameras for localisation and hazard detection. | [IPEx test facility, NTRS 20250000128](https://ntrs.nasa.gov/api/citations/20250000128/downloads/ipex_tent.pdf) |
+| VIPER is designed with eight LED-array lights tuned for permanently shadowed regions, with headlights for long-range stereo imaging (the first headlights on a lunar rover). | [VIPER mobility hardware, LSIC 2024, NTRS 20240013903](https://ntrs.nasa.gov/api/citations/20240013903/downloads/LSIC_2024-Tech%20Infusion_Panel-VIPER_Mob-HW.pdf) |
+
+The thermal camera was removed: no evidence supported it. LED headlights were added (the idea is from VIPER; the improvement numbers are illustrative).
+
 **Short version:** no published study gives detection rates for these sensors (camera, stereo, lidar, radar, thermal) in these Moon conditions (dust, long shadows, darkness, slopes). The judges gave no data either. So **most numbers in `data/truck.json` are illustrative** and the game says so on screen ("Mostly illustrative numbers" and the "Where is the data from?" button).
 
 ## What is real
@@ -26,7 +36,7 @@ These support only the **ranking** (radar most robust in dust, lidar and cameras
 
 ## Everything else
 
-All other detection values, and every sensor's mass, power and cost, are placeholders chosen to show the trade-offs. The thermal camera has no supporting evidence at all. Replace a value and set its `detect_basis` to `"sourced"` only when you have a source you can cite here.
+All other detection values, and every sensor's mass, power and cost, are placeholders chosen to show the trade-offs. Replace a value and set its `detect_basis` to `"sourced"` only when you have a source you can cite here.
 
 ## Model simplification
 
