@@ -243,6 +243,50 @@ static func _draw_sparkle(ci: CanvasItem, m: Vector2, r: float, color: Color) ->
 	ci.draw_colored_polygon(pts, color)
 
 
+## A short message in the bottom-right corner that fades out after a few seconds.
+## Used for feedback after a choice: how good it was and why.
+static func toast(host: Node, title: String, text: String, color: Color, seconds: float = 6.0) -> void:
+	var panel: PanelContainer = PanelContainer.new()
+	var sb: StyleBoxFlat = box(Color(0.02, 0.05, 0.11, 0.95), color, 8, 2, 12.0)
+	sb.border_width_left = 6
+	panel.add_theme_stylebox_override("panel", sb)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.z_index = 50
+	var col: VBoxContainer = vbox(4)
+	panel.add_child(col)
+	col.add_child(label(title, 18, color))
+	var l: Label = label(text, 14, C_TEXT, true)
+	l.custom_minimum_size = Vector2(380.0, 0.0)
+	col.add_child(l)
+	host.add_child(panel)
+	panel.position = Vector2(1270.0, 470.0)
+	panel.size = Vector2(410.0, 0.0)
+	var tw: Tween = panel.create_tween()
+	tw.tween_property(panel, "position:x", 850.0, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(seconds)
+	tw.tween_property(panel, "modulate:a", 0.0, 0.8)
+	tw.tween_callback(panel.queue_free)
+
+
+## The feedback toast for an event choice (see Sim.choice_rating).
+static func choice_toast(host: Node, rating: Dictionary, late: bool) -> void:
+	var r: String = str(rating.get("rating", "fair"))
+	var why: String = str(rating.get("why", ""))
+	var real: String = str(rating.get("real", ""))
+	if real != "":
+		# this is the choice the real team made: say so, and leave it up longer to read
+		why += "\nReal life: " + real
+	var secs: float = 12.0 if real != "" else 6.0
+	if late:
+		toast(host, "Time ran out", "The default was picked for you. " + why, C_RED, secs)
+	elif r == "best":
+		toast(host, "Optimal choice. Well done!", why, C_GREEN, secs)
+	elif r == "fair":
+		toast(host, "Fair choice", why, C_YELLOW, secs)
+	else:
+		toast(host, "Costly choice", why, C_RED, secs)
+
+
 static func label(text: String, size: int = 16, color: Color = C_TEXT, wrap: bool = false) -> Label:
 	# The menu's text size setting changes body text only: labels that wrap, so they can
 	# reflow. Headings and single-line labels in tight spots (bars, pills) keep their size,

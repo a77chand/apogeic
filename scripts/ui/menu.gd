@@ -9,7 +9,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Confirm = preload("res://scripts/ui/confirm.gd")
 const Sources = preload("res://scripts/ui/sources.gd")
 
-const TAB_RECT: Rect2 = Rect2(0, 180, 26, 96)
+const TAB_RECT: Rect2 = Rect2(0, 180, 17, 84)   # narrow: screens start at x = 20
 
 var _tab: Button = null
 var _layer: Control = null        # the open panel and its dim background, or null
@@ -43,7 +43,7 @@ func _ready() -> void:
 	add_child(_tab)
 	# two small tabs under it: home, and quit (a power symbol)
 	_side_tab(Vector2(0, TAB_RECT.end.y + 8.0), "Exit to home", _on_home, "home")
-	_side_tab(Vector2(0, TAB_RECT.end.y + 60.0), "Quit game", _on_exit, "power")
+	_side_tab(Vector2(0, TAB_RECT.end.y + 54.0), "Quit game", _on_exit, "power")
 
 
 func _side_tab(pos: Vector2, tip: String, on_press: Callable, icon: String) -> void:
@@ -62,16 +62,16 @@ func _side_tab(pos: Vector2, tip: String, on_press: Callable, icon: String) -> v
 	b.add_theme_stylebox_override("hover", hover)
 	b.add_theme_stylebox_override("pressed", hover)
 	b.position = pos
-	b.size = Vector2(26, 44)
+	b.size = Vector2(17, 40)
 	b.pressed.connect(on_press)
 	b.draw.connect(func() -> void:
-		var m: Vector2 = Vector2(12, 22)
+		var m: Vector2 = Vector2(8, 20)
 		if icon == "home":
-			b.draw_colored_polygon(PackedVector2Array([m + Vector2(-7, -1), m + Vector2(0, -8), m + Vector2(7, -1)]), accent)
-			b.draw_rect(Rect2(m + Vector2(-5, -1), Vector2(10, 8)), accent)
+			b.draw_colored_polygon(PackedVector2Array([m + Vector2(-6, -1), m + Vector2(0, -7), m + Vector2(6, -1)]), accent)
+			b.draw_rect(Rect2(m + Vector2(-4, -1), Vector2(8, 7)), accent)
 		else:
-			b.draw_arc(m + Vector2(0, 1), 7.0, -PI * 0.3, PI * 1.3, 16, accent, 2.0)
-			b.draw_line(m + Vector2(0, -8), m + Vector2(0, 0), accent, 2.0))
+			b.draw_arc(m + Vector2(0, 1), 5.5, -PI * 0.3, PI * 1.3, 16, accent, 2.0)
+			b.draw_line(m + Vector2(0, -6), m + Vector2(0, 0), accent, 2.0))
 	add_child(b)
 
 
@@ -80,7 +80,7 @@ func _draw_tab_icon() -> void:
 	var c: Color = Color(UI.C_ACCENT, 0.95)
 	for i in range(3):
 		var y: float = 36.0 + float(i) * 8.0
-		_tab.draw_line(Vector2(6, y), Vector2(19, y), c, 2.0)
+		_tab.draw_line(Vector2(3, y - 6.0), Vector2(13, y - 6.0), c, 2.0)
 
 
 func is_open() -> bool:
