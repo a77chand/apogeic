@@ -1,6 +1,6 @@
 # AP0GEIC 11: one-page summary
 
-**Play:** https://a77chand.github.io/space-mission-designer/ (press **Judge demo** on the start page for a 5-minute tour with everything unlocked)
+**Play:** https://a77chand.github.io/apogeic-game/ (press **Judge demo** on the start page for a 5-minute tour with everything unlocked)
 
 ## The problem
 
