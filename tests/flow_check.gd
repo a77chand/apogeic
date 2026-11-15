@@ -53,8 +53,8 @@ func run() -> void:
 	# fly missions 1 and 2 with a design that can earn 3 stars
 	var designs: Dictionary = {
 		"level1": {"solar": "solar_small", "battery": "battery_small", "instrument": "camera_std", "radio": "radio_uhf", "extra_a": "antenna_big", "extra_b": "ground2"},
-		"level4": {"solar": "solar_small", "battery": "battery_small", "instrument": "camera_std", "radio": "radio_uhf", "extra_a": "antenna_big", "extra_b": "ground2"},
-		"level2": {"solar": "solar_small", "battery": "battery_small", "instrument": "spectrometer", "radio": "radio_uhf", "extra_a": "ground2", "extra_b": ""},
+		"level4": {"solar": "solar_small", "battery": "battery_small", "instrument": "spectrometer", "radio": "radio_uhf", "extra_a": "", "extra_b": ""},
+		"level2": {"solar": "solar_large", "battery": "battery_small", "instrument": "spectrometer", "radio": "radio_uhf", "extra_a": "ground2", "extra_b": ""},
 	}
 	Engine.time_scale = 30.0
 	for mid in designs.keys():
