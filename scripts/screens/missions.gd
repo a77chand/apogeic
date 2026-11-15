@@ -68,38 +68,60 @@ func _build_top_bar() -> void:
 func _pixel_label(text: String, color: Color) -> Label:
 	var l: Label = UI.label(text, 14, color)
 	l.add_theme_font_override("font", UI.pixel_font(false))
-	l.add_theme_font_size_override("font_size", 13)
+	l.add_theme_font_size_override("font_size", 15)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
 
 
+## Three groups on the right of the header, each an icon, a number and a small word saying
+## what it is: STARS, LIVES (with the time to the next one) and STAR DUST.
 func _build_stats() -> void:
-	var row: HBoxContainer = UI.hbox(10)
+	var row: HBoxContainer = UI.hbox(26)
 	row.alignment = BoxContainer.ALIGNMENT_END
-	_place(row, Vector2(760, 16), Vector2(504, 40))
-	row.add_child(UI.star_icon(true, 18.0))
-	row.add_child(_pixel_label("%d/%d" % [GameState.total_stars(), GameState.mission_ids().size() * 3], UI.C_GOLD))
+	_place(row, Vector2(744, 8), Vector2(526, 56))
+	row.add_child(_stat(UI.star_icon(true, 22.0), _pixel_label("%d/%d" % [GameState.total_stars(), GameState.mission_ids().size() * 3], UI.C_GOLD), "STARS"))
 	var hearts: HBoxContainer = UI.hbox(2)
-	row.add_child(hearts)
 	for i in range(GameState.MAX_LIVES):
 		hearts.add_child(UI.heart_icon(i < GameState.lives, 18.0))
-	_lives_label = _pixel_label("", UI.C_MUTED)
-	row.add_child(_lives_label)
-	row.add_child(UI.sparkle_icon(22.0))
-	_dust_label = _pixel_label("", Color(0.80, 0.72, 1.0))
-	row.add_child(_dust_label)
+	_lives_label = _pixel_label("", UI.C_TEXT)
+	row.add_child(_stat(hearts, null, "LIVES", _lives_label))
+	_dust_label = _pixel_label("", Color(0.82, 0.74, 1.0))
+	row.add_child(_stat(UI.sparkle_icon(28.0), _dust_label, "STAR DUST"))
 	_buy_btn = UI.pixel_button("+1 life", _on_buy, 84.0, 30.0, 11, UI.C_RED)
 	_buy_btn.tooltip_text = "Buy a life for %d star dust" % GameState.LIFE_COST_STARDUST
+	_buy_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_buy_btn)
 	_refresh_stats()
+
+
+## One header group: the icon and value on top, a small caption under them.
+func _stat(icon: Control, value: Label, caption: String, extra: Label = null) -> VBoxContainer:
+	var col: VBoxContainer = UI.vbox(1)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	var top: HBoxContainer = UI.hbox(6)
+	top.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(top)
+	top.add_child(icon)
+	if value != null:
+		top.add_child(value)
+	var cap: HBoxContainer = UI.hbox(6)
+	cap.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(cap)
+	var c: Label = _pixel_label(caption, UI.C_MUTED)
+	c.add_theme_font_size_override("font_size", 9)
+	cap.add_child(c)
+	if extra != null:
+		extra.add_theme_font_size_override("font_size", 9)
+		cap.add_child(extra)
+	return col
 
 
 func _refresh_stats() -> void:
 	var wait: int = GameState.seconds_to_next_life()
 	if GameState.lives >= GameState.MAX_LIVES:
-		_lives_label.text = "FULL"
+		_lives_label.text = "· FULL"
 	else:
-		_lives_label.text = "%d:%02d" % [wait / 60, wait % 60]
+		_lives_label.text = "· +1 IN %d:%02d" % [wait / 60, wait % 60]
 	_lives_label.tooltip_text = "A life comes back every 30 minutes"
 	_dust_label.text = "%d" % GameState.stardust
 	_buy_btn.disabled = GameState.lives >= GameState.MAX_LIVES or GameState.stardust < GameState.LIFE_COST_STARDUST
