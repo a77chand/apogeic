@@ -244,7 +244,8 @@
     "story": "An attitude error and a bad thruster command made the X-ray telescope spin faster and faster until parts broke off, about a month after launch.",
     "lesson": "Software in orbit must be tested like hardware.",
     "source": "Wikipedia, \"Hitomi (satellite)\"",
-    "url": "https://en.wikipedia.org/wiki/Hitomi_(satellite)"
+    "url": "https://en.wikipedia.org/wiki/Hitomi_(satellite)",
+    "rocket": "H-IIA"
   },
   "event_bias": [
     "software_glitch",

@@ -13,6 +13,7 @@ const Menu = preload("res://scripts/ui/menu.gd")
 const SCREENS: Dictionary = {
 	"title": "res://scripts/screens/title.gd",
 	"profile": "res://scripts/screens/profile.gd",
+	"trivia": "res://scripts/screens/trivia.gd",
 	"guide": "res://scripts/screens/guide.gd",
 	"ladder": "res://scripts/screens/ladder.gd",
 	"puzzle_mass": "res://scripts/screens/puzzle_mass.gd",
@@ -88,6 +89,32 @@ func _ready() -> void:
 	go("title")
 
 
+## Screens are laid out for 1280 x 720 and sit in the middle of the window. When the window
+## is taller than that, the header would float below the top edge and the footer above the
+## bottom. So the header pieces (anything in the top 80 px) move up to the real top, and
+## the footer pieces (anything starting below y = 590) move down to the real bottom.
+func _pin_edges(screen: Control) -> void:
+	if not is_instance_valid(screen):
+		return
+	var gap: float = maxf(0.0, (get_viewport_rect().size.y - 720.0) * 0.5)
+	for child in screen.get_children():
+		if not (child is Control):
+			continue
+		var c: Control = child
+		if not c.has_meta("design_y"):
+			c.set_meta("design_y", c.position.y)
+		var y: float = float(c.get_meta("design_y"))
+		if y < 80.0 and y + c.size.y <= 90.0:
+			c.position.y = y - gap
+		elif y >= 590.0 and c.size.y < 140.0:
+			c.position.y = y + gap
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and _current != null:
+		_pin_edges.call_deferred(_current)
+
+
 func go(screen_id: String) -> void:
 	call_deferred("_swap", screen_id)
 
@@ -104,6 +131,8 @@ func next_in_flow(screen_id: String) -> String:
 
 
 func _swap(screen_id: String) -> void:
+	if screen_id == "title" and _current_id != "" and _current_id != "title":
+		GameState.play_sound("power_down")
 	if _current != null:
 		_holder.remove_child(_current)
 		_current.queue_free()
@@ -124,5 +153,6 @@ func _swap(screen_id: String) -> void:
 	_current_id = screen_id
 	_holder.add_child(screen)
 	screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pin_edges.call_deferred(screen)
 	screen.modulate = Color(1, 1, 1, 0)   # fade in, so changing screen is not a hard cut
 	screen.create_tween().tween_property(screen, "modulate:a", 1.0, 0.2)

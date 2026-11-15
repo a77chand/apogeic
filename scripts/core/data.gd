@@ -78,10 +78,15 @@ static func slot_key(when: String, week: int) -> String:
 
 
 ## Every moment that has events, mapped to the ids of the events that could fire there.
-static func event_slots(events: Array) -> Dictionary:
+## Events with a "mission" id belong to that mission only; pass mission_id to leave out
+## every other mission's own events.
+static func event_slots(events: Array, mission_id: String = "") -> Dictionary:
 	var out: Dictionary = {}
 	for item in events:
 		var ev: Dictionary = item
+		var owner: String = str(ev.get("mission", ""))
+		if owner != "" and owner != mission_id:
+			continue
 		var key: String = slot_key(str(ev.get("when", "")), int(ev.get("week", 0)))
 		if not out.has(key):
 			out[key] = []
@@ -99,6 +104,8 @@ static func events_for(events: Array, when: String, week: int, picks: Dictionary
 	for item in events:
 		var ev: Dictionary = item
 		if str(ev.get("when", "")) == when and int(ev.get("week", 0)) == week:
+			if str(ev.get("mission", "")) != "" and str(picks.get(slot_key(when, week), "")) != str(ev.get("id", "")):
+				continue   # a mission's own event only fires when it was picked for that mission
 			candidates.append(ev)
 	if candidates.size() <= 1:
 		return candidates

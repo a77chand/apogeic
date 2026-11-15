@@ -59,7 +59,11 @@ static func run() -> Array:
 	var events: Array = Data.load_events()
 	_same(fails, "parts loaded", parts.size(), 11)
 	_same(fails, "requirements loaded", (level.get("requirements", []) as Array).size(), 6)
-	_same(fails, "events loaded", events.size(), 11)
+	_same(fails, "events loaded", events.size(), 20)
+	var slots_l1: Dictionary = Data.event_slots(events, "level1")
+	_same(fails, "a mission's own events stay out of other missions", str(slots_l1.get("test_lab:0", [])).contains("vanguard_rush"), false)
+	_same(fails, "a mission's own event is in its own mission", str(Data.event_slots(events, "level6").get("test_lab:0", [])).contains("vanguard_rush"), true)
+	_same(fails, "without a pick, the default event is a shared one", str(Data.events_for(events, "test_lab", 0)[0].get("mission", "")), "")
 	if not fails.is_empty():
 		return fails
 

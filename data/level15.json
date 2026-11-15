@@ -243,7 +243,8 @@
     "story": "A working satellite and a dead one hit each other at about 11.7 km per second, the first accidental collision of two satellites. It made thousands of pieces of debris.",
     "lesson": "Space junk is real, and dodging it costs time and fuel.",
     "source": "Wikipedia, \"2009 satellite collision\"",
-    "url": "https://en.wikipedia.org/wiki/2009_satellite_collision"
+    "url": "https://en.wikipedia.org/wiki/2009_satellite_collision",
+    "rocket": "Proton-K"
   },
   "event_bias": [
     "debris_alert"

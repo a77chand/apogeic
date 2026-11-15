@@ -13,6 +13,8 @@ const Confirm = preload("res://scripts/ui/confirm.gd")
 
 var _test_label: Label = null
 var _sound_button: Button = null
+var _music_button: Button = null
+var _tips_button: Button = null
 var _progress_bar: ProgressBar = null
 var _progress_label: Label = null
 
@@ -56,19 +58,40 @@ func _build_main_choices() -> void:
 	var cream: Color = Logo.C_CREAM
 	var x: float = 800.0
 	var w: float = 420.0
-	var custom: Button = UI.pixel_button("Customise astronaut" if GameState.has_profile() else "Create astronaut", _on_customise, 240.0, 32.0, 12, UI.C_GOLD)
-	_place(custom, Vector2(x + (w - 240.0) * 0.5, 262), Vector2(240, 32))
-	_place(UI.pixel_button("Play  >", _on_play, w, 64.0, 30, Color(0.45, 0.78, 1.0)), Vector2(x, 306), Vector2(w, 64))
-	_place(UI.pixel_button("How to play", _on_guide, 204.0, 38.0, 13, UI.C_ACCENT), Vector2(x, 382), Vector2(204, 38))
-	_place(UI.pixel_button("Training", _on_training, 204.0, 38.0, 13, UI.C_ACCENT), Vector2(x + 216, 382), Vector2(204, 38))
-	_place(UI.pixel_button("Skip to missions  >", _on_mission, w, 64.0, 24, Color(0.78, 0.55, 1.0)), Vector2(x, 432), Vector2(w, 64))
-	_place(UI.pixel_button("NASA problem: can the truck see?", _on_truck, w, 32.0, 11, Color(UI.C_ACCENT, 0.75)), Vector2(x, 520), Vector2(w, 32))
-	_sound_button = UI.pixel_button(_sound_text(), _on_sound, 136.0, 28.0, 10, Color(UI.C_MUTED, 0.8))
-	_place(_sound_button, Vector2(x, 562), Vector2(136, 28))
-	_place(UI.pixel_button("Tips again", _on_tips, 136.0, 28.0, 10, Color(UI.C_MUTED, 0.8)), Vector2(x + 142, 562), Vector2(136, 28))
-	_place(UI.pixel_button("Reset", _on_reset, 136.0, 28.0, 10, Color(UI.C_MUTED, 0.8)), Vector2(x + 284, 562), Vector2(136, 28))
+	var top: float = 300.0
+	var custom: Button = UI.pixel_button("Customise astronaut" if GameState.has_profile() else "Create astronaut", _on_customise, 240.0, 30.0, 12, UI.C_GOLD)
+	_place(custom, Vector2(x + (w - 240.0) * 0.5, top), Vector2(240, 30))
+	var play: Button = UI.pixel_button("Play  >", _on_play, w, 64.0, 30, Color(0.45, 0.78, 1.0))
+	UI.add_icon(play, "sparkle", Color(1.0, 0.82, 0.3), 30.0)
+	_place(play, Vector2(x, top + 42), Vector2(w, 64))
+	var guide: Button = UI.pixel_button("How to play", _on_guide, 204.0, 38.0, 13, UI.C_ACCENT)
+	UI.add_icon(guide, "book", UI.C_ACCENT, 18.0)
+	_place(guide, Vector2(x, top + 118), Vector2(204, 38))
+	var train: Button = UI.pixel_button("Training", _on_training, 204.0, 38.0, 13, UI.C_ACCENT)
+	UI.add_icon(train, "rocket", UI.C_ACCENT, 20.0)
+	_place(train, Vector2(x + 216, top + 118), Vector2(204, 38))
+	var skip: Button = UI.pixel_button("Skip to missions  >", _on_mission, w, 64.0, 24, Color(0.78, 0.55, 1.0))
+	UI.add_icon(skip, "target", UI.C_GOLD, 26.0)
+	_place(skip, Vector2(x, top + 168), Vector2(w, 64))
+	_place(UI.pixel_button("NASA problem: can the truck see?", _on_truck, w, 32.0, 11, Color(UI.C_ACCENT, 0.75)), Vector2(x, top + 248), Vector2(w, 32))
+	# four small settings: sound, music, tips, reset
+	var bw: float = (w - 18.0) / 4.0
+	var muted_col: Color = Color(UI.C_MUTED, 0.85)
+	_sound_button = UI.pixel_button(_sound_text(), _on_sound, bw, 30.0, 9, muted_col)
+	UI.add_icon(_sound_button, "speaker", muted_col, 11.0)
+	_place(_sound_button, Vector2(x, top + 290), Vector2(bw, 30))
+	_music_button = UI.pixel_button(_music_text(), _on_music, bw, 30.0, 9, muted_col)
+	UI.add_icon(_music_button, "note", muted_col, 11.0)
+	_place(_music_button, Vector2(x + (bw + 6.0), top + 290), Vector2(bw, 30))
+	_tips_button = UI.pixel_button(_tips_text(), _on_tips, bw, 30.0, 9, muted_col)
+	_tips_button.tooltip_text = "Tips off makes the game harder: no hints on each screen."
+	UI.add_icon(_tips_button, "bulb", muted_col, 11.0)
+	_place(_tips_button, Vector2(x + (bw + 6.0) * 2.0, top + 290), Vector2(bw, 30))
+	var reset: Button = UI.pixel_button("Reset", _on_reset, bw, 30.0, 9, muted_col)
+	UI.add_icon(reset, "reset", muted_col, 11.0)
+	_place(reset, Vector2(x + (bw + 6.0) * 3.0, top + 290), Vector2(bw, 30))
 	var row: HBoxContainer = UI.hbox(10)
-	_place(row, Vector2(x, 604), Vector2(w, 20))
+	_place(row, Vector2(x + 30.0, top + 334), Vector2(w, 20))
 	_progress_bar = ProgressBar.new()
 	_progress_bar.show_percentage = false
 	_progress_bar.max_value = 100.0
@@ -91,10 +114,11 @@ func _build_footer() -> void:
 	_place(test, Vector2(1156, 684), Vector2(100, 24))
 
 
-## Play always goes through the astronaut screen first (name and look), then training.
+## Play goes to training. The very first time (no astronaut yet) it goes through the
+## astronaut screen first; after that the saved astronaut is used.
 func _on_play() -> void:
 	GameState.profile_next = "ladder"
-	GameState.go("profile")
+	GameState.go("ladder" if GameState.has_profile() else "profile")
 
 
 func _on_training() -> void:
@@ -110,7 +134,12 @@ func _on_customise() -> void:
 	GameState.go("profile")
 
 
+## Missions need every training puzzle finished once.
 func _on_mission() -> void:
+	if not GameState.all_puzzles_done():
+		GameState.play_sound("fail")
+		Confirm.ask(self, "Error! Training not finished", "Complete the 4 training puzzles before starting missions. They teach the rules every mission uses.", "Go to training", _on_play)
+		return
 	if not GameState.has_profile():
 		GameState.profile_next = "missions"
 		GameState.go("profile")
@@ -126,14 +155,28 @@ func _sound_text() -> String:
 	return "SOUND: OFF" if GameState.muted else "SOUND: ON"
 
 
+func _music_text() -> String:
+	return "MUSIC: OFF" if GameState.music_muted else "MUSIC: ON"
+
+
+func _tips_text() -> String:
+	return "TIPS: ON" if GameState.tips_on else "TIPS: OFF"
+
+
+func _on_music() -> void:
+	GameState.set_music_muted(not GameState.music_muted)
+	_music_button.text = _music_text()
+
+
 func _on_sound() -> void:
 	GameState.set_muted(not GameState.muted)
 	_sound_button.text = _sound_text()
 
 
 func _on_tips() -> void:
-	GameState.reset_tutorial()
-	_test_label.text = "Tips will show again on each screen."
+	GameState.set_tips_on(not GameState.tips_on)
+	_tips_button.text = _tips_text()
+	_test_label.text = "Tips on: each screen explains itself." if GameState.tips_on else "Tips off: no hints. Harder!"
 
 
 func _on_reset() -> void:

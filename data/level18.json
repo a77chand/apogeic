@@ -244,7 +244,8 @@
     "story": "The nose cone that protects the satellite on the way up did not come off, so the navigation satellite was trapped inside it and could not work.",
     "lesson": "One stage of the launch going wrong is enough.",
     "source": "Wikipedia, \"IRNSS-1H\"",
-    "url": "https://en.wikipedia.org/wiki/IRNSS-1H"
+    "url": "https://en.wikipedia.org/wiki/IRNSS-1H",
+    "rocket": "PSLV-XL"
   },
   "event_bias": [
     "vibration_break"

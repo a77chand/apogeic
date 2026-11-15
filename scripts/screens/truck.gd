@@ -1,10 +1,13 @@
 extends Control
-## NASA problem: an autonomous construction truck must sense obstacles, but no
-## sensor works everywhere. Pick sensors, see detection in five conditions, and
-## read why the truck misses things. All rules are in truck_sim.gd.
+## NASA problem: an autonomous digging robot near the Moon's south pole must spot rocks,
+## but no sensor works everywhere (low Sun, black shadows, dark craters, dust, slopes).
+## First the problem is explained, then the player picks sensors, sees detection in five
+## conditions, and runs a drive test that shows the truck spotting or hitting a rock in
+## each one. All rules are in truck_sim.gd; sources are behind "Where is the data from?".
 
 const UI = preload("res://scripts/ui/ui.gd")
 const TruckSim = preload("res://scripts/core/truck_sim.gd")
+const DriveTest = preload("res://scripts/ui/drive_test.gd")
 
 var _cfg: Dictionary = {}
 var selected: Array = []
@@ -24,6 +27,7 @@ func _ready() -> void:
 	_build_limits()
 	_build_explain()
 	_refresh()
+	_show_problem()
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -39,7 +43,7 @@ func _build_top_bar() -> void:
 	_place(bar, Vector2(0, 0), Vector2(1280, 72))
 	var row: HBoxContainer = UI.hbox(16)
 	bar.add_child(row)
-	row.add_child(UI.label("NASA problem: autonomous construction truck", 16, UI.C_MUTED))
+	row.add_child(UI.label("NASA problem: robots at the Moon's south pole", 15, UI.C_MUTED))
 	var spacer: Control = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
@@ -61,16 +65,17 @@ func _build_sensors() -> void:
 		var s: Dictionary = item
 		var id: String = str(s.get("id", ""))
 		var tag: String = "   [NASA data]" if _has_sourced(s) else ""
-		var text: String = "%s%s   (%.1f kg, %d W, $%dk)\n%s" % [
+		var text: String = "%s%s\n%.1f kg  ·  %d W  ·  $%dk" % [
 				str(s.get("name", id)), tag, float(s.get("mass_kg", 0.0)), int(float(s.get("power_w", 0.0))),
-				int(float(s.get("cost_k", 0.0))), str(s.get("blurb", ""))]
+				int(float(s.get("cost_k", 0.0)))]
 		var b: Button = UI.button(text, Callable(), 380.0, false)
 		b.toggle_mode = true
-		b.custom_minimum_size = Vector2(380.0, 44.0)
-		b.add_theme_font_size_override("font_size", 12)
+		b.custom_minimum_size = Vector2(380.0, 50.0)
+		b.add_theme_font_size_override("font_size", 13)
 		b.clip_text = true
 		b.add_theme_stylebox_override("pressed", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 4, 6.0))
 		b.add_theme_stylebox_override("hover_pressed", UI.box(UI.C_HOVER.lightened(0.1), UI.C_GREEN, 16, 4, 6.0))
+		b.tooltip_text = str(s.get("blurb", ""))
 		b.toggled.connect(_on_toggled.bind(id))
 		col.add_child(b)
 		_buttons[id] = b
@@ -136,11 +141,76 @@ func _build_explain() -> void:
 	_causes = UI.vbox(3)
 	_causes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_causes)
-	var back: Button = UI.button("Back to title", _on_back, 200.0, false)
+	var back: Button = UI.button("Back to home", _on_back, 200.0, false)
 	_place(back, Vector2(20, 660), Vector2(200, 52))
+	_place(UI.button("The problem", _show_problem, 180.0, false), Vector2(236, 660), Vector2(180, 52))
+	_place(UI.button("Where is the data from?", _on_sources, 260.0, false), Vector2(432, 660), Vector2(260, 52))
 	var note: Label = UI.label(str(_cfg.get("fusion_note", "")), 11, UI.C_MUTED, true)
-	_place(note, Vector2(240, 662), Vector2(740, 50))
-	_place(UI.button("Where is the data from?", _on_sources, 270.0, true), Vector2(990, 660), Vector2(270, 52))
+	_place(note, Vector2(708, 662), Vector2(300, 50))
+	_place(UI.button("Drive test  >", _on_drive, 236.0, true), Vector2(1024, 660), Vector2(236, 52))
+
+
+## What problem this solves, in three short points with where each fact comes from, and a
+## first drive with only a camera so the player sees what goes wrong.
+func _show_problem() -> void:
+	if _popup != null:
+		return
+	_popup = Control.new()
+	_popup.z_index = 90
+	_popup.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_popup)
+	_popup.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dim: ColorRect = ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.7)
+	_popup.add_child(dim)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel: PanelContainer = UI.neon_panel(UI.C_CYAN, 24.0)
+	_popup.add_child(panel)
+	panel.position = Vector2(200, 90)
+	panel.size = Vector2(880, 520)
+	var col: VBoxContainer = UI.vbox(12)
+	panel.add_child(col)
+	col.add_child(UI.label("The NASA problem", 26, UI.C_CYAN))
+	col.add_child(UI.bullets(_cfg.get("problem", []), 16, UI.C_TEXT, 820.0))
+	var goal: Label = UI.label("Your job: pick sensors so the truck spots at least %d%% of rocks in every condition, within its mass, power and budget." % int(float(_cfg.get("target_detect_pct", 95.0))), 16, UI.C_GOLD, true)
+	goal.custom_minimum_size = Vector2(820.0, 0.0)
+	col.add_child(goal)
+	var src: Label = UI.label("Sources: NASA lighting study for the south pole (NTRS 20240011393), NASA's IPEx excavator tests, VIPER rover hardware. Detection numbers are mostly illustrative: see \"Where is the data from?\".", 12, UI.C_MUTED, true)
+	src.custom_minimum_size = Vector2(820.0, 0.0)
+	col.add_child(src)
+	var spacer: Control = Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(spacer)
+	var row: HBoxContainer = UI.hbox(14)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(row)
+	row.add_child(UI.button("Watch: a truck with only a camera", _watch_camera_only, 360.0, false))
+	row.add_child(UI.button("Pick sensors", _on_close_sources, 220.0, true))
+
+
+func _watch_camera_only() -> void:
+	_on_close_sources()
+	_run_drive(["camera"])
+
+
+func _on_drive() -> void:
+	if selected.is_empty():
+		_verdict.text = "Pick at least one sensor first."
+		return
+	_run_drive(selected)
+
+
+func _run_drive(sensors: Array) -> void:
+	var t: Control = DriveTest.new()
+	t.set("cfg", _cfg)
+	t.set("selected", sensors.duplicate())
+	add_child(t)
+	t.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var all_safe: bool = await t.finished
+	if all_safe and sensors == selected and bool(TruckSim.evaluate(_cfg, selected).get("passed", false)):
+		GameState.play_sound("fanfare")
+		_verdict.text = "Drive test passed: ready for the south pole!"
+		_verdict.add_theme_color_override("font_color", UI.C_GREEN)
 
 
 func _on_toggled(pressed: bool, id: String) -> void:

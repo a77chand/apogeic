@@ -1,5 +1,5 @@
 extends RefCounted
-## Rules for the sensing-truck scenario. Pure static functions: no nodes, no
+## Rules for the sensing-truck scenario (an autonomous digging robot at the Moon's south pole). Pure static functions: no nodes, no
 ## randomness. Numbers all come from data/truck.json (placeholders for now).
 ## Use it through a preload:  const TruckSim = preload("res://scripts/core/truck_sim.gd")
 
@@ -42,8 +42,20 @@ static func detect_chance(cfg: Dictionary, selected: Array, condition_id: String
 	for id in selected:
 		var s: Dictionary = sensor_by_id(cfg, str(id))
 		var detect: Dictionary = s.get("detect", {})
-		miss *= 1.0 - float(detect.get(condition_id, 0.0))
+		miss *= 1.0 - _boosted(cfg, selected, str(id), condition_id, float(detect.get(condition_id, 0.0)))
 	return 1.0 - miss
+
+
+## A sensor's chance can be raised by another fitted part: headlights let the cameras see in
+## shadow and darkness (their "boosts" in truck.json). The higher value wins.
+static func _boosted(cfg: Dictionary, selected: Array, sensor_id: String, condition_id: String, value: float) -> float:
+	var out: float = value
+	for other in selected:
+		var o: Dictionary = sensor_by_id(cfg, str(other))
+		var boosts: Dictionary = o.get("boosts", {})
+		if boosts.has(sensor_id):
+			out = maxf(out, float((boosts[sensor_id] as Dictionary).get(condition_id, 0.0)))
+	return out
 
 
 ## The unselected sensor that would help most in a condition ("" if none helps).

@@ -244,6 +244,7 @@
     "story": "Launched on a small Rokot rocket, its TROPOMI instrument maps air pollution such as nitrogen dioxide over the whole planet every day.",
     "lesson": "Air instruments need steady power, all day and all night.",
     "source": "Wikipedia, \"Sentinel-5 Precursor\"",
-    "url": "https://en.wikipedia.org/wiki/Sentinel-5_Precursor"
+    "url": "https://en.wikipedia.org/wiki/Sentinel-5_Precursor",
+    "rocket": "Rokot"
   }
 }

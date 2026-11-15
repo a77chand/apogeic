@@ -18,7 +18,7 @@ func _ready() -> void:
 	v.add_child(UI.label("Screen not built yet", 14, UI.C_MUTED))
 	v.add_child(UI.label(screen_id, 34))
 	v.add_child(UI.button("Next screen", _on_next, 240.0, true))
-	v.add_child(UI.button("Back to title", _on_title))
+	v.add_child(UI.button("Back to home", _on_title))
 
 
 func _on_next() -> void:

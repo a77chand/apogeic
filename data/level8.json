@@ -243,7 +243,8 @@
     "story": "India's first satellite, launched on a Soviet Kosmos-3M. A fault in its power system stopped the experiments after only a few days in orbit.",
     "lesson": "Power is the part that, when it fails, takes everything else with it.",
     "source": "NASA NSSDCA Master Catalog, \"Aryabhata\" (1975-033A)",
-    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1975-033A"
+    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1975-033A",
+    "rocket": "Kosmos-3M"
   },
   "event_bias": [
     "thermal_test"

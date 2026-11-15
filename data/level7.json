@@ -243,7 +243,8 @@
     "story": "China's first satellite, launched on a Long March 1. At 173 kg it was heavier than the first satellites of the USSR and USA put together.",
     "lesson": "Every kilogram has to be paid for by the rocket.",
     "source": "NASA NSSDCA Master Catalog, \"DFH 1\" (1970-034A)",
-    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1970-034A"
+    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1970-034A",
+    "rocket": "Long March 1"
   },
   "event_bias": [
     "vibration_break"

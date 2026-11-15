@@ -35,6 +35,14 @@ So nobody can promise "no bugs" yet. The first job on Saturday (Block 0) is to o
 
 ## 0.1 What changed since this spec was written (14 Nov)
 
+**Late on 14 Nov:**
+- Missions need all four training puzzles done once. Play skips the astronaut screen once one is saved. Title: music and tips on/off toggles (tips off = harder), button icons, power-down sound when going home or resetting.
+- Header and footer pieces are pinned to the real window edges (main.gd `_pin_edges`).
+- Mission cards: neon frame, a drawing of the real rocket each mission flew on (`scripts/ui/rocket_art.gd`, `based_on.rocket`).
+- Nine missions have their own real-life decision event (`mission` in events.json); one option is what the real team did, shown with a "Real life" note.
+- Expert advice costs 250 star dust. Space trivia (`scripts/screens/trivia.gd`, `data/trivia.json`): 40 questions, 10 per round getting harder, 50 star dust each, 3 rounds a day 10 minutes apart; NASA photos in `art/trivia/`.
+- Truck problem reframed to robots at the lunar south pole with sourced setting (docs/TRUCK_SOURCES.md); thermal camera removed, VIPER-style headlights added; problem panel and a drive test animation.
+
 **Evening of 14 Nov:**
 - Progress: a mission opens when the one before has a star; every 7 missions is a stage, and the next stage needs 17 of its 21 stars. 5 lives (a 0-star mission costs one; one comes back every 30 minutes). The first 3-star result on a mission gives 500 star dust; 1500 buys a life. `tests/progress_tests.gd` checks the unlock rules.
 - Missions screen: tall cards that slide, an "All missions" list, "Go to next mission", total stars, lives and star dust, a "More missions incoming" card. Locked missions are darker with smaller grey text.

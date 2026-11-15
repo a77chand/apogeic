@@ -244,7 +244,8 @@
     "story": "A Dnepr rocket carrying 18 satellites, including 14 university CubeSats, failed soon after lift-off. Years of student work were lost in seconds.",
     "lesson": "On a shared rocket, its risk is your risk too.",
     "source": "Wikipedia, \"Dnepr (rocket)\"",
-    "url": "https://en.wikipedia.org/wiki/Dnepr_(rocket)"
+    "url": "https://en.wikipedia.org/wiki/Dnepr_(rocket)",
+    "rocket": "Dnepr"
   },
   "event_bias": [
     "vibration_break"

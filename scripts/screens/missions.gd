@@ -12,10 +12,12 @@ extends Control
 const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
 const Tutorial = preload("res://scripts/ui/tutorial.gd")
+const RocketArt = preload("res://scripts/ui/rocket_art.gd")
 
-const CARD_SIZE: Vector2 = Vector2(440, 462)
+const CARD_SIZE: Vector2 = Vector2(400, 470)
+const TEXT_W: float = 270.0   # the words; the rocket drawing takes the rest of the width
 const CARD_Y: float = 108.0
-const GAP: float = 470.0
+const GAP: float = 440.0
 const C_LOCKED_TEXT: Color = Color(0.56, 0.60, 0.70)
 
 var _cards: Array = []          # one card per mission, then the "more coming" card
@@ -87,10 +89,27 @@ func _build_stats() -> void:
 	row.add_child(_stat(hearts, null, "LIVES", _lives_label))
 	_dust_label = _pixel_label("", Color(0.82, 0.74, 1.0))
 	row.add_child(_stat(UI.sparkle_icon(28.0), _dust_label, "STAR DUST"))
-	_buy_btn = UI.pixel_button("+1 life", _on_buy, 84.0, 30.0, 11, UI.C_RED)
+	var buttons: VBoxContainer = UI.vbox(4)
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(buttons)
+	_buy_btn = UI.pixel_button("+1 life", _on_buy, 96.0, 24.0, 10, UI.C_RED)
 	_buy_btn.tooltip_text = "Buy a life for %d star dust" % GameState.LIFE_COST_STARDUST
-	_buy_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(_buy_btn)
+	buttons.add_child(_buy_btn)
+	var trivia: Button = UI.pixel_button("Trivia", _on_trivia, 96.0, 24.0, 10, Color(0.82, 0.74, 1.0))
+	trivia.tooltip_text = "Answer space questions to earn star dust"
+	buttons.add_child(trivia)
+	# low on star dust: make the trivia button pulse and point at it
+	if GameState.stardust < GameState.LIFE_COST_STARDUST:
+		var pulse: Tween = trivia.create_tween().set_loops()
+		pulse.tween_property(trivia, "modulate", Color(1.6, 1.4, 2.0), 0.6)
+		pulse.tween_property(trivia, "modulate", Color(1, 1, 1), 0.6)
+		var hint: Label = _pixel_label("GET MORE STAR DUST >", Color(0.82, 0.74, 1.0))
+		hint.add_theme_font_size_override("font_size", 9)
+		_place(hint, Vector2(1040, 72), Vector2(220, 18))
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var bob: Tween = hint.create_tween().set_loops()
+		bob.tween_property(hint, "modulate:a", 0.35, 0.6)   # a blink, so it stays where the header is
+		bob.tween_property(hint, "modulate:a", 1.0, 0.6)
 	_refresh_stats()
 
 
@@ -146,68 +165,70 @@ func _build_cards() -> void:
 	_cards.append(more)
 	# arrows either side
 	var left: Button = UI.button("<", _step.bind(-1), 56.0, false)
-	_place(left, Vector2(150, CARD_Y + CARD_SIZE.y * 0.5 - 30.0), Vector2(56, 60))
+	_place(left, Vector2(170, CARD_Y + CARD_SIZE.y * 0.5 - 30.0), Vector2(56, 60))
 	var right: Button = UI.button(">", _step.bind(1), 56.0, false)
-	_place(right, Vector2(1074, CARD_Y + CARD_SIZE.y * 0.5 - 30.0), Vector2(56, 60))
+	_place(right, Vector2(1054, CARD_Y + CARD_SIZE.y * 0.5 - 30.0), Vector2(56, 60))
 
 
+## A mission card: a neon frame; the words on the left and, on the right, a drawing of the
+## real rocket the mission flew on, as tall as the card.
 func _card(index: int, id: String) -> Control:
 	var info: Dictionary = GameState.mission_info(id)
 	var done: bool = GameState.is_mission_done(id)
 	var open: bool = GameState.is_mission_open(id)
 	var border: Color = UI.C_GOLD if done else (UI.C_CYAN if open else UI.C_DISABLED_BORDER)
-	var panel: PanelContainer = UI.panel(border, 16.0)
+	var panel: PanelContainer = UI.neon_panel(border, 16.0)
 	panel.custom_minimum_size = CARD_SIZE
 	panel.size = CARD_SIZE
 	panel.pivot_offset = CARD_SIZE * 0.5
+	var outer: HBoxContainer = UI.hbox(8)
+	panel.add_child(outer)
 	var col: VBoxContainer = UI.vbox(7)
-	panel.add_child(col)
-	var head: HBoxContainer = UI.hbox(8)
-	col.add_child(head)
+	col.custom_minimum_size = Vector2(TEXT_W, 0.0)
+	outer.add_child(col)
+	var b: Dictionary = info.get("based_on", {})
+	var art: Control = RocketArt.new()
+	art.rocket = str(b.get("rocket", ""))
+	art.custom_minimum_size = Vector2(CARD_SIZE.x - TEXT_W - 48.0, 0.0)
+	art.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	art.tooltip_text = "The real rocket: %s" % art.rocket
+	if not open:
+		art.modulate = Color(1, 1, 1, 0.5)
+	outer.add_child(art)
 	var stage_text: String = "Stage %d  ·  %s" % [GameState.stage_of(index) + 1, str(info.get("level_label", "Mission %d" % (index + 1)))]
-	var level_label: Label = UI.label(stage_text, 13, UI.C_MUTED)
-	level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_child(level_label)
+	col.add_child(UI.label(stage_text, 12, UI.C_MUTED))
 	var problem: String = str(info.get("main_problem", ""))
 	if problem != "":
 		var tag: PanelContainer = PanelContainer.new()
+		tag.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		tag.add_theme_stylebox_override("panel", UI.box(Color(UI.C_ORANGE, 0.18), UI.C_ORANGE, 6, 1, 4.0))
 		tag.add_child(UI.label(problem, 12, UI.C_ORANGE))
-		head.add_child(tag)
+		col.add_child(tag)
 	col.add_child(UI.label(str(info.get("name", id)), 26, UI.C_TEXT if open else C_LOCKED_TEXT, true))
-	col.add_child(UI.star_row(GameState.stars_for(id), 26.0))
-	col.add_child(UI.based_on_tag(info, 406.0))
-	var b: Dictionary = info.get("based_on", {})
+	col.add_child(UI.star_row(GameState.stars_for(id), 24.0))
+	col.add_child(UI.based_on_tag(info, TEXT_W))
 	var story: Label = UI.label(str(b.get("story", info.get("goal_text", ""))), 13, UI.C_TEXT if open else C_LOCKED_TEXT, true)
-	story.custom_minimum_size = Vector2(406.0, 0.0)
+	story.custom_minimum_size = Vector2(TEXT_W, 0.0)
 	col.add_child(story)
 	if b.has("lesson"):
 		var lesson: Label = UI.label("Lesson: " + str(b.get("lesson", "")), 13, UI.C_ACCENT if open else C_LOCKED_TEXT, true)
-		lesson.custom_minimum_size = Vector2(406.0, 0.0)
+		lesson.custom_minimum_size = Vector2(TEXT_W, 0.0)
 		col.add_child(lesson)
-	var row: HBoxContainer = UI.hbox(10)
-	col.add_child(row)
-	var rocket: Dictionary = info.get("rocket", {})
-	row.add_child(UI.picture("res://art/modules/%s.png" % str(rocket.get("kind", "rocket_small")), Vector2(26, 64), "rocket"))
-	var right: VBoxContainer = UI.vbox(3)
-	right.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_child(right)
-	right.add_child(UI.label(str(rocket.get("name", "")), 13, UI.C_ACCENT))
 	var limits: Dictionary = info.get("limits", {})
-	right.add_child(UI.label("Up to %.1f kg  |  %s  |  day %d" % [
+	col.add_child(UI.label("%.1f kg  |  %s  |  day %d" % [
 			float(limits.get("mass_kg", 0.0)), UI.money(float(limits.get("budget_k", 0.0))), int(limits.get("deadline_day", 0))], 13, UI.C_YELLOW))
 	var spacer: Control = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	col.add_child(spacer)
 	if open:
-		col.add_child(UI.button("Play again" if done else "Start mission", _on_start.bind(id), 406.0, not done))
+		col.add_child(UI.button("Play again" if done else "Start mission", _on_start.bind(id), TEXT_W, not done))
 	else:
 		# locked: smaller, greyer words, and the whole card a shade darker
 		var lock: Label = UI.label("LOCKED", 12, C_LOCKED_TEXT)
 		lock.add_theme_font_override("font", UI.pixel_font(false))
 		col.add_child(lock)
 		var why: Label = UI.label(GameState.lock_reason(id), 12, C_LOCKED_TEXT, true)
-		why.custom_minimum_size = Vector2(406.0, 0.0)
+		why.custom_minimum_size = Vector2(TEXT_W, 0.0)
 		col.add_child(why)
 	panel.set_meta("locked", not open)
 	panel.set_meta("shade", 0.6 if not open else 1.0)
@@ -215,7 +236,7 @@ func _card(index: int, id: String) -> Control:
 
 
 func _more_card() -> Control:
-	var panel: PanelContainer = UI.panel(UI.C_DISABLED_BORDER, 16.0)
+	var panel: PanelContainer = UI.neon_panel(UI.C_DISABLED_BORDER, 16.0)
 	panel.custom_minimum_size = CARD_SIZE
 	panel.size = CARD_SIZE
 	panel.pivot_offset = CARD_SIZE * 0.5
@@ -224,11 +245,11 @@ func _more_card() -> Control:
 	panel.add_child(col)
 	var head: Label = UI.label("More missions incoming", 26, UI.C_ACCENT, true)
 	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	head.custom_minimum_size = Vector2(406.0, 0.0)
+	head.custom_minimum_size = Vector2(360.0, 0.0)
 	col.add_child(head)
 	var t: Label = UI.label("New missions based on real spaceflights are on the way.", 15, UI.C_MUTED, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	t.custom_minimum_size = Vector2(406.0, 0.0)
+	t.custom_minimum_size = Vector2(360.0, 0.0)
 	col.add_child(t)
 	panel.set_meta("locked", true)
 	panel.set_meta("shade", 0.8)
@@ -322,6 +343,10 @@ func _on_next() -> void:
 		_index = i
 		_layout(true)
 	_on_start(id)
+
+
+func _on_trivia() -> void:
+	GameState.go("trivia")
 
 
 func _on_buy() -> void:

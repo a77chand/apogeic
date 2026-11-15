@@ -244,7 +244,8 @@
     "story": "India's first Moon probe ran hotter than planned, so its orbit was raised to cool it down. Contact was lost after 312 days, but it helped find water on the Moon.",
     "lesson": "Heat is a power problem in disguise.",
     "source": "NASA NSSDCA Master Catalog, \"Chandrayaan-1\" (2008-052A)",
-    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2008-052A"
+    "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2008-052A",
+    "rocket": "PSLV-XL"
   },
   "event_bias": [
     "thermal_test"

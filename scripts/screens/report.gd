@@ -117,7 +117,7 @@ func _build_empty() -> void:
 	var col: VBoxContainer = UI.vbox(14)
 	panel.add_child(col)
 	col.add_child(UI.label("No mission flown yet", 28))
-	col.add_child(UI.button("Back to title", _on_title, 240.0, true))
+	col.add_child(UI.button("Back to home", _on_title, 240.0, true))
 
 
 func _build_top_bar(grade: String) -> void:
@@ -340,7 +340,7 @@ func _build_buttons() -> void:
 	_place(UI.button("All missions", _on_missions, 200.0, false), Vector2(612, 660), Vector2(200, 52))
 	var next: Button = UI.button("Go to next mission", _on_next, 260.0, GameState.is_mission_done(GameState.mission_id))
 	_place(next, Vector2(828, 660), Vector2(260, 52))
-	_place(UI.button("Title", _on_title, 156.0, false), Vector2(1104, 660), Vector2(156, 52))
+	_place(UI.button("Home", _on_title, 156.0, false), Vector2(1104, 660), Vector2(156, 52))
 
 
 ## The next mission in order (the same one again if this one still has no stars).

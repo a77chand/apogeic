@@ -244,7 +244,8 @@
     "story": "America's first satellite found the Van Allen radiation belts. It had no data recorder, so readings were only caught while it passed over a ground station.",
     "lesson": "Data you cannot store or send is data you lose.",
     "source": "NASA Science, \"Explorer 1\"",
-    "url": "https://science.nasa.gov/mission/explorer-1/"
+    "url": "https://science.nasa.gov/mission/explorer-1/",
+    "rocket": "Juno I"
   },
   "event_bias": [
     "ground_rain"

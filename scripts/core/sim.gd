@@ -266,6 +266,8 @@ static func apply_prelaunch_choice(sched: Dictionary, part_ids: Array, event: Di
 				sched["flaws"] = known
 			"extra_power_w":
 				sched["extra_power_w"] = float(sched.get("extra_power_w", 0.0)) + value
+			"decay_in_weeks":
+				sched["decay_after_weeks"] = int(value)
 	return str(choice.get("log", ""))
 
 
@@ -273,10 +275,10 @@ static func apply_prelaunch_choice(sched: Dictionary, part_ids: Array, event: Di
 ## "why": one line}. A choice can rate differently when a part is fitted (rating_with_part).
 static func choice_rating(event: Dictionary, index: int, part_ids: Array) -> Dictionary:
 	var choice: Dictionary = _choice(event, index)
-	var out: Dictionary = {"rating": str(choice.get("rating", "fair")), "why": str(choice.get("why", ""))}
+	var out: Dictionary = {"rating": str(choice.get("rating", "fair")), "why": str(choice.get("why", "")), "real": str(choice.get("real", ""))}
 	var alt: Dictionary = choice.get("rating_with_part", {})
 	if not alt.is_empty() and part_ids.has(str(alt.get("part", ""))):
-		out = {"rating": str(alt.get("rating", "fair")), "why": str(alt.get("why", ""))}
+		out = {"rating": str(alt.get("rating", "fair")), "why": str(alt.get("why", "")), "real": str(choice.get("real", ""))}
 	return out
 
 

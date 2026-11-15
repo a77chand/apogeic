@@ -1,8 +1,8 @@
 {
-  "_note": "Sensing-truck scenario. NO real-world dataset covers these sensors in these conditions, so most numbers are ILLUSTRATIVE placeholders. The exceptions are marked 'sourced' in each sensor's detect_basis, with the evidence listed under 'evidence'. The ordering (radar most robust in dust, lidar and cameras hurt by dust, cameras blind in the dark) is supported by the evidence; the exact percentages are not.",
+  "_note": "Sensing-truck scenario: an autonomous digging robot at the Moon's south pole. NO real-world dataset covers these sensors in these conditions, so most numbers are ILLUSTRATIVE placeholders. The exceptions are marked 'sourced' in each sensor's detect_basis, with the evidence listed under 'evidence'. The ordering (radar most robust in dust, lidar and cameras hurt by dust, cameras blind in the dark) is supported by the evidence; the exact percentages are not. Headlights have no detection of their own; their boosts replace a camera's value in shadow and dark when both are fitted.",
   "title": "Can the truck see?",
-  "intro": "Autonomous construction trucks must sense what is around them, but sensing accuracy is still a hard problem. No single sensor works everywhere. Pick a sensor set, then see where the truck would miss an obstacle.",
-  "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots within mass, power and budget. No single dataset covers all of these conditions on the Moon, which is part of the real problem.",
+  "intro": "NASA's Artemis plans need robots that drive and dig on their own near the Moon's south pole, like NASA's IPEx excavator. There, the Sun stays 1 to 2 degrees above the horizon, so shadows are long and some craters never see sunlight. Pick sensors so the truck spots rocks in every condition, then drive it.",
+  "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots within mass, power and budget. NASA's VIPER rover is designed with headlights for exactly this reason: cameras need light in the shadows.",
   "fusion_note": "Sensors are treated as independent: the chance every sensor misses is the product of each miss chance. Real sensors are not fully independent, so this is a simplification.",
   "source": "placeholder",
   "target_detect_pct": 95.0,
@@ -14,27 +14,27 @@
   "conditions": [
     {
       "id": "clear",
-      "name": "Clear daylight",
-      "why": "Good light and clean air. The easy case."
+      "name": "Sunlit ground",
+      "why": "Good light. The easy case."
     },
     {
       "id": "dust",
-      "name": "Dust cloud",
-      "why": "Dust scatters laser light and blurs cameras. Radar still sees through it, but with less detail."
+      "name": "Dust from digging",
+      "why": "Digging throws up dust that scatters laser light and blurs cameras. Radar still sees through it, but with less detail."
     },
     {
       "id": "shadow",
-      "name": "Long shadows",
-      "why": "Low sun hides rocks in deep shadow, so cameras struggle. Lidar brings its own light."
+      "name": "Long shadows (Sun 1-2° high)",
+      "why": "Rocks hide in long black shadows, so cameras struggle. Lidar and headlights bring their own light."
     },
     {
       "id": "dark",
-      "name": "Dark (night)",
-      "why": "No sunlight at all. Cameras are blind. Lidar, radar and heat sensors do not need light."
+      "name": "Crater that never sees sunlight",
+      "why": "Permanently dark. Cameras need headlights; lidar and radar do not need light."
     },
     {
       "id": "slope",
-      "name": "Steep slope",
+      "name": "Crater rim slope",
       "why": "The truck tilts, so sensors point at the sky or the ground instead of ahead."
     }
   ],
@@ -86,6 +86,39 @@
       "basis_note": "Illustrative numbers. Only the direction is supported by evidence: stereo imaging is 'promising' for polar rovers in NASA Ames early results, but still needs light."
     },
     {
+      "id": "headlights",
+      "name": "LED headlights",
+      "blurb": "Light for the cameras in shadow and darkness, like NASA's VIPER rover.",
+      "mass_kg": 0.4,
+      "power_w": 15.0,
+      "cost_k": 15.0,
+      "detect": {
+        "clear": 0.0,
+        "dust": 0.0,
+        "shadow": 0.0,
+        "dark": 0.0,
+        "slope": 0.0
+      },
+      "boosts": {
+        "camera": {
+          "shadow": 0.85,
+          "dark": 0.8
+        },
+        "stereo": {
+          "shadow": 0.88,
+          "dark": 0.82
+        }
+      },
+      "detect_basis": {
+        "clear": "placeholder",
+        "dust": "placeholder",
+        "shadow": "placeholder",
+        "dark": "placeholder",
+        "slope": "placeholder"
+      },
+      "basis_note": "Headlights see nothing on their own; they let the cameras work in the dark. The idea is real (VIPER is designed as the first lunar rover with headlights, tuned for permanently shadowed regions); the improvement numbers are illustrative."
+    },
+    {
       "id": "lidar",
       "name": "Lidar",
       "blurb": "Laser scanner: great in dark and shadow, hurt by dust.",
@@ -130,29 +163,6 @@
         "slope": "placeholder"
       },
       "basis_note": "Illustrative numbers. Only the direction is supported by evidence: radar sees through dust with relatively low loss, but is coarse."
-    },
-    {
-      "id": "thermal",
-      "name": "Thermal camera",
-      "blurb": "Sees heat, so it works in the dark. Warm rocks only.",
-      "mass_kg": 1.2,
-      "power_w": 10.0,
-      "cost_k": 45.0,
-      "detect": {
-        "clear": 0.7,
-        "dust": 0.6,
-        "shadow": 0.7,
-        "dark": 0.8,
-        "slope": 0.65
-      },
-      "detect_basis": {
-        "clear": "placeholder",
-        "dust": "placeholder",
-        "shadow": "placeholder",
-        "dark": "placeholder",
-        "slope": "placeholder"
-      },
-      "basis_note": "Illustrative numbers. Only the direction is supported by evidence: no evidence was found; the values are a plain guess."
     },
     {
       "id": "structlight",
@@ -214,6 +224,32 @@
       "title": "CraterGrader: Autonomous Robotic Terrain Manipulation for Lunar Site Preparation and Earthmoving (arXiv 2311.01697).",
       "url": "https://arxiv.org/abs/2311.01697",
       "supports": "Chose passive stereo because infrared scattering is expected in dusty terrain. Taken from a search summary and not read in full, so this is why the structured-light dust value is low; please verify before relying on it."
+    },
+    {
+      "id": "south_pole_lighting",
+      "kind": "sourced fact",
+      "title": "NASA lighting study for driving at the lunar south pole (NTRS 20240011393).",
+      "url": "https://ntrs.nasa.gov/citations/20240011393",
+      "supports": "At the south pole the Sun is about 1 to 2 degrees above the horizon (8 to 50 degrees during Apollo), giving long shadows and high contrast that can seriously affect safe driving."
+    },
+    {
+      "id": "viper_headlights",
+      "kind": "sourced fact",
+      "title": "VIPER mobility hardware, LSIC 2024 panel (NASA, NTRS 20240013903).",
+      "url": "https://ntrs.nasa.gov/api/citations/20240013903/downloads/LSIC_2024-Tech%20Infusion_Panel-VIPER_Mob-HW.pdf",
+      "supports": "VIPER carries eight LED-array lights tuned for permanently shadowed regions, with headlights for long-range stereo imaging. Used for the idea of the headlights sensor; no numbers taken."
+    },
+    {
+      "id": "ipex",
+      "kind": "sourced fact",
+      "title": "ISRU Pilot Excavator (IPEx) test facility (NASA, NTRS 20250000128).",
+      "url": "https://ntrs.nasa.gov/api/citations/20250000128/downloads/ipex_tent.pdf",
+      "supports": "NASA tests an autonomous lunar excavator under simulated south pole lighting, using onboard cameras for localisation and hazard detection. This is the kind of robot the scenario is about."
     }
+  ],
+  "problem": [
+    "Robots near the Moon's south pole must drive themselves: a radio signal to Earth and back takes time, and people can't watch every metre.",
+    "The Sun is only 1 to 2 degrees above the horizon there (8 to 50 degrees during Apollo), so rocks hide in long, black shadows.",
+    "If a robot misses a rock, it can break a wheel or tip over, and nobody can fix it."
   ]
 }
