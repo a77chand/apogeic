@@ -169,6 +169,13 @@ func _poly(points: Array, fill: Color, line: bool = true) -> void:
 func _earth(c: Vector2, r: float) -> void:
 	for i in range(6):  # soft atmosphere glow
 		draw_circle(c, r * (1.16 - 0.025 * float(i)), Color(0.35, 0.65, 1.0, 0.045 + 0.012 * float(i)))
+	# the team's Earth drawing, when it is there
+	var tex: Texture2D = _art("res://art/backgrounds/earth_dark.png")
+	if tex != null:
+		var k: float = (r * 2.0) / float(maxi(tex.get_width(), tex.get_height()))
+		var sz: Vector2 = Vector2(tex.get_width(), tex.get_height()) * k
+		draw_texture_rect(tex, Rect2(c - sz * 0.5, sz), false)
+		return
 	draw_circle(c, r, OCEAN)
 	var land: Array = [
 		[Vector2(-0.55, -0.25), Vector2(-0.30, -0.50), Vector2(-0.05, -0.40), Vector2(-0.12, -0.15), Vector2(-0.30, 0.05), Vector2(-0.50, 0.00)],

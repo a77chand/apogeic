@@ -84,7 +84,35 @@ static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 		ops["goal_mb"] = snappedf(float(ops.get("goal_mb", 0.0)) * scale, 0.1)
 		ops["storage_mb"] = snappedf(float(ops.get("storage_mb", 0.0)) * scale, 0.1)
 		bus["power_use_w"] = float(bus.get("power_use_w", 0.0)) * scale
+	_apply_own_values(out, level, own)
 	return out
+
+
+## A mission's own numbers for this size (data/level1.json "craft_values"), applied last:
+##   bus_power_w  what the bare satellite uses
+##   budget_k     the money for this size
+##   data_kbps    how fast this size can send, compared with the 3U's: the weekly data goal
+##                scales with it (a 1U radio is far slower, so it is asked for less)
+static func _apply_own_values(out: Dictionary, level: Dictionary, own: Dictionary) -> void:
+	if own.is_empty():
+		return
+	if own.has("bus_power_w"):
+		(out["bus"] as Dictionary)["power_use_w"] = float(own["bus_power_w"])
+	if own.has("budget_k"):
+		(out["limits"] as Dictionary)["budget_k"] = float(own["budget_k"])
+	var base_kbps: float = float(((level.get("craft_values", {}) as Dictionary).get(BASE_ID, {}) as Dictionary).get("data_kbps", 0.0))
+	if own.has("data_kbps") and base_kbps > 0.0:
+		var k: float = float(own["data_kbps"]) / base_kbps
+		var base_ops: Dictionary = level.get("ops", {})
+		(out["ops"] as Dictionary)["goal_mb"] = snappedf(float(base_ops.get("goal_mb", 0.0)) * k, 0.1)
+		var base_reqs: Array = level.get("requirements", [])
+		var reqs: Array = out.get("requirements", [])
+		for i in range(reqs.size()):
+			var r: Dictionary = reqs[i]
+			if str(r.get("kind", "")) == "delivered_min":
+				var t: float = snappedf(float((base_reqs[i] as Dictionary).get("target", 0.0)) * k, 0.1)
+				r["target"] = t
+				r["text"] = "Deliver at least %s MB of %s per week" % [_clean(t), str(level.get("data_noun", "data"))]
 
 
 ## How much bigger or smaller than the 3U base this craft is (its mass limit over the base

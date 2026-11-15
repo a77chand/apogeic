@@ -451,7 +451,56 @@ static func panel(border: Color = C_BORDER, margin: float = 16.0) -> PanelContai
 	p.add_theme_stylebox_override("panel", sb)
 	if margin >= 12.0:
 		p.draw.connect(_brackets.bind(p))
+	p.ready.connect(keep_text_inside.bind(p))
 	return p
+
+
+## A fixed-size panel whose text no longer fits (large text size, or a long line that wraps)
+## would spill over the panel's edge. This shrinks the text inside it one step at a time until
+## it fits, never below MIN_FIT_SCALE of its size. Panels without a fixed height are left alone.
+const MIN_FIT_SCALE: float = 0.78
+
+
+static func keep_text_inside(p: Control) -> void:
+	for attempt in range(12):
+		await p.get_tree().process_frame
+		if not is_instance_valid(p) or not p.is_inside_tree():
+			return
+		var want: float = p.custom_minimum_size.y
+		if want <= 0.0:
+			return   # this panel grows with its content, so nothing can spill
+		var need: float = 0.0
+		for c in p.get_children():
+			if c is Control and (c as Control).visible:
+				need = maxf(need, (c as Control).get_combined_minimum_size().y)
+		var sb: StyleBox = p.get_theme_stylebox("panel")
+		if sb != null:
+			need += sb.get_minimum_size().y
+		if need <= want + 0.5:
+			if p.size.y > want + 0.5:
+				p.size = Vector2(p.size.x, want)
+			return
+		if not _shrink_text(p):
+			return   # everything is already as small as allowed
+
+
+## Makes every label and button text under the node one pixel smaller (down to MIN_FIT_SCALE of its
+## first size). Returns false when nothing could shrink any more.
+static func _shrink_text(n: Node) -> bool:
+	var changed: bool = false
+	for c in n.get_children():
+		if c is Label or c is Button:
+			var ctl: Control = c
+			var now: int = ctl.get_theme_font_size("font_size")
+			if not ctl.has_meta("fit_base"):
+				ctl.set_meta("fit_base", now)
+			var floor_size: int = maxi(9, int(round(float(ctl.get_meta("fit_base")) * MIN_FIT_SCALE)))
+			if now > floor_size:
+				ctl.add_theme_font_size_override("font_size", now - 1)
+				changed = true
+		if _shrink_text(c):
+			changed = true
+	return changed
 
 
 ## A sci-fi panel: cut corners, a soft neon edge, a few circuit-style details (a tab on
@@ -466,6 +515,7 @@ static func neon_panel(color: Color = C_CYAN, margin: float = 18.0) -> PanelCont
 	sb.content_margin_bottom = margin
 	p.add_theme_stylebox_override("panel", sb)
 	p.draw.connect(_neon.bind(p, color))
+	p.ready.connect(keep_text_inside.bind(p))
 	return p
 
 

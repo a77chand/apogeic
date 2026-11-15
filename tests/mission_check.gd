@@ -1,6 +1,7 @@
 ## Checks every mission, for every craft size it offers:
 ##   1. some set of the parts offered in its tray earns 3 stars (events ignored), and
-##   2. no two missions share the same cheapest 3-star design (each mission is its own puzzle).
+##   2. no two missions share the same cheapest 3-star design at their main size (3U where offered),
+##      so each mission is its own puzzle.
 ## Prints each mission's best design. Slow (tries every combination).
 ##   godot --headless --path . -s tests/mission_check.gd
 extends SceneTree
@@ -77,7 +78,7 @@ func _initialize() -> void:
 			print("%-8s %-3s %-22s best: %s" % [id, str(size), str(base.get("name", "")), best_key if best_key != "" else "NONE"])
 			if best_key == "":
 				problems.append("%s %s has no 3-star design" % [id, size])
-			elif str(size) == str(sizes[sizes.size() - 1]):
+			elif str(size) == ("3u" if sizes.has("3u") else str(sizes[sizes.size() - 1])):   # each mission's main size
 				if best_designs.has(best_key):
 					problems.append("%s and %s have the same best design" % [id, str(best_designs[best_key])])
 				best_designs[best_key] = str(id)

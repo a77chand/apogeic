@@ -105,7 +105,7 @@
   <path class="lo" d="M185,428 V460 H728 V118 H612" marker-end="url(#ag)"/><text class="d" x="420" y="474" fill="#c2410c">Next mission (stars open the next stage)</text>
   <path class="lo" d="M480,262 H460 V196 H478" marker-end="url(#ag)"/><text class="d" x="372" y="230" fill="#c2410c">Back (asks first)</text>
   <!-- side activities -->
-  <rect class="s" x="10" y="176" width="200" height="34" rx="7"/><text class="t" x="110" y="198" text-anchor="middle">NASA problem: can the truck see?</text>
+  <rect class="s" x="10" y="176" width="200" height="34" rx="7"/><text class="t" x="110" y="198" text-anchor="middle">NASA problem: can the rover see?</text>
   <text class="d" x="14" y="226">1 Sensors → 2 Route → 3 Shadows</text>
   <rect class="s" x="10" y="240" width="95" height="30" rx="7"/><text class="t" x="57" y="260" text-anchor="middle">Trivia</text>
   <rect class="s" x="115" y="240" width="95" height="30" rx="7"/><text class="t" x="162" y="260" text-anchor="middle">Logbook</text>
@@ -197,7 +197,7 @@
   <tr><td>launch</td><td>The launch, animated; failure shows the stage, an error code and the reasons.</td></tr>
   <tr><td>ops</td><td>Operations week by week: data, battery, fuel, events with a timer.</td></tr>
   <tr><td>report</td><td>Stars, the cause chain, the mission chart, retry or move on.</td></tr>
-  <tr><td>truck · truck_route</td><td>The NASA problem: sensors, then route, then moving shadows.</td></tr>
+  <tr><td>truck · truck_route</td><td>The NASA problem with the hopping rover: sensors, then three route sets, then moving shadows.</td></tr>
   <tr><td>trivia · logbook · demo</td><td>Star-dust trivia, lessons learned, and the judge tour.</td></tr>
 </table>
 
@@ -229,12 +229,13 @@
   <li><b>Design values</b> (Sim.evaluate_design): mass = bus + parts; power made by panels (capped by the craft in Earth Imager: 1U 2.5 W, 3U 20 W, 6U 57.6 W); power used by bus and parts; battery need = power used × eclipse minutes; data delivered = the smaller of made and sent.</li>
   <li><b>The clock:</b> one day passes every few seconds. Every day adds staff cost, and launch day = build day + post-build days + retests, never earlier than the licence.</li>
   <li><b>Pressure:</b> removing or swapping a fitted part costs rework days and money; a HURRY warning flashes when the launch date nears the deadline.</li>
-  <li><b>Back</b> asks "Progress will be lost for this round" before returning to the briefing; "Bring back my last parts" can restore the design.</li>
+  <li><b>Back</b> asks first: progress for this round is lost and leaving costs 1 life. "Bring back my last parts" can restore the design.</li>
+  <li><b>Each mission is its own puzzle:</b> it offers only the spacecraft that really flew (CubeSat sizes where the mission used CubeSats, otherwise one satellite with no size choice) and only the parts that make sense for it, so each mission has a different best design (checked by <code>tests/mission_check.gd</code>). Earth Imager offers 1U, 3U and 6U with the team's values sheet: mass 1.33 / 4 / 8 kg, power 2.5 / 20 / 57.6 W, and a data goal that follows the data rate (19.6 / 125 / 125 kbps).</li>
 </ul>
 
 <h3>4.4 Test lab and launch</h3>
 <ul>
-  <li><b>Test events</b> (vibration, thermal, software …) give a choice under a timer. Leaving a problem unfixed records a <i>flaw</i>.</li>
+  <li><b>Test events</b> (vibration, thermal, software …) give a choice with a 30-second timer. Leaving a problem unfixed records a <i>flaw</i>.</li>
   <li><b>Launch outcome</b> is decided by the player's choices, never by chance (Sim.launch_outcome):
     <ul>
       <li><b>On the pad:</b> readiness below the minimum, so the launch is called off.</li>
@@ -262,17 +263,17 @@
   <li><b>Grade:</b> success (goal met), partial (60% of the goal or more), failed (less).</li>
 </ul>
 
-<h3>4.7 NASA problem: can the truck see?</h3>
+<h3>4.7 NASA problem: can the rover see? (a hopping rover)</h3>
 <ul>
-  <li><b>1 Sensors:</b> choose sensors within mass, power and cost limits; a drive test shows which ground conditions each one sees.</li>
-  <li><b>2 Route:</b> click squares to plan a path for a solar-powered scout rover; shadows drain the battery, dust hides rocks, ridges block the way.</li>
-  <li><b>3 Shadows:</b> the same, but the Sun moves each step so shadows sweep across the map; waiting in sunlight recharges. Each challenge opens when the one before is done.</li>
+  <li><b>1 Sensors:</b> choose sensors within mass, power and cost limits; a drive test (1x or 2x speed) shows the rover hopping over the rocks it sees and hitting the ones it cannot.</li>
+  <li><b>2 Route (3 sets, each trickier):</b> move with WASD or the arrow keys (or click squares) to plan a path for a solar-powered scout rover; shadows drain the battery, dust hides rocks, ridges block the way.</li>
+  <li><b>3 Shadows:</b> the same, but the Sun moves each step so shadows sweep across the map; waiting in sunlight recharges. Each challenge has its own tips and a Next button, and opens when the one before is done.</li>
 </ul>
 
 <h2>5. Progress, rewards and saving</h2>
 <ul>
   <li><b>Missions</b> come in stages of 7. A stage opens when the stage before has 17 of its 21 stars. Missions open only after the four puzzles.</li>
-  <li><b>Lives:</b> 5. A 0-star mission costs one; one comes back every 30 minutes, or can be bought for 1,500 star dust.</li>
+  <li><b>Lives:</b> 5. A 0-star mission costs one, and so does leaving a mission part-way (Home, Quit or the workshop Back button warn first). One comes back every hour, or can be bought for 1,500 star dust.</li>
   <li><b>Star dust:</b> 500 the first time a mission gets 3 stars; 50 per right trivia answer (up to 3 rounds a day, 10 minutes apart).</li>
   <li><b>Saved</b> to <code>user://save.json</code>: puzzles and missions done, stars, lives, star dust, profile, settings (sound, music, text size, tips), truck and trivia progress.</li>
 </ul>

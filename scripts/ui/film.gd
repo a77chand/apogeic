@@ -234,7 +234,7 @@ func _big_text(text: String, color: Color, at: float) -> void:
 		var tw: float = small.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
 		_c.draw_string(small, Vector2(mid.x - tw * 0.5, mid.y + 38.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(color, k))
 		return
-	var font: Font = UI.pixel_font()
+	var font: Font = UI.display_font()
 	var fs: int = 44
 	var w: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	while w > SCREEN.size.x - 80.0 and fs > 16:
@@ -363,7 +363,7 @@ func _budget() -> void:
 		var k: float = clampf((_t - 4.0) * 4.0, 0.0, 1.0)
 		_c.draw_set_transform(r.get_center() + Vector2(0, 30), -0.25, Vector2.ONE * lerpf(2.0, 1.0, k))
 		_c.draw_rect(Rect2(-190, -40, 380, 80), Color(UI.C_RED, 0.9 * k), false, 6.0)
-		_c.draw_string(UI.pixel_font(), Vector2(-170, 18), "CANCELLED", HORIZONTAL_ALIGNMENT_LEFT, -1, 50, Color(UI.C_RED, k))
+		_c.draw_string(UI.display_font(), Vector2(-170, 18), "CANCELLED", HORIZONTAL_ALIGNMENT_LEFT, -1, 50, Color(UI.C_RED, k))
 		_c.draw_set_transform(Vector2.ZERO)
 
 

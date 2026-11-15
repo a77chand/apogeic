@@ -222,6 +222,9 @@ func _build_tray() -> void:
 		var part: Dictionary = GameState.parts[key]
 		var card: PanelContainer = PartCard.new()
 		card.call("setup", part)
+		# the tray is one row of fixed height: keep each card's text inside it at any text size
+		card.custom_minimum_size = Vector2(card.custom_minimum_size.x, 104.0)
+		card.ready.connect(UI.keep_text_inside.bind(card))
 		card.connect("clicked", _on_fit_any)
 		card.connect("hovered", _on_card_hover)
 		card.connect("unhovered", _rest_tip)
@@ -641,10 +644,11 @@ func _refresh_slots() -> void:
 
 ## Back to the briefing. This round's parts are lost, so ask first.
 func _on_back() -> void:
-	Confirm.ask(self, "Go back?", "Progress will be lost for this round. Do you still want to go back?", "Yes", _do_back)
+	Confirm.ask(self, "Go back?", "Progress will be lost for this round, and leaving in the middle of a mission costs 1 life (you have %d). Do you still want to go back?" % GameState.lives, "Yes (-1 life)", _do_back)
 
 
 func _do_back() -> void:
 	GameState.remember_design()   # "Bring back my last parts" can still fetch them
+	GameState.abandon_mission()   # leaving part-way costs a life, as in the menu
 	GameState.reset_mission()
 	GameState.go("briefing")

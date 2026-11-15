@@ -22,7 +22,7 @@ ALL = ["solar_small", "solar_large", "battery_small", "battery_std", "camera_std
 
 # id: (kind, T, spare, ecl, drop, shield, craft_kind, craft_sizes, class name, real mass, goal text)
 M = {
- "level1": ("images", 40, 10, 35, [], False, "satellite", [], "Earth-observing satellite", "about 816 kg",
+ "level1": ("images", 40, 10, 35, [], False, "cubesat", ["1u", "3u", "6u"], "Imaging CubeSat (inspired by Landsat 1)", "1U, 3U or 6U",
             "Take photos of coastlines for 12 weeks and get them to the ground."),
  "level4": ("spectra", 6, 5, 75, ["radio_sband", "ground2"], False, "satellite", [], "First artificial satellite", "about 84 kg",
             "Send temperature readings for 12 weeks, on a simple battery-powered design."),

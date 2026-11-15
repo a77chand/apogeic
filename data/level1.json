@@ -33,10 +33,24 @@
     "medium_max_fraction": 0.9
   },
   "craft_values": {
-    "_note": "Earth Imager only: mass limit and most power the craft can make, per size, from the team's values sheet (Values.pdf). Data rate (19.6 / 125 / 125 kbps) is recorded but not used yet.",
-    "1u": {"mass_kg": 1.33, "power_w": 2.5, "data_kbps": 19.6},
-    "3u": {"mass_kg": 4.0, "power_w": 20.0, "data_kbps": 125.0},
-    "6u": {"mass_kg": 8.0, "power_w": 57.6, "data_kbps": 125.0}
+    "_note": "Earth Imager only, per CubeSat size. mass_kg, power_w (most power the craft can make) and data_kbps come from the team values sheet (Values.pdf); the weekly data goal scales with data_kbps. bus_power_w (1U) and budget_k (6U) are game placeholders so every size has a 3-star design.",
+    "1u": {
+      "mass_kg": 1.33,
+      "power_w": 2.5,
+      "data_kbps": 19.6,
+      "bus_power_w": 0.25
+    },
+    "3u": {
+      "mass_kg": 4.0,
+      "power_w": 20.0,
+      "data_kbps": 125.0
+    },
+    "6u": {
+      "mass_kg": 8.0,
+      "power_w": 57.6,
+      "data_kbps": 125.0,
+      "budget_k": 1300
+    }
   },
   "limits": {
     "mass_kg": 4.0,
@@ -187,7 +201,7 @@
   "concept_chips": [
     {
       "group": "Spacecraft",
-      "label": "Earth-observing satellite (about 816 kg)",
+      "label": "Imaging CubeSat (inspired by Landsat 1)",
       "state": "chosen",
       "why": ""
     },
@@ -240,10 +254,14 @@
     "ground2",
     "shielding"
   ],
-  "craft_kind": "satellite",
-  "craft_sizes": [],
+  "craft_kind": "cubesat",
+  "craft_sizes": [
+    "1u",
+    "3u",
+    "6u"
+  ],
   "satellite_class": {
-    "name": "Earth-observing satellite",
-    "real_mass": "about 816 kg"
+    "name": "Imaging CubeSat (inspired by Landsat 1)",
+    "real_mass": "1U, 3U or 6U"
   }
 }
