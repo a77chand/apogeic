@@ -198,16 +198,28 @@ func roll_events() -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.randomize()
 	event_picks = {}
-	var slots: Dictionary = Data.event_slots(events)
+	var slots: Dictionary = Data.event_slots(events, mission_id)
 	# a mission based on a real story leans towards the events from that story
 	var bias: Array = level.get("event_bias", [])
 	for key in slots.keys():
 		var ids: Array = slots[key]
 		var liked: Array = ids.filter(func(x: Variant) -> bool: return bias.has(str(x)))
-		if not liked.is_empty() and rng.randf() < 0.8:
+		# a mission's own real-life decision always comes up
+		var own: Array = ids.filter(func(x: Variant) -> bool: return _event_mission(str(x)) == mission_id)
+		if not own.is_empty():
+			event_picks[str(key)] = str(own[0])
+		elif not liked.is_empty() and rng.randf() < 0.8:
 			event_picks[str(key)] = str(liked[rng.randi_range(0, liked.size() - 1)])
 		else:
 			event_picks[str(key)] = str(ids[rng.randi_range(0, ids.size() - 1)])
+
+
+func _event_mission(id: String) -> String:
+	for item in events:
+		var ev: Dictionary = item
+		if str(ev.get("id", "")) == id:
+			return str(ev.get("mission", ""))
+	return ""
 
 
 ## The events that fire at this moment of the current attempt.
@@ -286,6 +298,8 @@ func begin_ops() -> void:
 	ops = Sim.new_ops_state(level, launch_eval, launch_results)
 	launch_outcome = Sim.launch_outcome(level, launch_results, launch_eval)
 	launch_eval["launch_min_readiness_pct"] = float(level.get("launch_min_readiness_pct", 0.0))
+	if sched.has("decay_after_weeks"):   # a pre-launch choice that leaves the orbit too low
+		ops["decay_week"] = int(sched["decay_after_weeks"])
 	if not bool(launch_outcome.get("reached_orbit", true)):
 		Sim.fail_launch(ops, str(launch_outcome.get("fail_text", "")))
 
