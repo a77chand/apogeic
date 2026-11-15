@@ -188,15 +188,43 @@ func _draw_planet() -> void:
 		var glow: Color = Color(0.70, 0.88, 1.0).lerp(Color(0.72, 0.50, 1.0), float(i) / 8.0)
 		draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 2.0 + float(i) * 4.0, PI * 1.0, PI * 1.9, 128, Color(glow, maxf(0.04, a)), 4.0)
 	draw_arc(c + Vector2(PX * 0.5, PX * 0.5), r + 1.0, PI * 1.05, PI * 1.7, 128, Color(0.92, 0.98, 1.0, 0.95), 3.0)
-	# a small satellite crossing above the horizon, hidden while it is behind the planet
-	var oc: Vector2 = c + Vector2(0.0, -r * 0.92)
-	var rx: float = r * 0.85
-	var ry: float = r * 0.12
-	var sa: float = _t * 0.3
-	var sp: Vector2 = oc + Vector2(cos(sa) * rx, sin(sa) * ry)
-	if sin(sa) < 0.0 and sp.distance_to(c) < r:
-		return
-	sp = sp.snapped(Vector2(4, 4))
-	draw_rect(Rect2(sp - Vector2(5, 5), Vector2(10, 10)), C_CREAM)
-	draw_rect(Rect2(sp - Vector2(19, 3), Vector2(11, 6)), Color(0.30, 0.55, 0.95))
-	draw_rect(Rect2(sp + Vector2(8, -3), Vector2(11, 6)), Color(0.30, 0.55, 0.95))
+	_draw_orbit(c, r)
+
+
+## A satellite on a real, tilted orbit round the planet: the near half of the orbit passes
+## in front of the planet's face, the far half goes behind it (hidden where the planet is in
+## the way). The satellite looks bigger on the near side, so it reads as going round, not
+## sliding back and forth.
+func _draw_orbit(c: Vector2, r: float) -> void:
+	# centred just inside the planet's top edge, so the far half of the orbit dips behind
+	# the planet and the near half passes across its face
+	var oc: Vector2 = c + Vector2(-10.0, -r - 10.0)
+	var rx: float = 390.0
+	var ry: float = 74.0
+	var tilt: float = -0.12
+	# the orbit line: a dotted ring, faint behind, brighter in front
+	for i in range(120):
+		var a: float = TAU * float(i) / 120.0
+		var p: Vector2 = oc + Vector2(cos(a) * rx, sin(a) * ry).rotated(tilt)
+		var front: bool = sin(a) > 0.0
+		if not front and p.distance_to(c) < r:
+			continue
+		if i % 2 == 0:
+			var dot: Rect2 = Rect2(p.snapped(Vector2(2, 2)) - Vector2(2, 2), Vector2(4, 4))
+			if front:
+				draw_rect(dot.grow(1.0), Color(0.10, 0.04, 0.25, 0.8))   # dark edge so it shows on the planet
+			draw_rect(dot, Color(0.55, 0.92, 1.0, 0.95 if front else 0.45))
+	# the satellite: one orbit every 16 seconds
+	var sa: float = _t * TAU / 16.0
+	var sp: Vector2 = oc + Vector2(cos(sa) * rx, sin(sa) * ry).rotated(tilt)
+	var near: bool = sin(sa) > 0.0
+	if not near and sp.distance_to(c) < r + 6.0:
+		return   # behind the planet
+	var k: float = 0.75 + 0.45 * (0.5 + 0.5 * sin(sa))   # bigger when nearer
+	sp = sp.snapped(Vector2(2, 2))
+	var body: Vector2 = Vector2(12, 12) * k
+	var panel: Vector2 = Vector2(16, 7) * k
+	draw_circle(sp, 18.0 * k, Color(UI.C_ACCENT, 0.18))
+	draw_rect(Rect2(sp - body * 0.5, body), C_CREAM)
+	draw_rect(Rect2(sp - Vector2(body.x * 0.5 + panel.x + 2.0, panel.y * 0.5), panel), Color(0.30, 0.55, 0.95))
+	draw_rect(Rect2(sp + Vector2(body.x * 0.5 + 2.0, -panel.y * 0.5), panel), Color(0.30, 0.55, 0.95))

@@ -101,7 +101,7 @@ func _link(url: String) -> LinkButton:
 	var l: LinkButton = LinkButton.new()
 	l.text = url
 	l.uri = url
-	l.add_theme_font_size_override("font_size", 13)
+	l.add_theme_font_size_override("font_size", UI.fs(13))
 	l.add_theme_color_override("font_color", UI.C_ACCENT)
 	l.underline = LinkButton.UNDERLINE_MODE_ON_HOVER
 	return l

@@ -1,7 +1,7 @@
 {
   "_note": "Sensing-truck scenario: an autonomous digging robot at the Moon's south pole. NO real-world dataset covers these sensors in these conditions, so most numbers are ILLUSTRATIVE placeholders. The exceptions are marked 'sourced' in each sensor's detect_basis, with the evidence listed under 'evidence'. The ordering (radar most robust in dust, lidar and cameras hurt by dust, cameras blind in the dark) is supported by the evidence; the exact percentages are not. Headlights have no detection of their own; their boosts replace a camera's value in shadow and dark when both are fitted.",
-  "title": "Can the truck see?",
-  "intro": "NASA's Artemis plans need robots that drive and dig on their own near the Moon's south pole, like NASA's IPEx excavator. There, the Sun stays 1 to 2 degrees above the horizon, so shadows are long and some craters never see sunlight. Pick sensors so the truck spots rocks in every condition, then drive it.",
+  "title": "Can the rover see?",
+  "intro": "NASA's Artemis plans need robots that drive and dig on their own near the Moon's south pole, like NASA's IPEx excavator. There, the Sun stays 1 to 2 degrees above the horizon, so shadows are long and some craters never see sunlight. Pick sensors so the hopping rover spots rocks in every condition, then drive it.",
   "lesson": "Each sensor fails in a different place, so a good set covers each other's weak spots within mass, power and budget. NASA's VIPER rover is designed with headlights for exactly this reason: cameras need light in the shadows.",
   "fusion_note": "Coverage words come from a simple model: sensors are treated as independent, and most of their numbers are illustrative (hover a word to see the model value). Only the structured-light 97% is a measured NASA figure.",
   "source": "placeholder",
@@ -250,14 +250,16 @@
   "problem": [
     "Robots near the Moon's south pole must drive themselves: a radio signal to Earth and back takes time, and people can't watch every metre.",
     "The Sun is only 1 to 2 degrees above the horizon there (8 to 50 degrees during Apollo), so rocks hide in long, black shadows.",
-    "If a robot misses a rock, it can break a wheel or tip over, and nobody can fix it."
+    "If the rover misses a rock, it can break a wheel or tip over, and nobody can fix it."
   ],
-  "route_note": "Route challenges: a light scout rover with a camera, a stereo camera and headlights. Battery numbers are illustrative. The idea is real: at the lunar south pole the Sun circles low around the horizon, so shadows sweep across the ground, and VIPER's team planned routes to stay in sunlight because the rover is solar powered.",
+  "route_note": "Route challenges: a light hopping rover with a camera, a stereo camera and headlights. Battery numbers are illustrative. The idea is real: at the lunar south pole the Sun circles low around the horizon, so shadows sweep across the ground, and VIPER's team planned routes to stay in sunlight because the rover is solar powered.",
   "routes": [
     {
-      "id": "route",
-      "title": "Plan the route",
-      "intro": "A light scout rover must reach the dig site. Its sensors can't see rocks in digging dust, and its battery drains in shadow and dark craters because the solar panels only charge in sunlight. Click squares to plan a path, then drive.",
+      "id": "route_1",
+      "challenge": 2,
+      "set": 1,
+      "title": "Plan the route: set 1",
+      "intro": "A light hopping rover must reach the dig site. Its sensors can't see rocks in digging dust, and its battery drains in shadow and dark craters because the solar panels only charge in sunlight. Move with WASD or the arrow keys (or click squares), then drive.",
       "lesson": "Plan around what the sensors can't see, and stay in the sunlight to keep the battery up.",
       "kit": [
         "camera",
@@ -281,7 +283,65 @@
       ]
     },
     {
+      "id": "route_2",
+      "challenge": 2,
+      "set": 2,
+      "title": "Plan the route: set 2",
+      "intro": "Set 2: less battery, and the shortcut is in shadow. Find the way round through the sunlight, even if it is longer.",
+      "lesson": "The longest way round can be the safest: sunlight is power.",
+      "kit": [
+        "camera",
+        "stereo",
+        "headlights"
+      ],
+      "sun_az": 180,
+      "sun_step_deg": 0,
+      "battery": 12,
+      "capacity": 30,
+      "waits": false,
+      "grid": [
+        "...#..........",
+        "...#....DD....",
+        "...#....DD....",
+        "S..#.CC......G",
+        "...#.CC....#..",
+        "...#.......#..",
+        "..../////..#..",
+        "....DDDD......"
+      ]
+    },
+    {
+      "id": "route_3",
+      "challenge": 2,
+      "set": 3,
+      "title": "Plan the route: set 3",
+      "intro": "Set 3: two ridges, dust at both ends and a tight battery. There is one sunny way through. The rover can't drive back over its own tracks.",
+      "lesson": "Check the whole route before you drive: one wrong square can end the mission.",
+      "kit": [
+        "camera",
+        "stereo",
+        "headlights"
+      ],
+      "sun_az": 180,
+      "sun_step_deg": 0,
+      "battery": 14,
+      "capacity": 30,
+      "waits": false,
+      "grid": [
+        "...#....#.....",
+        "...#....#..DD.",
+        "S..#.DD.#..DD.",
+        "...#.DD.#....G",
+        "...#....#..#..",
+        "...#..C.#..#..",
+        "........#..#..",
+        "..DD.../...//."
+      ]
+    },
+    {
       "id": "shadows",
+      "challenge": 3,
+      "set": 1,
       "title": "Moving shadows",
       "intro": "At the Moon's south pole the Sun circles low around the horizon, so the shadows sweep across the ground. The battery is almost flat. Wait in the sunlight to charge, and cross when the shadow has moved.",
       "lesson": "Timing matters: wait in the light for the shadows to move, instead of driving into the dark.",

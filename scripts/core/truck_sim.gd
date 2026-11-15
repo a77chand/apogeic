@@ -218,6 +218,7 @@ static func route_eval(cfg: Dictionary, route: Dictionary, path: Array) -> Dicti
 		var cond: String = route_condition(route, c, sh)
 		var pct: float = detect_chance(cfg, kit, cond) * 100.0
 		var wait: bool = c == prev
+		var revisit: bool = not wait and path.slice(0, i).has(c)
 		var gain: float = 0.0
 		if wait:
 			gain = float(energy.get("wait_clear", 4)) if cond == "clear" else float(energy.get("wait_other", -2))
@@ -227,7 +228,9 @@ static func route_eval(cfg: Dictionary, route: Dictionary, path: Array) -> Dicti
 		var safe: bool = pct >= target - EPS
 		steps.append({"cell": c, "cond": cond, "pct": pct, "safe": safe, "battery": battery, "wait": wait})
 		if fail == "":
-			if not safe:
+			if revisit:
+				fail = "The rover can't drive back over its own tracks."
+			elif not safe:
 				fail = "The rover drove into %s, where its sensors are %s, and hit a rock." % [_cond_words(cond), coverage_word(cfg, pct).to_lower()]
 			elif battery <= 0.0:
 				fail = "The battery ran flat in %s." % _cond_words(cond)

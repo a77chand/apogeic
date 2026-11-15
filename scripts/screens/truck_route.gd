@@ -1,5 +1,6 @@
 extends Control
-## Truck challenges 2 and 3: plan a route across the south pole for a light scout rover.
+## Rover challenges 2 and 3: plan a route across the south pole for a light hopping rover.
+## Challenge 2 has three sets of maps, each harder; challenge 3 has moving shadows.
 ## Click squares next to the end of the path to extend it (click the last square again to
 ## take it back; "Wait" stays a step to charge in sunlight). The map shows the shadows as
 ## they will be when the rover gets there, so in challenge 3 they move as the plan grows.
@@ -10,6 +11,7 @@ const UI = preload("res://scripts/ui/ui.gd")
 const Player = preload("res://scripts/ui/player.gd")
 const TruckSim = preload("res://scripts/core/truck_sim.gd")
 const TruckTabs = preload("res://scripts/ui/truck_tabs.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 const CELL: float = 60.0
 const ORIGIN: Vector2 = Vector2(30, 150)
@@ -23,26 +25,81 @@ var _battery_label: Label = null
 var _status: Label = null
 var _driving: float = -1.0   # step being shown while driving, -1 = planning
 var _result: Dictionary = {}
-var _tabs: Control = null
 var _next_btn: Button = null
-
-
-## The challenge number shown here: route 0 is challenge 2 (Route), route 1 is challenge 3 (Shadows).
-func _challenge() -> int:
-	return GameState.truck_route + 2
+var _routes: Array = []
 
 
 func _ready() -> void:
 	_cfg = TruckSim.load_config()
-	var routes: Array = _cfg.get("routes", [])
-	_route = routes[clampi(GameState.truck_route, 0, routes.size() - 1)]
+	_routes = _cfg.get("routes", [])
+	_route = _routes[clampi(GameState.truck_route, 0, _routes.size() - 1)]
 	_path = [TruckSim.route_find(_route, "S")]
-	_tabs = TruckTabs.bar(_cfg, _challenge())
-	add_child(_tabs)
+	add_child(TruckTabs.bar(_cfg, int(_route.get("challenge", 2))))
 	_build_intro()
 	_build_map()
 	_build_side()
+	_build_sets()
 	_refresh()
+	Tutorial.maybe_show(self, "route" if int(_route.get("challenge", 2)) == 2 else "shadows")
+
+
+## Set 1 / 2 / 3 of this challenge, with a tick on the ones done. A set opens when the
+## one before it is done.
+func _build_sets() -> void:
+	var mine: Array = []
+	for i in range(_routes.size()):
+		if int((_routes[i] as Dictionary).get("challenge", 0)) == int(_route.get("challenge", 0)):
+			mine.append(i)
+	if mine.size() <= 1:
+		return
+	var row: HBoxContainer = UI.hbox(8)
+	_place(row, Vector2(210, 650), Vector2(400, 40))
+	for k in range(mine.size()):
+		var i: int = mine[k]
+		var r: Dictionary = _routes[i]
+		var done: bool = _set_done(i)
+		var open: bool = k == 0 or GameState.demo_mode or _set_done(int(mine[k - 1]))
+		var accent: Color = UI.C_GOLD if i == GameState.truck_route else (UI.C_GREEN if done else (UI.C_ACCENT if open else UI.C_DISABLED_BORDER))
+		var b: Button = UI.pixel_button("Set %d%s" % [k + 1, " ✓" if done else ""], _go_route.bind(i), 110.0, 40.0, 11, accent)
+		b.disabled = not open
+		row.add_child(b)
+
+
+func _set_done(i: int) -> bool:
+	return bool(GameState.truck_sets_done.get(str((_routes[i] as Dictionary).get("id", "")), false))
+
+
+func _go_route(i: int) -> void:
+	GameState.truck_route = i
+	GameState.go("truck_route")
+
+
+## Keyboard: WASD or the arrow keys move the end of the path; moving back onto the last
+## square takes it back. Backspace undoes, Space waits (when allowed), Enter drives.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey) or not event.pressed or event.echo or _driving >= 0.0:
+		return
+	var k: int = (event as InputEventKey).physical_keycode
+	var d: Vector2i = Vector2i.ZERO
+	match k:
+		KEY_W, KEY_UP:
+			d = Vector2i(0, -1)
+		KEY_S, KEY_DOWN:
+			d = Vector2i(0, 1)
+		KEY_A, KEY_LEFT:
+			d = Vector2i(-1, 0)
+		KEY_D, KEY_RIGHT:
+			d = Vector2i(1, 0)
+		KEY_BACKSPACE:
+			_on_undo()
+		KEY_SPACE:
+			if bool(_route.get("waits", false)):
+				_on_wait()
+		KEY_ENTER, KEY_KP_ENTER:
+			_on_drive()
+	if d != Vector2i.ZERO:
+		_step_to(_path[_path.size() - 1] + d)
+	get_viewport().set_input_as_handled()
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -53,7 +110,7 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 
 
 func _build_intro() -> void:
-	var l: Label = UI.label(str(_route.get("intro", "")), 14, UI.C_TEXT, true)
+	var l: Label = UI.label("%s: %s" % [str(_route.get("title", "")), str(_route.get("intro", ""))], 14, UI.C_TEXT, true)
 	l.custom_minimum_size = Vector2(1220.0, 0.0)
 	_place(l, Vector2(30, 82), Vector2(1220, 60))
 
@@ -77,7 +134,7 @@ func _build_side() -> void:
 	col.add_child(_battery_bar)
 	_battery_label = UI.label("", 14)
 	col.add_child(_battery_label)
-	col.add_child(UI.label("Scout rover: camera, stereo camera, headlights", 12, UI.C_MUTED, true))
+	col.add_child(UI.label("Hopping rover: camera, stereo camera, headlights", 12, UI.C_MUTED, true))
 	# a small key to the map
 	for item in [["Sunlight: charges the battery", Color(0.72, 0.70, 0.62)], ["Shadow / dark crater: drains it", Color(0.10, 0.10, 0.16)],
 			["Digging dust: can't see rocks", Color(0.62, 0.48, 0.30)], ["Slope", Color(0.55, 0.52, 0.48)], ["Ridge: can't cross", Color(0.30, 0.28, 0.34)]]:
@@ -101,6 +158,9 @@ func _build_side() -> void:
 		row2.add_child(UI.button("Wait", _on_wait, 100.0, false))
 	row2.add_child(UI.button("Clear", _on_clear, 100.0, false))
 	col.add_child(UI.button("Drive  >", _on_drive, 330.0, true))
+	_next_btn = UI.button("Next  >", _on_next, 330.0, true)
+	_next_btn.visible = _set_done(GameState.truck_route)
+	col.add_child(_next_btn)
 	_place(UI.button("Back", _on_back, 160.0, false), Vector2(30, 650), Vector2(160, 52))
 
 
@@ -199,13 +259,26 @@ func _on_map_input(event: InputEvent) -> void:
 	if _driving >= 0.0 or not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
 		return
 	var c: Vector2i = Vector2i(int(event.position.x / CELL), int(event.position.y / CELL))
+	if _path.size() > 1 and c == _path[_path.size() - 1]:
+		_on_undo()
+		return
+	_step_to(c)
+
+
+## Extends the path to square c (next to its end). Stepping back onto the square before
+## the end takes the last step back; the rover can't cross its own tracks or a ridge.
+func _step_to(c: Vector2i) -> void:
 	var last: Vector2i = _path[_path.size() - 1]
-	if _path.size() > 1 and c == last:
+	if _path.size() > 1 and c == _path[_path.size() - 2]:
 		_on_undo()
 		return
 	if absi(c.x - last.x) + absi(c.y - last.y) != 1 or TruckSim.route_cell(_route, c) == "#":
 		GameState.play_sound("fail")
 		_status.text = "Pick a square next to the end of the path (not a ridge)."
+		return
+	if _path.has(c):
+		GameState.play_sound("fail")
+		_status.text = "The rover can't drive back over its own tracks."
 		return
 	_path.append(c)
 	GameState.play_sound("select")
@@ -251,18 +324,10 @@ func _on_drive() -> void:
 			return
 	if bool(_result.get("ok", false)):
 		GameState.play_sound("fanfare")
-		GameState.mark_truck_done(_challenge())
+		_mark_done()
 		_status.text = "Arrived safely! " + str(_route.get("lesson", ""))
 		_status.add_theme_color_override("font_color", UI.C_GREEN)
-		# rebuild the tabs so the next challenge opens straight away, and offer to go there
-		if _tabs != null and is_instance_valid(_tabs):
-			_tabs.queue_free()
-		_tabs = TruckTabs.bar(_cfg, _challenge())
-		add_child(_tabs)
-		var routes: Array = _cfg.get("routes", [])
-		if GameState.truck_route + 1 < routes.size() and _next_btn == null:
-			_next_btn = UI.button("Next: %s  >" % str(TruckTabs.NAMES[_challenge()]), _on_next, 260.0, true)
-			_place(_next_btn, Vector2(620, 650), Vector2(260, 52))
+		_next_btn.visible = true
 	else:
 		GameState.play_sound("fail")
 		_status.text = (str(_result.get("fail", "")) if str(_result.get("fail", "")) != "" else "The route stops before the dig site.") + " Change the plan and try again."
@@ -271,9 +336,28 @@ func _on_drive() -> void:
 	_map.queue_redraw()
 
 
+## This set is done; when every set of the challenge is done, the challenge is too.
+func _mark_done() -> void:
+	GameState.truck_sets_done[str(_route.get("id", ""))] = true
+	var ch: int = int(_route.get("challenge", 2))
+	var all_done: bool = true
+	for i in range(_routes.size()):
+		if int((_routes[i] as Dictionary).get("challenge", 0)) == ch and not _set_done(i):
+			all_done = false
+	if all_done:
+		GameState.mark_truck_done(ch)
+	else:
+		GameState.save_game()
+
+
+## The next set, the next challenge, or home after the last one.
 func _on_next() -> void:
-	GameState.truck_route += 1
-	GameState.go("truck_route")
+	var i: int = GameState.truck_route + 1
+	if i < _routes.size():
+		GameState.truck_route = i
+		GameState.go("truck_route")
+	else:
+		GameState.go("title")
 
 
 func _on_back() -> void:

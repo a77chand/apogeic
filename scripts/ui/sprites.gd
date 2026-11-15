@@ -169,6 +169,13 @@ func _poly(points: Array, fill: Color, line: bool = true) -> void:
 func _earth(c: Vector2, r: float) -> void:
 	for i in range(6):  # soft atmosphere glow
 		draw_circle(c, r * (1.16 - 0.025 * float(i)), Color(0.35, 0.65, 1.0, 0.045 + 0.012 * float(i)))
+	# the team's Earth drawing, when it is there
+	var tex: Texture2D = _art("res://art/backgrounds/earth_dark.png")
+	if tex != null:
+		var k: float = (r * 2.0) / float(maxi(tex.get_width(), tex.get_height()))
+		var sz: Vector2 = Vector2(tex.get_width(), tex.get_height()) * k
+		draw_texture_rect(tex, Rect2(c - sz * 0.5, sz), false)
+		return
 	draw_circle(c, r, OCEAN)
 	var land: Array = [
 		[Vector2(-0.55, -0.25), Vector2(-0.30, -0.50), Vector2(-0.05, -0.40), Vector2(-0.12, -0.15), Vector2(-0.30, 0.05), Vector2(-0.50, 0.00)],
@@ -483,15 +490,11 @@ func _band(y0: float, y1: float, c0: Color, c1: Color) -> void:
 			PackedColorArray([c0, c0, c1, c1]))
 
 
+## The satellite release background: the Earth drawn as a whole round planet (the same
+## drawing as the rest of the game), low in the frame, with the stars behind it.
 func _orbit_bg() -> void:
-	var c: Vector2 = Vector2(size.x * 0.5, size.y * 2.05)
-	var r: float = size.y * 1.38
-	for i in range(8):
-		draw_circle(c, r + float(i) * 5.0, Color(0.35, 0.65, 1.0, 0.03 + 0.012 * float(8 - i)))
-	draw_circle(c, r, OCEAN)
-	for blob in [[0.18, 0.80, 0.10], [0.42, 0.74, 0.07], [0.70, 0.78, 0.12], [0.88, 0.86, 0.09]]:
-		draw_circle(Vector2(size.x * float(blob[0]), size.y * float(blob[1])), size.y * float(blob[2]), LAND)
-	draw_arc(c, r, PI * 1.18, PI * 1.82, 64, Color(0.6, 0.85, 1.0, 0.8), 3.0)
+	var r: float = size.y * 0.30
+	_earth(Vector2(size.x * 0.5, size.y * 0.70), r)
 
 
 func _logo() -> void:

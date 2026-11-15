@@ -73,7 +73,7 @@ func _build_main_choices() -> void:
 	var skip: Button = UI.pixel_button("Skip to missions  >", _on_mission, w, 64.0, 24, Color(0.78, 0.55, 1.0))
 	UI.add_icon(skip, "target", UI.C_GOLD, 26.0)
 	_place(skip, Vector2(x, top + 168), Vector2(w, 64))
-	_place(UI.pixel_button("NASA problem: can the truck see?", _on_truck, w, 32.0, 11, Color(UI.C_ACCENT, 0.75)), Vector2(x, top + 248), Vector2(w, 32))
+	_place(UI.pixel_button("NASA problem: can the rover see?", _on_truck, w, 32.0, 11, Color(UI.C_ACCENT, 0.75)), Vector2(x, top + 248), Vector2(w, 32))
 	# four small settings: sound, music, tips, reset
 	var bw: float = (w - 18.0) / 4.0
 	var muted_col: Color = Color(UI.C_MUTED, 0.85)

@@ -14,7 +14,7 @@
     "cost_k": 200
   },
   "launch": {
-    "name": "Rideshare launch",
+    "name": "Delta 900 launch",
     "cost_k": 120
   },
   "launch_min_readiness_pct": 80,
@@ -33,10 +33,24 @@
     "medium_max_fraction": 0.9
   },
   "craft_values": {
-    "_note": "Earth Imager only: mass limit and most power the craft can make, per size, from the team's values sheet (Values.pdf). Data rate (19.6 / 125 / 125 kbps) is recorded but not used yet.",
-    "1u": {"mass_kg": 1.33, "power_w": 2.5, "data_kbps": 19.6},
-    "3u": {"mass_kg": 4.0, "power_w": 20.0, "data_kbps": 125.0},
-    "6u": {"mass_kg": 8.0, "power_w": 57.6, "data_kbps": 125.0}
+    "_note": "Earth Imager only, per CubeSat size. mass_kg, power_w (most power the craft can make) and data_kbps come from the team values sheet (Values.pdf); the weekly data goal scales with data_kbps. bus_power_w (1U) and budget_k (6U) are game placeholders so every size has a 3-star design.",
+    "1u": {
+      "mass_kg": 1.33,
+      "power_w": 2.5,
+      "data_kbps": 19.6,
+      "bus_power_w": 0.25
+    },
+    "3u": {
+      "mass_kg": 4.0,
+      "power_w": 20.0,
+      "data_kbps": 125.0
+    },
+    "6u": {
+      "mass_kg": 8.0,
+      "power_w": 57.6,
+      "data_kbps": 125.0,
+      "budget_k": 1300
+    }
   },
   "limits": {
     "mass_kg": 4.0,
@@ -44,9 +58,9 @@
     "deadline_day": 180
   },
   "orbit": {
-    "name": "Low Earth orbit, 550 km",
+    "name": "Sun-synchronous orbit, about 920 km",
     "period_min": 95.0,
-    "eclipse_min": 35.0
+    "eclipse_min": 35
   },
   "slots": [
     {
@@ -112,7 +126,7 @@
     {
       "id": "R2",
       "kind": "delivered_min",
-      "target": 40.0,
+      "target": 40,
       "unit": "MB/wk",
       "hard": false,
       "text": "Deliver at least 40 MB of photos per week",
@@ -123,7 +137,7 @@
     {
       "id": "R3",
       "kind": "power_spare_min",
-      "target": 10.0,
+      "target": 10,
       "unit": "%",
       "hard": false,
       "text": "Keep at least 10% spare power",
@@ -187,53 +201,29 @@
   "concept_chips": [
     {
       "group": "Spacecraft",
-      "label": "1U",
-      "state": "locked",
-      "why": "Too small for a camera and a radio together."
-    },
-    {
-      "group": "Spacecraft",
-      "label": "3U",
-      "state": "chosen",
-      "why": ""
-    },
-    {
-      "group": "Spacecraft",
-      "label": "6U",
-      "state": "locked",
-      "why": "Costs more than this mission's budget. Unlocks in Level 2."
-    },
-    {
-      "group": "Orbit",
-      "label": "Low Earth orbit",
+      "label": "Imaging CubeSat (inspired by Landsat 1)",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Orbit",
-      "label": "Geostationary",
-      "state": "locked",
-      "why": "Too far away for a CubeSat radio."
-    },
-    {
-      "group": "Launch",
-      "label": "Rideshare",
+      "label": "Sun-synchronous orbit, about 920 km",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Launch",
-      "label": "Own rocket",
-      "state": "locked",
-      "why": "Costs more than the whole budget."
+      "label": "Delta 900",
+      "state": "chosen",
+      "why": ""
     }
   ],
   "level_label": "Level 1  ·  Easy",
   "main_problem": "Balance",
   "rocket": {
     "kind": "rocket_rideshare",
-    "name": "Big rideshare rocket",
-    "why": "Dozens of small satellites share one big rocket, so a seat is cheap. You go where the big rocket goes, and your slot has a hard mass limit."
+    "name": "Delta 900",
+    "why": "NASA's workhorse Delta, with strap-on boosters."
   },
   "differences": [
     "The first satellite built to photograph Earth's land. Its scanner sent back hundreds of thousands of pictures of farms, forests and coastlines.",
@@ -251,5 +241,27 @@
     "source": "NASA Landsat Science, \"Landsat 1\"",
     "url": "https://landsat.gsfc.nasa.gov/satellites/landsat-1/",
     "rocket": "Delta 900"
+  },
+  "parts_offered": [
+    "solar_small",
+    "solar_large",
+    "battery_small",
+    "battery_std",
+    "camera_std",
+    "radio_uhf",
+    "radio_sband",
+    "antenna_big",
+    "ground2",
+    "shielding"
+  ],
+  "craft_kind": "cubesat",
+  "craft_sizes": [
+    "1u",
+    "3u",
+    "6u"
+  ],
+  "satellite_class": {
+    "name": "Imaging CubeSat (inspired by Landsat 1)",
+    "real_mass": "1U, 3U or 6U"
   }
 }

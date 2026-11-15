@@ -1,9 +1,10 @@
 extends RefCounted
-## The header for the truck problem: what it is on the left, the title in the middle, and
+## The header for the hopping-rover problem: what it is on the left, the title in the middle, and
 ## the three challenges as tabs on the right (1 sensors, 2 route, 3 moving shadows).
 ## A challenge opens when the one before it is done; done ones get a tick.
 
 const UI = preload("res://scripts/ui/ui.gd")
+const TruckSim = preload("res://scripts/core/truck_sim.gd")
 
 const NAMES: Array = ["Sensors", "Route", "Shadows"]
 
@@ -20,9 +21,9 @@ static func bar(cfg: Dictionary, current: int) -> Control:
 	left.alignment = BoxContainer.ALIGNMENT_CENTER
 	left.custom_minimum_size = Vector2(330.0, 0.0)
 	row.add_child(left)
-	left.add_child(UI.label("NASA problem: robots at the Moon's south pole", 13, UI.C_MUTED))
+	left.add_child(UI.label("NASA problem: a hopping rover at the Moon's south pole", 13, UI.C_MUTED))
 	left.add_child(UI.label("MOSTLY ILLUSTRATIVE NUMBERS", 11, UI.C_ORANGE))
-	var title: Label = UI.label(str(cfg.get("title", "Can the truck see?")), 26)
+	var title: Label = UI.label(str(cfg.get("title", "Can the rover see?")), 26)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -46,6 +47,18 @@ static func bar(cfg: Dictionary, current: int) -> Control:
 static func _go(n: int) -> void:
 	if n == 1:
 		GameState.go("truck")
-	else:
-		GameState.truck_route = n - 2
-		GameState.go("truck_route")
+		return
+	# the first set of this challenge that is not done yet (or its first set)
+	var routes: Array = TruckSim.load_config().get("routes", [])
+	var first: int = -1
+	for i in range(routes.size()):
+		var r: Dictionary = routes[i]
+		if int(r.get("challenge", 0)) != n:
+			continue
+		if first < 0:
+			first = i
+		if not bool(GameState.truck_sets_done.get(str(r.get("id", "")), false)):
+			first = i
+			break
+	GameState.truck_route = maxi(0, first)
+	GameState.go("truck_route")
