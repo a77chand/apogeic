@@ -14,6 +14,8 @@ const SCREENS: Dictionary = {
 	"title": "res://scripts/screens/title.gd",
 	"profile": "res://scripts/screens/profile.gd",
 	"trivia": "res://scripts/screens/trivia.gd",
+	"demo": "res://scripts/screens/demo.gd",
+	"logbook": "res://scripts/screens/logbook.gd",
 	"truck_route": "res://scripts/screens/truck_route.gd",
 	"guide": "res://scripts/screens/guide.gd",
 	"ladder": "res://scripts/screens/ladder.gd",

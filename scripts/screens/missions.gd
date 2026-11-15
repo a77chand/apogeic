@@ -322,6 +322,7 @@ func _build_bottom() -> void:
 	_tip = UI.label("", 15)
 	bar.add_child(_tip)
 	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 606), Vector2(160, 50))
+	_place(UI.button("Logbook", _on_logbook, 180.0, false), Vector2(330, 606), Vector2(180, 50))
 	_place(UI.button("All missions", _on_list, 220.0, false), Vector2(530, 606), Vector2(220, 50))
 	_place(UI.button("Go to next mission", _on_next, 260.0, true), Vector2(1000, 606), Vector2(260, 50))
 
@@ -343,6 +344,10 @@ func _on_next() -> void:
 		_index = i
 		_layout(true)
 	_on_start(id)
+
+
+func _on_logbook() -> void:
+	GameState.go("logbook")
 
 
 func _on_trivia() -> void:

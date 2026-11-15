@@ -20,6 +20,15 @@
       "year": "2017"
     },
     {
+      "title": "CubeSat Design Specification Rev 14.1",
+      "by": "Cal Poly CubeSat Program",
+      "author": "Cal Poly CubeSat Program",
+      "year": "2022",
+      "where": "nasa.gov",
+      "url": "https://www.nasa.gov/wp-content/uploads/2018/01/cubesatdesignspecificationrev14_12022-02-09.pdf",
+      "used_for": "CubeSat sizes (1U is 100 x 100 x 113.5 mm) and mass limits (Table 1: 1U 2 kg, 3U 6 kg, 6U 12 kg)"
+    },
+    {
       "title": "CubeSat Design Specification",
       "by": "Cal Poly CubeSat programme",
       "where": "cubesat.org",

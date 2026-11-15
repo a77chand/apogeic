@@ -2,7 +2,9 @@
 
 A space mission design game for the NASA Space Apps Challenge 2026. You design a small satellite, launch it, and keep it working in orbit. Every part you pick trades mass, power, data, money and time against each other, and every mission is based on a real spaceflight.
 
-**Play it in your browser:** https://a77chand.github.io/space-mission-designer/
+**Play it in your browser:** https://a77chand.github.io/space-mission-designer/ (judges: press **Judge demo** on the start page)
+
+One-page summary: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
 
 Built with Godot 4.7 (standard build), GDScript, and the Compatibility renderer, so it runs as a web (HTML5) export.
 

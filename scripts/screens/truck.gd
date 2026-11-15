@@ -77,7 +77,7 @@ func _build_conditions() -> void:
 	panel.add_child(col)
 	col.add_child(UI.label("Does it see the obstacle?", 20))
 	var target: float = float(_cfg.get("target_detect_pct", 95.0))
-	col.add_child(UI.label("Needs %d%% in every condition." % int(target), 12, UI.C_MUTED))
+	col.add_child(UI.label("Every condition must be Covered.", 12, UI.C_MUTED))
 	var list: Array = _cfg.get("conditions", [])
 	for item in list:
 		var c: Dictionary = item
@@ -222,9 +222,16 @@ func _refresh() -> void:
 		var close: bool = pct < float(_cfg.get("target_detect_pct", 95.0)) + 3.0
 		UI.set_meter(row["bar"], pct, UI.status_for(passed, close))
 		var value: Label = row["text"]
-		value.text = "%.1f%%" % pct
+		# a word, not a precise-looking %: the numbers behind it are mostly illustrative.
+		# The one measured figure (NASA Ames, 97%) is shown when only that sensor covers it.
+		value.text = TruckSim.coverage_word(_cfg, pct)
+		value.tooltip_text = "Illustrative model value: %.0f%%" % pct
+		value.mouse_filter = Control.MOUSE_FILTER_PASS
+		if selected == ["structlight"] and str(c["id"]) in ["clear", "shadow", "dark"]:
+			value.text = "Covered (97%, NASA test)"
+		value.add_theme_color_override("font_color", {"Covered": UI.C_GREEN, "Weak": UI.C_YELLOW, "Blind": UI.C_RED}.get(TruckSim.coverage_word(_cfg, pct), UI.C_TEXT))
 		var status: Label = row["status"]
-		status.text = "OK" if passed else "Miss"
+		status.text = ""
 		status.add_theme_color_override("font_color", UI.C_GREEN if passed else UI.C_RED)
 	var limits: Dictionary = _cfg.get("limits", {})
 	_set_limit("mass", float(res["mass_kg"]), float(limits.get("mass_kg", 1.0)), bool(res["mass_ok"]), "%.1f kg of %.1f kg")

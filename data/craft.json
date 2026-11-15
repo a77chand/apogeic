@@ -1,5 +1,5 @@
 {
-  "_note": "Craft size choice for the main mission. Scope agreed with the team: LEO (550 km) and rideshare only; no orbit or launch-type choice. Values come from the team's research table and still need a check against the primary sources. 'dimension' is the nominal CubeSat standard size, not from that table. Ranges are given as min/max so the game can pick one value or show the range.",
+  "_note": "Craft size choice. Mass limits and sizes are verified against the CubeSat Design Specification Rev 14.1 (Table 1) and NASA's Small Spacecraft State of the Art report. Power, launch cost and data rate are typical ranges from the team's research table, not from one published source.",
   "orbit": "LEO 550 km",
   "launch": "Rideshare",
   "craft": [
@@ -10,14 +10,14 @@
         "value": [
           10,
           10,
-          10
+          11.35
         ],
-        "source": "CubeSat standard, nominal size. Verify."
+        "source": "CDS Rev 14.1: 100 x 100 mm, 113.5 mm long"
       },
       "max_mass_kg": {
         "value": 2.0,
-        "note": "1.33 kg in older rules",
-        "source": "team table, verify"
+        "note": "Older versions of the spec allowed less (1.33 / 4 / 8 kg).",
+        "source": "CubeSat Design Specification Rev 14.1 (Cal Poly, 2022), Table 1 and section 2.2, verified 14 Nov 2026 from the copy on nasa.gov"
       },
       "peak_power_w": {
         "min": 1.0,
@@ -37,7 +37,7 @@
       "game": {
         "mass_limit_kg": 1.33,
         "launch_cost_k": 65.0,
-        "source": "placeholder, inside the table range"
+        "source": "The game uses the older, tighter limits (1.33 / 4 / 8 kg) as the rocket slot's limit, so the puzzles stay hard. Today's spec allows up to 2 kg."
       }
     },
     {
@@ -47,14 +47,14 @@
         "value": [
           10,
           10,
-          30
+          34.05
         ],
-        "source": "CubeSat standard, nominal size. Verify."
+        "source": "CDS Rev 14.1: 100 x 100 mm, 340.5 mm long"
       },
       "max_mass_kg": {
         "value": 6.0,
-        "note": "4 kg in older rules",
-        "source": "team table, verify"
+        "note": "Older versions of the spec allowed less (1.33 / 4 / 8 kg).",
+        "source": "CubeSat Design Specification Rev 14.1 (Cal Poly, 2022), Table 1 and section 2.2, verified 14 Nov 2026 from the copy on nasa.gov"
       },
       "peak_power_w": {
         "min": 7.0,
@@ -75,7 +75,7 @@
       "game": {
         "mass_limit_kg": 4.0,
         "launch_cost_k": 120.0,
-        "source": "placeholder, inside the table range"
+        "source": "The game uses the older, tighter limits (1.33 / 4 / 8 kg) as the rocket slot's limit, so the puzzles stay hard. Today's spec allows up to 6 kg."
       }
     },
     {
@@ -84,15 +84,15 @@
       "dimension_cm": {
         "value": [
           10,
-          20,
-          30
+          22.63,
+          36.6
         ],
-        "source": "CubeSat standard, nominal size. Verify."
+        "source": "NASA Small Spacecraft Technology State of the Art, Structures chapter: 100 x 226.3 x 366 mm"
       },
       "max_mass_kg": {
         "value": 12.0,
-        "note": "8 kg in older rules",
-        "source": "team table, verify"
+        "note": "Older versions of the spec allowed less (1.33 / 4 / 8 kg).",
+        "source": "CubeSat Design Specification Rev 14.1 (Cal Poly, 2022), Table 1 and section 2.2, verified 14 Nov 2026 from the copy on nasa.gov (Table 1 lists 6U at 12.00 kg)"
       },
       "peak_power_w": {
         "min": 42.0,
@@ -113,7 +113,7 @@
       "game": {
         "mass_limit_kg": 8.0,
         "launch_cost_k": 395.0,
-        "source": "placeholder, inside the table range"
+        "source": "The game uses the older, tighter limits (1.33 / 4 / 8 kg) as the rocket slot's limit, so the puzzles stay hard. Today's spec allows up to 12 kg."
       }
     }
   ],

@@ -21,9 +21,17 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+var _since_draw: float = 0.0
+
+
 func _process(delta: float) -> void:
 	_t += delta
-	queue_redraw()
+	_since_draw += delta
+	# the pixel planet is thousands of squares, so redraw 30 times a second, not every frame
+	# (smooth enough for a slow spin, and much lighter in a browser)
+	if _since_draw >= 1.0 / 30.0:
+		_since_draw = 0.0
+		queue_redraw()
 
 
 func _draw() -> void:

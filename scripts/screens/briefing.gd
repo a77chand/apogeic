@@ -148,7 +148,7 @@ func _build_facts(col: VBoxContainer) -> void:
 		return
 	col.add_child(UI.label("About the %s" % str(craft.get("name", "")), 14, UI.C_MUTED))
 	var dim: Array = craft.get("dimension_cm", {}).get("value", [])
-	var dim_words: String = " x ".join(PackedStringArray(dim.map(func(v): return str(int(v)))))
+	var dim_words: String = " x ".join(PackedStringArray(dim.map(func(v): return _num(float(v)))))
 	var power: Dictionary = craft.get("peak_power_w", {})
 	var cost: Dictionary = craft.get("launch_cost_k", {})
 	var down: Dictionary = craft.get("downlink_kbps", {})
@@ -164,7 +164,7 @@ func _build_facts(col: VBoxContainer) -> void:
 		var l: Label = UI.label(str(line), 13, UI.C_TEXT, true)
 		l.custom_minimum_size = Vector2(380.0, 0.0)
 		col.add_child(l)
-	var note: Label = UI.label("Mass and launch cost change the mission; the rest is for information. Figures still need checking.", 11, UI.C_MUTED, true)
+	var note: Label = UI.label("Size and mass limit: CubeSat Design Specification Rev 14.1. The game uses the older, tighter mass limit. Power, cost and data rate are typical ranges.", 11, UI.C_MUTED, true)
 	note.custom_minimum_size = Vector2(380.0, 0.0)
 	col.add_child(note)
 

@@ -35,6 +35,7 @@ var mission_stars: Dictionary = {}  # mission id -> best stars
 var lives: int = MAX_LIVES          # a failed mission (0 stars) costs one, saved
 var life_clock: float = 0.0         # unix time the next life started refilling (0 = full)
 var stardust: int = 0               # earned by 3-star missions and trivia, spent on lives and advice, saved
+var demo_mode: bool = false         # judge demo: everything open for this session, not saved
 var truck_done: Dictionary = {}     # truck challenge number -> true, saved
 var truck_route: int = 0            # which route challenge the route screen shows (0 = challenge 2)
 var trivia_day: String = ""         # the date of today's trivia rounds, saved
@@ -367,6 +368,8 @@ func is_stage_open(stage: int) -> bool:
 ## The first mission of a stage also needs the stage before it to have enough stars.
 ## Finished missions can be replayed in any order.
 func is_mission_open(id: String) -> bool:
+	if demo_mode:
+		return Data.MISSIONS.has(id)
 	var index: int = Data.MISSIONS.find(id)
 	if index <= 0:
 		return index == 0
@@ -448,6 +451,8 @@ func buy_life() -> bool:
 ## {"ok": can a round start now, "wait": seconds until it can, "left": rounds left today,
 ## "why": a short reason when it cannot}
 func trivia_status(cfg: Dictionary) -> Dictionary:
+	if demo_mode:
+		return {"ok": true, "wait": 0, "left": int(cfg.get("rounds_per_day", 3)), "why": ""}
 	var today: String = Time.get_date_string_from_system()
 	var played: int = trivia_rounds if trivia_day == today else 0
 	var per_day: int = int(cfg.get("rounds_per_day", 3))
@@ -623,6 +628,8 @@ func mark_truck_done(n: int) -> void:
 
 ## Missions open only after every training puzzle has been finished once.
 func all_puzzles_done() -> bool:
+	if demo_mode:
+		return true
 	for id in puzzle_order():
 		if not is_puzzle_done(str(id)):
 			return false
