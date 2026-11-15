@@ -23,7 +23,7 @@ Built with Godot 4.7 (standard build), GDScript, and the Compatibility renderer,
   - Every 7 missions is a stage, and the next stage needs 17 of its 21 stars.
   - You have 5 lives (a 0-star mission costs one; one comes back every 30 minutes).
   - The first 3-star result on a mission earns 500 star dust, and 1500 star dust buys a life.
-- **A "NASA problem" scenario:** a digging robot at the Moon's south pole must spot rocks in low sun, black shadows, dark craters, dust and slopes. Pick sensors (including VIPER-style headlights), then run a drive test. The setting is sourced from NASA papers. Only the structured-light figure (about 97%, NASA Ames) is a measured detection rate; the others are illustrative and labelled as such.
+- **A "NASA problem" scenario:** a digging robot at the Moon's south pole must spot rocks in low sun, black shadows, dark craters, dust and slopes. Three challenges: pick sensors (including VIPER-style headlights) and run a drive test; plan a route around dust and shadow; then time the drive while the shadows sweep round. The setting is sourced from NASA papers. Only the structured-light figure (about 97%, NASA Ames) is a measured detection rate; the others are illustrative and labelled as such.
 - **Space trivia for star dust:** 40 questions on rockets, missions and the people behind them (with NASA photos), 10 per round, up to 3 rounds a day.
 - **Real decisions:** nine missions include the decision the real team faced, with what they actually chose as one of the options.
 - **Your astronaut:** real suit styles from different decades and countries, mission patch emblems, and a cheer when a mission earns stars.

@@ -127,3 +127,101 @@ static func evaluate(cfg: Dictionary, selected: Array) -> Dictionary:
 		"passed": all_detect_ok and limits_ok and not selected.is_empty(),
 		"causes": causes,
 	}
+
+
+# ---------------------------------------------------------------- route challenges
+## A route is a grid of letters: "." open ground, "#" a ridge (cannot be crossed, casts a
+## shadow), "C" a crater floor that never sees sunlight, "D" digging dust, "/" a slope,
+## "S" the start and "G" the dig site. The Sun is low; sun_az is where it is (180 = from
+## the left), and it moves sun_step_deg every step, so the shadows sweep round.
+
+static func route_cell(route: Dictionary, c: Vector2i) -> String:
+	var grid: Array = route.get("grid", [])
+	if c.y < 0 or c.y >= grid.size():
+		return "#"
+	var row: String = str(grid[c.y])
+	if c.x < 0 or c.x >= row.length():
+		return "#"
+	return row[c.x]
+
+
+static func route_find(route: Dictionary, letter: String) -> Vector2i:
+	var grid: Array = route.get("grid", [])
+	for y in range(grid.size()):
+		var x: int = str(grid[y]).find(letter)
+		if x >= 0:
+			return Vector2i(x, y)
+	return Vector2i(-1, -1)
+
+
+## The squares in shadow at step t: behind every ridge square, away from the Sun.
+static func route_shadows(cfg: Dictionary, route: Dictionary, t: int) -> Dictionary:
+	var az: float = deg_to_rad(float(route.get("sun_az", 180.0)) + float(route.get("sun_step_deg", 0.0)) * float(t))
+	var dir: Vector2 = Vector2(-cos(az), sin(az))
+	var length: int = int((cfg.get("route_energy", {}) as Dictionary).get("shadow_length", 5))
+	var out: Dictionary = {}
+	var grid: Array = route.get("grid", [])
+	for y in range(grid.size()):
+		var row: String = str(grid[y])
+		for x in range(row.length()):
+			if row[x] != "#":
+				continue
+			for k in range(1, length + 1):
+				# round half away from zero, the same as the level check in tools
+				var fx: float = float(x) + dir.x * float(k)
+				var fy: float = float(y) + dir.y * float(k)
+				var p: Vector2i = Vector2i(int(roundf(fx)), int(roundf(fy)))
+				if route_cell(route, p) != "#":
+					out[p] = true
+	return out
+
+
+static func route_condition(route: Dictionary, c: Vector2i, shadows: Dictionary) -> String:
+	var letter: String = route_cell(route, c)
+	if letter == "C":
+		return "dark"
+	if letter == "D":
+		return "dust"
+	if shadows.has(c):
+		return "shadow"
+	if letter == "/":
+		return "slope"
+	return "clear"
+
+
+## Plays a path (start first; a repeated square is a wait). Returns every step with its
+## condition, whether the kit sees rocks there, and the battery; plus where it failed.
+static func route_eval(cfg: Dictionary, route: Dictionary, path: Array) -> Dictionary:
+	var energy: Dictionary = cfg.get("route_energy", {})
+	var target: float = float(cfg.get("target_detect_pct", 95.0))
+	var kit: Array = route.get("kit", [])
+	var battery: float = float(route.get("battery", 10))
+	var cap: float = float(route.get("capacity", 30))
+	var steps: Array = []
+	var fail: String = ""
+	for i in range(1, path.size()):
+		var prev: Vector2i = path[i - 1]
+		var c: Vector2i = path[i]
+		var sh: Dictionary = route_shadows(cfg, route, i)
+		var cond: String = route_condition(route, c, sh)
+		var pct: float = detect_chance(cfg, kit, cond) * 100.0
+		var wait: bool = c == prev
+		var gain: float = 0.0
+		if wait:
+			gain = float(energy.get("wait_clear", 4)) if cond == "clear" else float(energy.get("wait_other", -2))
+		else:
+			gain = float(energy.get(cond, 0))
+		battery = minf(cap, battery + gain)
+		var safe: bool = pct >= target - EPS
+		steps.append({"cell": c, "cond": cond, "pct": pct, "safe": safe, "battery": battery, "wait": wait})
+		if fail == "":
+			if not safe:
+				fail = "The rover drove into %s and could not see a rock (it spots only %.0f%% there)." % [_cond_words(cond), pct]
+			elif battery <= 0.0:
+				fail = "The battery ran flat in %s." % _cond_words(cond)
+	var reached: bool = not path.is_empty() and path[path.size() - 1] == route_find(route, "G")
+	return {"steps": steps, "fail": fail, "reached": reached, "ok": reached and fail == "", "battery": battery}
+
+
+static func _cond_words(cond: String) -> String:
+	return {"clear": "sunlight", "shadow": "a shadow", "dark": "a crater that never sees sunlight", "dust": "digging dust", "slope": "a slope"}.get(cond, cond)

@@ -8,6 +8,8 @@
 | NASA tests an autonomous lunar excavator (IPEx) under simulated south pole lighting, using onboard cameras for localisation and hazard detection. | [IPEx test facility, NTRS 20250000128](https://ntrs.nasa.gov/api/citations/20250000128/downloads/ipex_tent.pdf) |
 | VIPER is designed with eight LED-array lights tuned for permanently shadowed regions, with headlights for long-range stereo imaging (the first headlights on a lunar rover). | [VIPER mobility hardware, LSIC 2024, NTRS 20240013903](https://ntrs.nasa.gov/api/citations/20240013903/downloads/LSIC_2024-Tech%20Infusion_Panel-VIPER_Mob-HW.pdf) |
 
+**Route challenges (2 and 3):** a light scout rover (camera, stereo, headlights) must plan a path. The rules (solar charging only in sunlight, shadows that sweep as the Sun circles low around the horizon) follow the real situation at the south pole; the battery numbers and shadow lengths are illustrative. Levels were checked solvable by search, and challenge 3 can only be solved by waiting for the shadow to move (tests/truck_tests.gd).
+
 The thermal camera was removed: no evidence supported it. LED headlights were added (the idea is from VIPER; the improvement numbers are illustrative).
 
 **Short version:** no published study gives detection rates for these sensors (camera, stereo, lidar, radar, thermal) in these Moon conditions (dust, long shadows, darkness, slopes). The judges gave no data either. So **most numbers in `data/truck.json` are illustrative** and the game says so on screen ("Mostly illustrative numbers" and the "Where is the data from?" button).

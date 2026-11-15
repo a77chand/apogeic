@@ -46,7 +46,7 @@ func run() -> void:
 	var saved_file: String = FileAccess.get_file_as_string(gs.SAVE_PATH) if FileAccess.file_exists(gs.SAVE_PATH) else ""
 	gs.set("tips_on", false)
 	# every screen opens
-	for id in ["title", "guide", "profile", "ladder", "puzzle_mass", "puzzle_power", "puzzle_link", "puzzle_time", "missions", "trivia", "truck", "briefing", "workshop"]:
+	for id in ["title", "guide", "profile", "ladder", "puzzle_mass", "puzzle_power", "puzzle_link", "puzzle_time", "missions", "trivia", "truck", "truck_route", "briefing", "workshop"]:
 		gs.go(id)
 		await wait(0.3)
 		check(current() == id, "screen opens: " + id)

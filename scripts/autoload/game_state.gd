@@ -35,6 +35,8 @@ var mission_stars: Dictionary = {}  # mission id -> best stars
 var lives: int = MAX_LIVES          # a failed mission (0 stars) costs one, saved
 var life_clock: float = 0.0         # unix time the next life started refilling (0 = full)
 var stardust: int = 0               # earned by 3-star missions and trivia, spent on lives and advice, saved
+var truck_done: Dictionary = {}     # truck challenge number -> true, saved
+var truck_route: int = 0            # which route challenge the route screen shows (0 = challenge 2)
 var trivia_day: String = ""         # the date of today's trivia rounds, saved
 var trivia_rounds: int = 0          # rounds played on trivia_day, saved
 var trivia_last: float = 0.0        # unix time the last round finished, saved
@@ -542,7 +544,7 @@ func save_game() -> void:
 		return
 	file.store_string(JSON.stringify({"puzzles_done": puzzles_done, "best_stars": best_stars, "tutorial_seen": tutorial_seen, "muted": muted, "missions_done": missions_done, "mission_stars": mission_stars,
 			"player_name": player_name, "player_title": player_title, "avatar_suit": avatar_suit, "avatar_patch": avatar_patch,
-			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on, "trivia_day": trivia_day, "trivia_rounds": trivia_rounds, "trivia_last": trivia_last,
+			"sfx_volume": sfx_volume, "music_volume": music_volume, "music_muted": music_muted, "font_size": font_size, "tips_on": tips_on, "truck_done": truck_done, "trivia_day": trivia_day, "trivia_rounds": trivia_rounds, "trivia_last": trivia_last,
 			"lives": lives, "life_clock": life_clock, "stardust": stardust}))
 	file.close()
 
@@ -588,6 +590,9 @@ func load_save() -> void:
 	music_muted = bool(data.get("music_muted", false))
 	font_size = str(data.get("font_size", "medium"))
 	tips_on = bool(data.get("tips_on", true))
+	var td: Variant = data.get("truck_done", {})
+	if typeof(td) == TYPE_DICTIONARY:
+		truck_done = td
 	trivia_day = str(data.get("trivia_day", ""))
 	trivia_rounds = int(data.get("trivia_rounds", 0))
 	trivia_last = float(data.get("trivia_last", 0.0))
@@ -604,6 +609,15 @@ func set_tips_on(value: bool) -> void:
 	tips_on = value
 	if value:
 		tutorial_seen = {}   # turning tips back on shows them again from the start
+	save_game()
+
+
+func is_truck_done(n: int) -> bool:
+	return bool(truck_done.get(str(n), false))
+
+
+func mark_truck_done(n: int) -> void:
+	truck_done[str(n)] = true
 	save_game()
 
 
