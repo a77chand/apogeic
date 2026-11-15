@@ -1,5 +1,5 @@
 {
-  "_note": "Shown by the menu's Resources and sources button (scripts/ui/sources.gd). Keep it honest: say what is real, what is rounded, and what is invented for gameplay. Every url was checked (HTTP 200) on 14 Nov 2026; check again before the final submission. The missions' own sources are in each level file's based_on block and are listed automatically.",
+  "_note": "Shown by the menu's Resources and sources button (scripts/ui/sources.gd). Keep it honest: say what is real, what is rounded, and what is invented for gameplay. Every url was checked (HTTP 200) on 14 Nov 2026, including the ones added later that day; check again before the final submission. The missions' own sources are in each level file's based_on block and are listed automatically.",
   "accuracy": [
     "Real physics: one low Earth orbit at about 550 km takes about 95 minutes, and the Earth hides the Sun for up to about 35 of them. That is why every satellite needs a battery.",
     "Real rules: CubeSats come in standard sizes (1U is a 10 cm cube, 3U is three of them), and a rideshare rocket sells a slot with a hard mass limit.",
@@ -7,7 +7,9 @@
     "Real launch stages: max-Q, the second-stage burn and separation are the moments a real launch is most likely to go wrong.",
     "Rounded: part masses, power and data rates are in the right range for CubeSat parts, but rounded so the maths is easy.",
     "Invented for gameplay: prices, the exact risk rules, fuel use and the event cards. They teach the trade-off, not the exact number.",
-    "Every screen with made-up numbers says PLACEHOLDER NUMBERS in the bottom bar."
+    "Checked: CubeSat sizes and mass limits come from the CubeSat Design Specification Rev 14.1 (the game uses the older, tighter limits on purpose).",
+    "The NASA problem: the setting is sourced (south pole lighting, VIPER, IPEx). Only the structured-light 97% is a measured detection rate, so the other sensors are shown as Covered / Weak / Blind, not as percentages.",
+    "Every screen with made-up numbers says PLACEHOLDER or ILLUSTRATIVE NUMBERS."
   ],
   "sources": [
     {
@@ -90,6 +92,62 @@
       "url": "https://www.nasa.gov/centers-and-facilities/ames/the-dark-side-of-the-crater-how-light-looks-different-on-the-moon-and-what-nasa-is-doing-about-it",
       "author": "NASA Ames Research Center",
       "year": "n.d."
+    },
+    {
+      "title": "Lighting study for driving at the lunar south pole (NTRS 20240011393)",
+      "author": "NASA",
+      "year": "2024",
+      "where": "ntrs.nasa.gov",
+      "url": "https://ntrs.nasa.gov/citations/20240011393",
+      "used_for": "The NASA problem: the Sun is about 1 to 2 degrees above the horizon at the south pole (8 to 50 degrees during Apollo), giving long shadows that make driving hard"
+    },
+    {
+      "title": "VIPER mobility hardware, LSIC 2024 panel (NTRS 20240013903)",
+      "author": "NASA",
+      "year": "2024",
+      "where": "ntrs.nasa.gov",
+      "url": "https://ntrs.nasa.gov/api/citations/20240013903/downloads/LSIC_2024-Tech%20Infusion_Panel-VIPER_Mob-HW.pdf",
+      "used_for": "The NASA problem: VIPER's LED headlights for permanently shadowed regions (the headlights sensor)"
+    },
+    {
+      "title": "ISRU Pilot Excavator (IPEx) test facility (NTRS 20250000128)",
+      "author": "NASA",
+      "year": "2025",
+      "where": "ntrs.nasa.gov",
+      "url": "https://ntrs.nasa.gov/api/citations/20250000128/downloads/ipex_tent.pdf",
+      "used_for": "The NASA problem: an autonomous lunar digging robot tested under south pole lighting, with cameras for hazard detection"
+    },
+    {
+      "title": "VIPER lunar operations",
+      "author": "NASA Science",
+      "year": "n.d.",
+      "where": "science.nasa.gov",
+      "url": "https://science.nasa.gov/mission/viper/lunar-operations/",
+      "used_for": "The NASA problem: hazard cameras and route planning between waypoints"
+    },
+    {
+      "title": "Part 2: Artificial intelligence and NASA's first robotic lunar rover",
+      "author": "NASA Artemis blog",
+      "year": "2023",
+      "where": "nasa.gov",
+      "url": "https://www.nasa.gov/blogs/artemis/2023/12/14/part-2-artificial-intelligence-and-nasas-first-robotic-lunar-rover/",
+      "used_for": "Route challenges: VIPER's team plans routes that stay in sunlight because the rover is solar powered, and shadows move"
+    },
+    {
+      "title": "NASA Image and Video Library",
+      "author": "NASA",
+      "year": "n.d.",
+      "where": "images.nasa.gov",
+      "url": "https://images.nasa.gov",
+      "used_for": "The 22 photographs in Space trivia (each credited 'Image: NASA'; image ids are listed in docs/CREDITS.md)"
+    },
+    {
+      "title": "NASA images and media usage guidelines",
+      "author": "NASA",
+      "year": "n.d.",
+      "where": "nasa.gov",
+      "url": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "used_for": "Why the NASA photos can be used: NASA media are generally not copyrighted; no NASA logo or endorsement is implied"
     }
   ],
   "made_with": [

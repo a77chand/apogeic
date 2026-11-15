@@ -43,6 +43,16 @@ func _ready() -> void:
 	for item in cfg.get("sources", []):
 		var src: Dictionary = item
 		body.add_child(_card(src, "Used for: " + str(src.get("used_for", "")), accessed))
+	# the NASA problem's own evidence (from truck.json), each with how strong it is
+	var listed: Array = cfg.get("sources", []).map(func(x: Variant) -> String: return str((x as Dictionary).get("url", "")))
+	var truck: Dictionary = Data.load_dict("res://data/truck.json")
+	var extra: Array = (truck.get("evidence", []) as Array).filter(func(e: Variant) -> bool: return not listed.has(str((e as Dictionary).get("url", ""))))
+	if not extra.is_empty():
+		body.add_child(UI.label("The NASA problem: sensor evidence", 18, UI.C_TEXT))
+		for item in extra:
+			var e: Dictionary = item
+			var src: Dictionary = {"title": str(e.get("title", "")), "cite": "Kind of evidence: " + str(e.get("kind", "")), "url": str(e.get("url", ""))}
+			body.add_child(_card(src, "Supports: " + str(e.get("supports", "")), accessed))
 	body.add_child(UI.label("The real missions behind the 20 levels", 18, UI.C_TEXT))
 	for id in Data.MISSIONS:
 		var level: Dictionary = Data.load_level(str(id))
