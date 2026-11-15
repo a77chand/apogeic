@@ -179,45 +179,21 @@
   "concept_chips": [
     {
       "group": "Spacecraft",
-      "label": "1U",
-      "state": "locked",
-      "why": "Too small for a camera and a fast radio."
-    },
-    {
-      "group": "Spacecraft",
-      "label": "3U",
-      "state": "chosen",
-      "why": ""
-    },
-    {
-      "group": "Spacecraft",
-      "label": "6U",
-      "state": "locked",
-      "why": "Costs more than this mission budget."
-    },
-    {
-      "group": "Orbit",
-      "label": "Low Earth orbit",
+      "label": "Planet Labs Doves",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Orbit",
-      "label": "Geostationary",
-      "state": "locked",
-      "why": "Too far away for a CubeSat radio."
-    },
-    {
-      "group": "Launch",
-      "label": "Rideshare",
+      "label": "Space station orbit, 400 km",
       "state": "chosen",
       "why": ""
     },
     {
       "group": "Launch",
-      "label": "Own rocket",
-      "state": "locked",
-      "why": "Costs more than the whole budget."
+      "label": "Space station cargo ship (Antares)",
+      "state": "chosen",
+      "why": ""
     }
   ],
   "blurb": "Huge photo files, a flood that will not wait, and a low orbit that eats fuel.",
@@ -246,5 +222,13 @@
     "source": "Wikipedia, \"Planet Labs\"",
     "url": "https://en.wikipedia.org/wiki/Planet_Labs",
     "rocket": "Antares"
+  },
+  "craft_kind": "cubesat",
+  "craft_sizes": [
+    "3u"
+  ],
+  "satellite_class": {
+    "name": "Planet Labs Doves",
+    "real_mass": "3U CubeSats"
   }
 }

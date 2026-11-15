@@ -164,7 +164,7 @@ func _section(text: String) -> Label:
 func _menu_button(text: String, on_press: Callable, primary: bool) -> Button:
 	var b: Button = UI.button(text, on_press, 340.0, primary)
 	b.custom_minimum_size = Vector2(340.0, 36.0)
-	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_font_size_override("font_size", UI.fs(16))
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	return b
 
@@ -172,7 +172,7 @@ func _menu_button(text: String, on_press: Callable, primary: bool) -> Button:
 func _leave_button(text: String, on_press: Callable, accent: Color) -> Button:
 	var b: Button = UI.button(text, on_press, 165.0, false)
 	b.custom_minimum_size = Vector2(165.0, 42.0)
-	b.add_theme_font_size_override("font_size", 16)
+	b.add_theme_font_size_override("font_size", UI.fs(16))
 	b.add_theme_color_override("font_color", accent)
 	b.add_theme_stylebox_override("normal", UI.box(Color(accent, 0.12), accent, 8, 2, 8.0))
 	b.add_theme_stylebox_override("hover", UI.box(Color(accent, 0.28), accent, 8, 2, 8.0))
@@ -191,7 +191,7 @@ func _volume_row(text: String, volume: float, on: bool, on_slide: Callable, on_t
 	head.add_child(pct)
 	var toggle: Button = UI.button("On" if on else "Muted", Callable(), 84.0, false)
 	toggle.custom_minimum_size = Vector2(84.0, 32.0)
-	toggle.add_theme_font_size_override("font_size", 15)
+	toggle.add_theme_font_size_override("font_size", UI.fs(15))
 	toggle.pressed.connect(func() -> void:
 		var now_on: bool = toggle.text != "On"
 		toggle.text = "On" if now_on else "Muted"
@@ -229,6 +229,12 @@ func _close() -> void:
 		_layer.queue_free()
 	_layer = null
 	get_tree().paused = false
+
+
+## Leaving a mission part-way: costs a life, then goes to the screen.
+func _abandon(screen: String) -> void:
+	GameState.abandon_mission()
+	_go(screen)
 
 
 func _go(screen: String) -> void:
@@ -274,18 +280,18 @@ func _host() -> Control:
 
 func _on_home() -> void:
 	if GameState.in_mission():
-		Confirm.ask(_host(), "Quit the game?", "You are in the middle of a mission. If you go home now, you will lose your progress on this attempt.", "Yes, go home", _go.bind("title"))
+		Confirm.ask(_host(), "Leave this mission?", "You are in the middle of a mission. Going home now loses this attempt and costs 1 life (you have %d)." % GameState.lives, "Yes, go home (-1 life)", _abandon.bind("title"))
 		return
 	_go("title")
 
 
 func _on_quit_mission() -> void:
-	Confirm.ask(_layer, "Quit this mission?", "Your parts and progress on this attempt will be lost. You can pick the mission again.", "Yes, quit", _go.bind("missions"))
+	Confirm.ask(_layer, "Quit this mission?", "Your parts and progress on this attempt will be lost, and it costs 1 life (you have %d)." % GameState.lives, "Yes, quit (-1 life)", _abandon.bind("missions"))
 
 
 func _on_guide() -> void:
 	if GameState.in_mission():
-		Confirm.ask(_layer, "Leave the mission?", "Opening the guide leaves this mission and loses this attempt.", "Yes, open guide", _go.bind("guide"))
+		Confirm.ask(_layer, "Leave the mission?", "Opening the guide leaves this mission, loses this attempt and costs 1 life (you have %d)." % GameState.lives, "Yes, open guide (-1 life)", _abandon.bind("guide"))
 		return
 	_go("guide")
 

@@ -128,7 +128,7 @@ func _build_left_panel() -> void:
 	col.add_child(_slot_col)
 	_restore_btn = UI.button("Bring back my last parts", _on_restore, 266.0, false)
 	_restore_btn.custom_minimum_size = Vector2(266.0, 36.0)
-	_restore_btn.add_theme_font_size_override("font_size", 15)
+	_restore_btn.add_theme_font_size_override("font_size", UI.fs(15))
 	_restore_btn.tooltip_text = "Puts back the parts from your last attempt."
 	col.add_child(_restore_btn)
 
@@ -215,7 +215,10 @@ func _build_tray() -> void:
 	var row: HBoxContainer = UI.hbox(8)
 	scroll.add_child(row)
 	var order: Array = GameState.parts.keys()
+	var offered: Array = GameState.level.get("parts_offered", [])   # a mission can leave parts out
 	for key in order:
+		if not offered.is_empty() and not offered.has(str(key)):
+			continue
 		var part: Dictionary = GameState.parts[key]
 		var card: PanelContainer = PartCard.new()
 		card.call("setup", part)

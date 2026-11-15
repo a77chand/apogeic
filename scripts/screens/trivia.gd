@@ -79,38 +79,102 @@ func _clear() -> void:
 
 # ---------------------------------------------------------------- the start panel
 
+## The start panel: a centred title, a small row of cards that say how it works (with
+## little pictures and mini charts), your star dust, the rounds left today and the button.
 func _show_intro() -> void:
 	_clear()
-	var panel: PanelContainer = UI.neon_panel(UI.C_CYAN, 26.0)
-	_place(panel, Vector2(290, 120), Vector2(700, 420), _body)
+	var panel: PanelContainer = UI.neon_panel(UI.C_CYAN, 24.0)
+	_place(panel, Vector2(150, 96), Vector2(980, 480), _body)
 	var col: VBoxContainer = UI.vbox(14)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(col)
-	col.add_child(UI.label("Earn star dust", 26, UI.C_CYAN))
+	var head: Label = UI.label("Earn star dust", 30, UI.C_CYAN)
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(head)
+	var sub: Label = UI.label("Answer space questions. Spend star dust on lives and expert advice.", 16, UI.C_MUTED, true)
+	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub.custom_minimum_size = Vector2(900.0, 0.0)
+	col.add_child(sub)
+	# four small cards, each with its own little picture
 	var per: int = int(_cfg.get("stardust_per_correct", 50))
-	col.add_child(UI.bullets([
-		"10 questions on rockets, missions and the people behind them",
-		"%d seconds each. They get harder as you go" % int(_cfg.get("seconds", 20)),
-		"%d star dust for every right answer (up to %d a round)" % [per, per * 10],
-		"Up to %d rounds a day, %d minutes apart" % [int(_cfg.get("rounds_per_day", 3)), int(_cfg.get("cooldown_minutes", 10))],
-	], 16, UI.C_TEXT, 640.0))
+	var cards: HBoxContainer = UI.hbox(14)
+	cards.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(cards)
+	var items: Array = [
+		["questions", "10 questions", "Rockets, missions and the people behind them"],
+		["ladder", "Harder each time", "Easy first, expert last"],
+		["dust", "%d star dust each" % per, "Up to %d a round" % (per * 10)],
+		["days", "%d rounds a day" % int(_cfg.get("rounds_per_day", 3)), "%d minutes apart" % int(_cfg.get("cooldown_minutes", 10))],
+	]
+	for item in items:
+		var card: PanelContainer = PanelContainer.new()
+		card.add_theme_stylebox_override("panel", UI.box(Color(0.04, 0.09, 0.18, 0.9), Color(UI.C_ACCENT, 0.5), 8, 1, 10.0))
+		card.custom_minimum_size = Vector2(212.0, 170.0)
+		cards.add_child(card)
+		var cc: VBoxContainer = UI.vbox(6)
+		cc.alignment = BoxContainer.ALIGNMENT_CENTER
+		card.add_child(cc)
+		var pic: Control = Control.new()
+		pic.custom_minimum_size = Vector2(190.0, 70.0)
+		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pic.draw.connect(_draw_card_picture.bind(pic, str(item[0])))
+		cc.add_child(pic)
+		var t: Label = UI.label(str(item[1]), 16, UI.C_GOLD)
+		t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cc.add_child(t)
+		var d: Label = UI.label(str(item[2]), 13, UI.C_TEXT, true)
+		d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		d.custom_minimum_size = Vector2(190.0, 0.0)
+		cc.add_child(d)
+	# your star dust and the rounds left, side by side
 	var st: Dictionary = GameState.trivia_status(_cfg)
-	var info: Label = UI.label("Rounds left today: %d" % int(st.get("left", 0)), 15, UI.C_GOLD)
-	col.add_child(info)
-	var spacer: Control = Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	col.add_child(spacer)
+	var stats: HBoxContainer = UI.hbox(30)
+	stats.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(stats)
+	var mine: HBoxContainer = UI.hbox(8)
+	stats.add_child(mine)
+	mine.add_child(UI.sparkle_icon(28.0))
+	mine.add_child(UI.label("You have %d star dust" % GameState.stardust, 17, Color(0.82, 0.74, 1.0)))
+	stats.add_child(UI.label("Rounds left today: %d" % int(st.get("left", 0)), 17, UI.C_GOLD))
 	if bool(st.get("ok", false)):
 		var go: Button = UI.pixel_button("Start round  >", _start_round, 320.0, 56.0, 20, Color(0.45, 0.78, 1.0))
 		UI.add_icon(go, "sparkle", UI.C_GOLD, 24.0)
 		go.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		col.add_child(go)
 	else:
-		_wait_label = UI.label(str(st.get("why", "")), 20, UI.C_YELLOW, true)
+		_wait_label = UI.label(str(st.get("why", "")), 22, UI.C_YELLOW, true)
 		_wait_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_wait_label.custom_minimum_size = Vector2(640.0, 0.0)
+		_wait_label.custom_minimum_size = Vector2(900.0, 0.0)
 		col.add_child(_wait_label)
 		set_process(true)
 	_place(UI.button("Back", _on_back, 160.0, false), Vector2(20, 606), Vector2(160, 50), _body)
+
+
+## The small pictures on the start cards, drawn in code: a question mark, a rising bar
+## chart, a sparkle with a pile, and a row of three days.
+func _draw_card_picture(c: Control, kind: String) -> void:
+	var m: Vector2 = c.size * 0.5
+	match kind:
+		"questions":
+			c.draw_circle(m, 28.0, Color(UI.C_ACCENT, 0.15))
+			c.draw_arc(m, 28.0, 0.0, TAU, 40, UI.C_ACCENT, 2.5)
+			c.draw_string(UI.pixel_font(), m + Vector2(-12, 14), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 40, UI.C_CYAN)
+		"ladder":
+			for i in range(4):
+				var h: float = 14.0 + float(i) * 13.0
+				var col: Color = [UI.C_GREEN, UI.C_YELLOW, UI.C_ORANGE, UI.C_RED][i]
+				c.draw_rect(Rect2(Vector2(m.x - 62.0 + float(i) * 32.0, c.size.y - h - 4.0), Vector2(26.0, h)), col)
+		"dust":
+			UI.draw_sparkle_at(c, m + Vector2(0, -2), 26.0, Color(0.82, 0.74, 1.0))
+			for i in range(5):
+				c.draw_rect(Rect2(m + Vector2(-34.0 + float(i) * 14.0, 26.0 - float(i % 2) * 6.0), Vector2(8, 8)), Color(0.82, 0.74, 1.0, 0.7))
+		"days":
+			for i in range(3):
+				var r: Rect2 = Rect2(Vector2(m.x - 78.0 + float(i) * 54.0, 8.0), Vector2(46.0, 50.0))
+				c.draw_rect(r, Color(0.03, 0.07, 0.14))
+				c.draw_rect(r, Color(UI.C_ACCENT, 0.8), false, 2.0)
+				c.draw_rect(Rect2(r.position, Vector2(r.size.x, 12.0)), Color(UI.C_ACCENT, 0.8))
+				c.draw_circle(r.position + Vector2(r.size.x * 0.5, 34.0), 8.0, UI.C_GOLD)
 
 
 ## 10 questions: a few from each level of difficulty, easiest first, shuffled within a level.
@@ -155,7 +219,7 @@ func _show_question() -> void:
 		var b: Button = UI.button(str(choices[k]), _on_answer.bind(k), 620.0, false)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		b.add_theme_font_size_override("font_size", 16)
+		b.add_theme_font_size_override("font_size", UI.fs(16))
 		_place(b, Vector2(630, 232 + k * 64), Vector2(620, 54), _body)
 		_buttons.append(b)
 	_explain = UI.label("", 15, UI.C_TEXT, true)
@@ -306,6 +370,10 @@ class TriviaArt:
 				_draw_dsky()
 			"mars_orbit":
 				_draw_mars_orbit()
+			"moon":
+				_draw_moon(false)
+			"earthrise":
+				_draw_moon(true)
 		match str(q.get("anim", "twinkle")):
 			"launch":
 				for i in range(16):
@@ -369,6 +437,30 @@ class TriviaArt:
 			var ky: float = r.position.y + 170.0 + float(i / 6) * 50.0
 			draw_rect(Rect2(kx, ky, 44, 42), Color(0.12, 0.12, 0.13))
 			draw_string(ThemeDB.fallback_font, Vector2(kx + 6, ky + 26), str(keys[i]), HORIZONTAL_ALIGNMENT_LEFT, 40, 11, Color(0.92, 0.92, 0.92))
+
+	## The Moon, drawn: a grey ball with craters, lit from the left, slowly turning. With
+	## earth = true, a little Earth rises over its edge (Apollo 8's view).
+	func _draw_moon(earth: bool) -> void:
+		var c: Vector2 = Vector2(size.x * 0.5, size.y * (1.15 if earth else 0.52))
+		var r: float = size.y * (0.78 if earth else 0.34)
+		draw_circle(c, r + 14.0, Color(0.85, 0.85, 0.95, 0.07))
+		draw_circle(c, r, Color(0.62, 0.62, 0.66))
+		draw_circle(c + Vector2(-r * 0.22, -r * 0.22), r * 0.78, Color(0.74, 0.74, 0.78))
+		draw_circle(c + Vector2(r * 0.30, r * 0.20), r * 0.70, Color(0.0, 0.0, 0.0, 0.18))
+		for k in range(9):
+			var a: float = float(k) * 2.4 + _t * 0.05
+			var rr: float = r * (0.20 + 0.55 * fposmod(float(k) * 0.37, 1.0))
+			var p: Vector2 = c + Vector2(cos(a), sin(a) * 0.9) * rr * 0.9
+			var cr: float = r * (0.05 + 0.04 * fposmod(float(k) * 0.61, 1.0))
+			if p.distance_to(c) < r - cr:
+				draw_circle(p, cr, Color(0.48, 0.48, 0.52))
+				draw_arc(p, cr, PI * 0.9, PI * 1.9, 12, Color(0.85, 0.85, 0.9, 0.8), 2.0)
+		if earth:
+			var e: Vector2 = Vector2(size.x * 0.66, size.y * 0.30 - fmod(_t, 8.0) * 1.2)
+			draw_circle(e, 34.0, Color(0.15, 0.40, 0.78))
+			draw_circle(e + Vector2(-8, -6), 14.0, Color(0.28, 0.66, 0.40))
+			draw_circle(e + Vector2(10, 12), 9.0, Color(0.28, 0.66, 0.40))
+			draw_arc(e, 34.0, 0.0, TAU, 32, Color(0.6, 0.85, 1.0, 0.7), 2.0)
 
 	## Mars, and a small orbiter dipping too low, into the glowing upper air.
 	func _draw_mars_orbit() -> void:

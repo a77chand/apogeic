@@ -145,6 +145,57 @@
           "3 stars = 500 star dust; 1500 buys a life"
         ]
       ]
+    },
+    "truck": {
+      "title": "The NASA problem",
+      "steps": [
+        [
+          "Robots at the Moon's south pole must drive themselves",
+          "The Sun is low: long shadows, dark craters, dust"
+        ],
+        [
+          "Pick sensors: each one is blind somewhere",
+          "Every condition must say Covered"
+        ],
+        [
+          "Press Drive test to watch the rover",
+          "Pass it to open challenge 2"
+        ]
+      ]
+    },
+    "route": {
+      "title": "Plan the route",
+      "steps": [
+        [
+          "Move with WASD or the arrow keys",
+          "Or click the square next to the end of the path"
+        ],
+        [
+          "Sunlight charges the battery; shadow and craters drain it",
+          "The sensors can't see rocks in digging dust"
+        ],
+        [
+          "Backspace undoes a step, Enter drives",
+          "Finish all 3 sets to open challenge 3"
+        ]
+      ]
+    },
+    "shadows": {
+      "title": "Moving shadows",
+      "steps": [
+        [
+          "The Sun circles low round the horizon",
+          "so the shadows move as you plan"
+        ],
+        [
+          "Space (or Wait) stays put for a step",
+          "Waiting in sunlight charges the battery"
+        ],
+        [
+          "Cross when the shadow has moved off your path",
+          "Enter drives"
+        ]
+      ]
     }
   }
 }

@@ -82,9 +82,12 @@ func _build_concept() -> void:
 		var head: HBoxContainer = UI.hbox(8)
 		col.add_child(head)
 		head.add_child(UI.label(str(group_name), 14, UI.C_MUTED))
-		head.add_child(UI.label(str(GLOSSARY.get(str(group_name), "")), 12, Color(UI.C_ACCENT, 0.85)))
-		if str(group_name) == "Spacecraft":
-			col.add_child(_craft_row())  # the one choice you can change
+		var gloss: String = str(GLOSSARY.get(str(group_name), ""))
+		if str(group_name) == "Spacecraft" and not GameState.is_cubesat_mission():
+			gloss = "a real satellite, not a CubeSat"
+		head.add_child(UI.label(gloss, 12, Color(UI.C_ACCENT, 0.85)))
+		if str(group_name) == "Spacecraft" and GameState.is_cubesat_mission() and GameState.craft_sizes().size() > 1:
+			col.add_child(_craft_row())  # a CubeSat mission offers the sizes the real ones came in
 			continue
 		var row: HFlowContainer = HFlowContainer.new()
 		row.add_theme_constant_override("h_separation", 8)
@@ -93,8 +96,8 @@ func _build_concept() -> void:
 		col.add_child(row)
 		for item in chips:
 			var chip: Dictionary = item
-			if str(chip.get("group", "")) != str(group_name):
-				continue
+			if str(chip.get("group", "")) != str(group_name) or str(chip.get("state", "")) == "locked":
+				continue   # options that do not apply to this mission are not shown
 			row.add_child(_chip(chip))
 	_build_facts(col)
 
@@ -110,7 +113,7 @@ const GLOSSARY: Dictionary = {
 ## 1U / 3U / 6U buttons. The chosen one is highlighted; pressing another reloads this screen.
 func _craft_row() -> Control:
 	var row: HBoxContainer = UI.hbox(8)
-	for id in Craft.ids(GameState.craft_cfg):
+	for id in GameState.craft_sizes():
 		var b: Button = UI.button(str(id).to_upper(), _on_craft.bind(str(id)), 10.0, false)
 		b.custom_minimum_size = Vector2(70.0, 40.0)
 		if str(id) == GameState.craft_id:
@@ -143,6 +146,21 @@ func _draw_cubes(c: Control) -> void:
 
 
 func _build_facts(col: VBoxContainer) -> void:
+	if not GameState.is_cubesat_mission():
+		var sat: Dictionary = GameState.base_level.get("satellite_class", {})
+		col.add_child(UI.label("About this spacecraft", 14, UI.C_MUTED))
+		var lines: Array = [
+			"%s, %s in real life" % [str(sat.get("name", "Satellite")), str(sat.get("real_mass", ""))],
+			"Its parts are listed in the tray; parts it never had are left out",
+		]
+		for line in lines:
+			var l: Label = UI.label(str(line), 13, UI.C_TEXT, true)
+			l.custom_minimum_size = Vector2(380.0, 0.0)
+			col.add_child(l)
+		var note: Label = UI.label("In the game the parts and limits are scaled to a small model, so every mission plays the same way.", 11, UI.C_MUTED, true)
+		note.custom_minimum_size = Vector2(380.0, 0.0)
+		col.add_child(note)
+		return
 	var craft: Dictionary = Craft.by_id(GameState.craft_cfg, GameState.craft_id)
 	if craft.is_empty():
 		return

@@ -21,7 +21,7 @@ const RocketArt = preload("res://scripts/ui/rocket_art.gd")
 
 signal chosen(index: int)
 
-const DEFAULT_SECONDS: float = 22.0   # 20-25 s to decide
+const DEFAULT_SECONDS: float = 30.0   # 30 s to decide
 const ADVICE_COST_STARDUST: int = 250
 const TIMEOUT_NOTICE_SECONDS: float = 7.0
 

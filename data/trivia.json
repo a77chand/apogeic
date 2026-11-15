@@ -571,9 +571,9 @@
    ],
    "answer": 1,
    "explain": "The Soviet Luna 9 landed softly in February 1966, four months before NASA's Surveyor 1.",
-   "image": "res://art/trivia/moon_crater.jpg",
+   "image": "",
    "anim": "drift",
-   "art": ""
+   "art": "moon"
   },
   {
    "id": "q35",
@@ -588,9 +588,9 @@
    ],
    "answer": 2,
    "explain": "India's Chandrayaan-3 landed near the south pole in August 2023.",
-   "image": "res://art/trivia/moon_crater.jpg",
+   "image": "",
    "anim": "drift",
-   "art": ""
+   "art": "moon"
   },
   {
    "id": "q36",
@@ -655,10 +655,10 @@
     "Luna 3"
    ],
    "answer": 0,
-   "explain": "Apollo 8 orbited the Moon ten times at Christmas 1968 and took the famous Earthrise photo.",
-   "image": "res://art/trivia/earthrise.jpg",
+   "explain": "Apollo 8 orbited the Moon ten times at Christmas 1968 and took the famous Earthrise photo (drawn here).",
+   "image": "",
    "anim": "drift",
-   "art": ""
+   "art": "earthrise"
   },
   {
    "id": "q40",

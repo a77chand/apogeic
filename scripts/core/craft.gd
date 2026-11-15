@@ -38,7 +38,12 @@ static func ids(cfg: Dictionary) -> Array:
 	return out
 
 
-## The level for craft `id`. Unknown ids give an unchanged copy.
+static func _clean(x: float) -> String:
+	return str(int(x)) if absf(x - roundf(x)) < 0.05 else "%.1f" % x
+
+
+## The level for craft `id`. Unknown ids give an unchanged copy. A level can set
+## "mass_limit_factor" (below 1 = a tighter rocket slot) to make its own limit.
 static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 	var out: Dictionary = level.duplicate(true)
 	var craft: Dictionary = by_id(cfg, id)
@@ -47,7 +52,7 @@ static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 	var game: Dictionary = craft.get("game", {})
 	var base_game: Dictionary = by_id(cfg, BASE_ID).get("game", {})
 	var base_limit: float = float(base_game.get("mass_limit_kg", 1.0))
-	var limit: float = float(game.get("mass_limit_kg", base_limit))
+	var limit: float = float(game.get("mass_limit_kg", base_limit)) * float(level.get("mass_limit_factor", 1.0))
 	# a mission can set its own numbers per size (Earth Imager uses the team's values sheet):
 	# the mass limit, and the most power the craft can make (panels are capped at it)
 	var own: Dictionary = (level.get("craft_values", {}) as Dictionary).get(id, {})
@@ -55,7 +60,7 @@ static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 		limit = float(own.get("mass_kg", limit))
 		if own.has("power_w"):
 			out["power_cap_w"] = float(own["power_w"])
-	var scale: float = limit / maxf(0.001, base_limit)  # the bus structure grows and shrinks with the craft
+	var scale: float = float(game.get("mass_limit_kg", base_limit)) / maxf(0.001, base_limit)  # the bus structure grows and shrinks with the craft
 	var limits: Dictionary = out["limits"]
 	limits["mass_kg"] = limit
 	var bus: Dictionary = out["bus"]
@@ -70,4 +75,33 @@ static func apply(level: Dictionary, cfg: Dictionary, id: String) -> Dictionary:
 		if str(r.get("kind", "")) == "mass_max":
 			r["target"] = limit
 			r["text"] = "Total mass at most %.2f kg" % limit if limit < 2.0 else "Total mass at most %.1f kg" % limit
+		elif str(r.get("kind", "")) == "delivered_min" and absf(scale - 1.0) > 0.001:
+			# a smaller craft makes and sends proportionally less data
+			r["target"] = snappedf(float(r.get("target", 0.0)) * scale, 0.1)
+			r["text"] = str(r.get("text", "")).split(" at least ")[0] + " at least %s MB" % _clean(float(r["target"])) + str(r.get("text", "")).split(" MB", 1)[1]
+	if absf(scale - 1.0) > 0.001:
+		var ops: Dictionary = out.get("ops", {})
+		ops["goal_mb"] = snappedf(float(ops.get("goal_mb", 0.0)) * scale, 0.1)
+		ops["storage_mb"] = snappedf(float(ops.get("storage_mb", 0.0)) * scale, 0.1)
+		bus["power_use_w"] = float(bus.get("power_use_w", 0.0)) * scale
+	return out
+
+
+## How much bigger or smaller than the 3U base this craft is (its mass limit over the base
+## limit). Parts, power and data scale with it, so every size plays like the same puzzle:
+## a 1U needs tiny parts, a 6U can carry bigger ones.
+static func scale_of(cfg: Dictionary, id: String) -> float:
+	var game: Dictionary = by_id(cfg, id).get("game", {})
+	var base: Dictionary = by_id(cfg, BASE_ID).get("game", {})
+	return float(game.get("mass_limit_kg", 1.0)) / maxf(0.001, float(base.get("mass_limit_kg", 1.0)))
+
+
+## A copy of the parts with mass, power, battery and data scaled to a craft size.
+static func scale_parts(parts: Dictionary, s: float) -> Dictionary:
+	var out: Dictionary = parts.duplicate(true)
+	for key in out.keys():
+		var p: Dictionary = out[key]
+		for field in ["mass_kg", "power_gen_w", "power_use_w", "battery_wh", "make_mb_wk", "send_mb_wk"]:
+			if p.has(field):
+				p[field] = float(p[field]) * s
 	return out

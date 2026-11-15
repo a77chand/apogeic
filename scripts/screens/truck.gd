@@ -1,14 +1,15 @@
 extends Control
-## NASA problem: an autonomous digging robot near the Moon's south pole must spot rocks,
+## NASA problem: a hopping rover near the Moon's south pole must spot rocks,
 ## but no sensor works everywhere (low Sun, black shadows, dark craters, dust, slopes).
 ## First the problem is explained, then the player picks sensors, sees detection in five
-## conditions, and runs a drive test that shows the truck spotting or hitting a rock in
+## conditions, and runs a drive test that shows the rover spotting or hitting a rock in
 ## each one. All rules are in truck_sim.gd; sources are behind "Where is the data from?".
 
 const UI = preload("res://scripts/ui/ui.gd")
 const TruckSim = preload("res://scripts/core/truck_sim.gd")
 const DriveTest = preload("res://scripts/ui/drive_test.gd")
 const TruckTabs = preload("res://scripts/ui/truck_tabs.gd")
+const Tutorial = preload("res://scripts/ui/tutorial.gd")
 
 var _cfg: Dictionary = {}
 var selected: Array = []
@@ -18,7 +19,7 @@ var _limit_rows: Dictionary = {}    # "mass"/"power"/"cost" -> {"bar", "text"}
 var _verdict: Label = null
 var _causes: VBoxContainer = null
 var _popup: Control = null
-var _tabs: Control = null
+var _next_btn: Button = null
 
 
 func _ready() -> void:
@@ -29,8 +30,7 @@ func _ready() -> void:
 	_build_limits()
 	_build_explain()
 	_refresh()
-	if not GameState.is_truck_done(1):
-		_show_problem()   # the first time; after that it is behind "The problem"
+	Tutorial.maybe_show(self, "truck")   # first visit; "The problem" button has the full story
 
 
 func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
@@ -41,10 +41,7 @@ func _place(node: Control, pos: Vector2, sz: Vector2) -> void:
 
 
 func _build_top_bar() -> void:
-	if _tabs != null and is_instance_valid(_tabs):
-		_tabs.queue_free()
-	_tabs = TruckTabs.bar(_cfg, 1)
-	add_child(_tabs)
+	add_child(TruckTabs.bar(_cfg, 1))
 
 
 func _build_sensors() -> void:
@@ -52,7 +49,7 @@ func _build_sensors() -> void:
 	_place(panel, Vector2(20, 88), Vector2(410, 430))
 	var col: VBoxContainer = UI.vbox(6)
 	panel.add_child(col)
-	col.add_child(UI.label("Choose the truck's sensors", 20))
+	col.add_child(UI.label("Choose the rover's sensors", 20))
 	var list: Array = _cfg.get("sensors", [])
 	for item in list:
 		var s: Dictionary = item
@@ -64,7 +61,7 @@ func _build_sensors() -> void:
 		var b: Button = UI.button(text, Callable(), 380.0, false)
 		b.toggle_mode = true
 		b.custom_minimum_size = Vector2(380.0, 50.0)
-		b.add_theme_font_size_override("font_size", 13)
+		b.add_theme_font_size_override("font_size", UI.fs(13))
 		b.clip_text = true
 		b.add_theme_stylebox_override("pressed", UI.box(UI.C_HOVER, UI.C_GREEN, 16, 4, 6.0))
 		b.add_theme_stylebox_override("hover_pressed", UI.box(UI.C_HOVER.lightened(0.1), UI.C_GREEN, 16, 4, 6.0))
@@ -111,7 +108,7 @@ func _build_limits() -> void:
 	_place(panel, Vector2(882, 88), Vector2(378, 430))
 	var col: VBoxContainer = UI.vbox(6)
 	panel.add_child(col)
-	col.add_child(UI.label("What the truck can carry", 20))
+	col.add_child(UI.label("What the rover can carry", 20))
 	for key in ["mass", "power", "cost"]:
 		var title: String = {"mass": "Mass", "power": "Power", "cost": "Budget"}[key]
 		col.add_child(UI.label(title, 14, UI.C_MUTED))
@@ -141,6 +138,9 @@ func _build_explain() -> void:
 	var note: Label = UI.label(str(_cfg.get("fusion_note", "")), 11, UI.C_MUTED, true)
 	_place(note, Vector2(708, 662), Vector2(300, 50))
 	_place(UI.button("Drive test  >", _on_drive, 236.0, true), Vector2(1024, 660), Vector2(236, 52))
+	_next_btn = UI.button("Next challenge  >", _on_next, 236.0, true)
+	_place(_next_btn, Vector2(1024, 600), Vector2(236, 52))
+	_next_btn.visible = GameState.is_truck_done(1)
 
 
 ## What problem this solves, in three short points with where each fact comes from, and a
@@ -165,7 +165,7 @@ func _show_problem() -> void:
 	panel.add_child(col)
 	col.add_child(UI.label("The NASA problem", 26, UI.C_CYAN))
 	col.add_child(UI.bullets(_cfg.get("problem", []), 16, UI.C_TEXT, 820.0))
-	var goal: Label = UI.label("Your job: pick sensors so the truck spots at least %d%% of rocks in every condition, within its mass, power and budget." % int(float(_cfg.get("target_detect_pct", 95.0))), 16, UI.C_GOLD, true)
+	var goal: Label = UI.label("Your job: pick sensors so the rover spots at least %d%% of rocks in every condition, within its mass, power and budget." % int(float(_cfg.get("target_detect_pct", 95.0))), 16, UI.C_GOLD, true)
 	goal.custom_minimum_size = Vector2(820.0, 0.0)
 	col.add_child(goal)
 	var src: Label = UI.label("Sources: NASA lighting study for the south pole (NTRS 20240011393), NASA's IPEx excavator tests, VIPER rover hardware. Detection numbers are mostly illustrative: see \"Where is the data from?\".", 12, UI.C_MUTED, true)
@@ -177,8 +177,12 @@ func _show_problem() -> void:
 	var row: HBoxContainer = UI.hbox(14)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_child(row)
-	row.add_child(UI.button("Watch: a truck with only a camera", _watch_camera_only, 360.0, false))
+	row.add_child(UI.button("Watch: a rover with only a camera", _watch_camera_only, 360.0, false))
 	row.add_child(UI.button("Pick sensors", _on_close_sources, 220.0, true))
+
+
+func _on_next() -> void:
+	TruckTabs._go(2)
 
 
 func _watch_camera_only() -> void:
@@ -203,8 +207,8 @@ func _run_drive(sensors: Array) -> void:
 	if all_safe and sensors == selected and bool(TruckSim.evaluate(_cfg, selected).get("passed", false)):
 		GameState.play_sound("fanfare")
 		GameState.mark_truck_done(1)
-		_build_top_bar()   # open the Route tab straight away
 		_verdict.text = "Drive test passed! Challenge 2 is open: plan the route."
+		_next_btn.visible = true
 		_verdict.add_theme_color_override("font_color", UI.C_GREEN)
 
 
@@ -249,11 +253,11 @@ func _refresh() -> void:
 		_causes.add_child(UI.label(str(_cfg.get("intro", "")), 14, UI.C_TEXT, true))
 		_causes.add_child(UI.label("Why it matters: " + str(_cfg.get("lesson", "")), 14, UI.C_CYAN, true))
 	elif bool(res["passed"]):
-		_verdict.text = "The truck sees everything it needs to."
+		_verdict.text = "The rover sees everything it needs to."
 		_verdict.add_theme_color_override("font_color", UI.C_GREEN)
 		_causes.add_child(UI.label(str(_cfg.get("lesson", "")), 14, UI.C_GREEN, true))
 	else:
-		_verdict.text = "The truck would miss obstacles."
+		_verdict.text = "The rover would miss obstacles."
 		_verdict.add_theme_color_override("font_color", UI.C_RED)
 		var causes: Array = res.get("causes", [])
 		for line in causes:
