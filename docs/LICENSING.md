@@ -1,5 +1,7 @@
 # Licensing: what is covered by what
 
+Copyright holders: Nebula Forge (Anusha Chandra, Aadhav Dijay, Bhairavi Swaminathan, Adity Agrawal, Tanvi Padala, Amudha Lakshmanan).
+
 This project mixes our own work with third-party material, so no single licence covers everything.
 
 | Part | Licence |
