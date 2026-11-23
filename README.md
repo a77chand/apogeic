@@ -108,8 +108,8 @@ godot --headless --path . -s tests/flow_check.gd       # plays through every scr
 ## Team (Nebula Forge):
 
 - **Software development:** Anusha Chandra, Aadhav Dijay, Bhairavi Swaminathan
-- **Artistry and animation:** Adity Agrawal and Tanvi Padala drew the game's images: the rocket launch animation, the CubeSat, antenna and dish modules, the Moon, Sun and Earth backgrounds, the icons and the Mission Completed / Failed titles.
-- **Team management and calculations:** Amudha Lakshmanan led the team and did much of the mission calculations, especially Mission 1, where she worked out the numbers for the different CubeSat types (1U, 3U, 6U).
+- **Artistry and animation:** Adity Agrawal & Tanvi Padala
+- **Team management and calculations:** Amudha Lakshmanan
 
 ## AI assistance (NASA Space Apps disclosure):
 
