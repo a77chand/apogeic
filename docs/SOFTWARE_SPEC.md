@@ -161,7 +161,7 @@ scripts/screens/launch.gd         Anusha
 scripts/screens/ops.gd            Anusha
 data/parts.json level1.json events.json puzzles.json    Anusha
 tests/sim_tests.gd run_tests.gd   Anusha
-art/...                           files from Aditi and Tanvi, copied in by Bhairavi
+art/...                           files from Adity and Tanvi, copied in by Bhairavi
 docs/SOFTWARE_SPEC.md             this file
 ```
 
@@ -750,7 +750,7 @@ Edge case: the report opened with an empty `ops` (for example from the stub flow
 
 ## 13. Art
 
-- Files arrive from Aditi (animations) and Tanvi (stills). Bhairavi copies them into `art/` with the exact names from the art tracker and commits them together with the `.import` files Godot creates next to them.
+- Files arrive from Adity (animations) and Tanvi (stills). Bhairavi copies them into `art/` with the exact names from the art tracker and commits them together with the `.import` files Godot creates next to them.
 - Code never fails on missing art. `UI.picture` and `UI.frames` handle it.
 - Never list a folder at run time to find frames. It works in the editor and breaks in an exported game. Build the paths from numbers, as `UI.frames` does.
 
@@ -996,7 +996,7 @@ When the AI's code shows an error in Godot, paste the exact error line and the f
 
 ## 24. Open items
 
-> **Updated 14 Nov:** Still open: verify the craft table and the truck figures against primary sources before presenting them; art from Tanvi and Aditi.
+> **Updated 14 Nov:** Still open: verify the craft table and the truck figures against primary sources before presenting them; art from Tanvi and Adity.
 
 
 | Item | Who |
