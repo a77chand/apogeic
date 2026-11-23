@@ -305,9 +305,9 @@ func _on_sources() -> void:
 
 ## The team behind the game, by role (Nebula Forge).
 const TEAM: Array = [
-	["Artistry & animation", ["Adity Agrawal", "Tanvi Padala"]],
+	["Artwork & animation (all the game's images)", ["Adity Agrawal", "Tanvi Padala"]],
 	["Software development", ["Anusha Chandra", "Aadhav Dijay", "Bhairavi Swaminathan"]],
-	["Team management", ["Amudha Lakshmanan"]],
+	["Team lead & mission calculations (CubeSat types)", ["Amudha Lakshmanan"]],
 ]
 
 
