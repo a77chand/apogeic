@@ -12,3 +12,6 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+
+# Godot makes these next to the README screenshots; they are not needed
+docs/screenshots/*.import
