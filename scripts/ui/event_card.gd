@@ -35,6 +35,7 @@ var _bar: ProgressBar = null
 var _timer_label: Label = null
 var advice_paid_k: float = 0.0   # money spent on expert advice; the owner charges it
 var _col: VBoxContainer = null
+var _panel: PanelContainer = null
 var _choice_buttons: Array = []
 var _help_label: Label = null
 var _clue_btn: Button = null
@@ -59,14 +60,16 @@ func _ready() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(dim)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var centre: CenterContainer = CenterContainer.new()
-	centre.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(centre)
-	centre.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var panel: PanelContainer = UI.panel(UI.C_ORANGE, 20.0)
 	panel.custom_minimum_size = Vector2(600.0, 0.0)
-	centre.add_child(panel)
-	var col: VBoxContainer = UI.vbox(12)
+	# anchored to the middle of the screen and growing both ways, so it stays centred even
+	# when it has to shrink to fit (a container cannot centre something taller than the screen)
+	add_child(panel)
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_panel = panel
+	var col: VBoxContainer = UI.vbox(7)
 	panel.add_child(col)
 	_col = col
 	# the event's picture; a mission's own real-life decision shows the real rocket instead
@@ -76,9 +79,9 @@ func _ready() -> void:
 	if (path == "" or not ResourceLoader.exists(path)) and rocket != "":
 		pic = RocketArt.new()
 		pic.set("rocket", rocket)
-		pic.custom_minimum_size = Vector2(160.0, 216.0)
+		pic.custom_minimum_size = Vector2(90.0, 108.0)
 	else:
-		pic = UI.picture(path, Vector2(384.0, 216.0), str(_event.get("title", "")))
+		pic = UI.picture(path, Vector2(200.0, 112.0), str(_event.get("title", "")))
 	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	col.add_child(pic)
 	col.add_child(UI.label(str(_event.get("title", "")), 24))
@@ -114,7 +117,7 @@ func _ready() -> void:
 		if no_fuel:
 			text = str(choice.get("label", "")) + "\nNot enough fuel: it needs %d%% and only %d%% is left." % [int(round(needs_fuel)), int(round(fuel_now))]
 		var b: Button = UI.button(text, _on_choice.bind(i), 560.0, false)
-		b.custom_minimum_size = Vector2(560.0, 56.0)
+		b.custom_minimum_size = Vector2(560.0, 50.0)
 		b.disabled = missing or no_fuel
 		col.add_child(b)
 		_choice_buttons.append(b)
@@ -126,6 +129,21 @@ func _ready() -> void:
 	_timer_label.custom_minimum_size = Vector2(560.0, 0.0)
 	col.add_child(_timer_label)
 	_update_timer()
+	_fit.call_deferred()
+
+
+## Shrinks the card a little if it would not fit the screen (large text, a long clue, the
+## timeout notice), so nothing is ever cut off at the bottom.
+func _fit() -> void:
+	if _panel == null or not is_inside_tree():
+		return
+	await get_tree().process_frame
+	if _panel == null or not is_instance_valid(_panel):
+		return
+	var limit: float = maxf(300.0, size.y - 24.0)
+	var k: float = minf(1.0, limit / maxf(1.0, _panel.size.y))
+	_panel.pivot_offset = _panel.size * 0.5
+	_panel.scale = Vector2(k, k)
 
 
 ## A free clue and a paid, clearer tip. Hidden until the player asks.
@@ -157,6 +175,7 @@ func _on_clue() -> void:
 	_help_label.text = "Clue: " + str(_event.get("hint", ""))
 	_help_label.visible = true
 	_clue_btn.disabled = true
+	_fit.call_deferred()
 
 
 func _on_advice() -> void:
@@ -167,6 +186,7 @@ func _on_advice() -> void:
 	_help_label.text = "Expert: " + str(_event.get("advice", ""))
 	_help_label.visible = true
 	_advice_btn.disabled = true
+	_fit.call_deferred()
 	if _clue_btn != null:
 		_clue_btn.disabled = true
 
@@ -236,6 +256,7 @@ func _show_timeout() -> void:
 	_col.add_child(ok)
 	_notice_left = TIMEOUT_NOTICE_SECONDS
 	GameState.play_sound("fail")
+	_fit.call_deferred()
 
 
 func _finish() -> void:
