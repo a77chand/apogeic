@@ -29,4 +29,4 @@ For the NASA problem, we took the judges' idea of autonomous trucks and set it w
 
 ## Team
 
-Amudha (lead), Anusha, Aadhav, Bhairavi, Tanvi and Aditi. Built in Godot 4.7 (GDScript), exported to the web.
+Amudha (lead), Anusha, Aadhav, Bhairavi, Tanvi and Adity. Built in Godot 4.7 (GDScript), exported to the web.
