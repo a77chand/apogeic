@@ -120,5 +120,6 @@ godot --headless --path . -s tests/flow_check.gd       # plays through every scr
 
 ## Licence
 
-Code and data: **MIT** ([`LICENSE`](LICENSE)). Our own art and writing: **CC BY 4.0**. NASA photographs, fonts and the Godot engine keep their own terms. What is covered by what is in [`docs/LICENSING.md`](docs/LICENSING.md).
+Code and data: **MIT** ([`LICENSE`](LICENSE)). 
+Our own art and writing: **CC BY 4.0**. NASA photographs, fonts and the Godot engine keep their own terms. What is covered by what is in [`docs/LICENSING.md`](docs/LICENSING.md).
 
